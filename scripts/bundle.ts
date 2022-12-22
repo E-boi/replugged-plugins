@@ -1,8 +1,14 @@
 import asar from "@electron/asar";
-import { readFileSync } from "fs";
+import { readFileSync, readdirSync } from "fs";
+import { join } from "path";
 import { Plugin } from "replugged/dist/types/addon";
 
-const manifest = JSON.parse(readFileSync("manifest.json", "utf-8")) as Plugin;
-const outputName = `${manifest.id}.asar`;
+readdirSync("dist", { withFileTypes: true }).forEach((direct) => {
+  if (!direct.isDirectory()) return;
+  const manifest = JSON.parse(
+    readFileSync(join("dist", direct.name, "manifest.json"), "utf-8"),
+  ) as Plugin;
+  const outputName = `${manifest.id}.asar`;
 
-asar.createPackage("dist", outputName);
+  asar.createPackage(join("dist", direct.name), outputName);
+});

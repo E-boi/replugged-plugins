@@ -1,11 +1,11 @@
 import esbuild from "esbuild";
 import { globalExternals } from "@fal-works/esbuild-plugin-global-externals";
 import path, { join } from "path";
-import fs, { existsSync, rmSync } from "fs";
+import fs, { existsSync, readdirSync, rmSync } from "fs";
 import _manifest from "../manifest.json";
 import { Plugin } from "replugged/dist/types/addon";
 
-const manifest: Plugin = _manifest;
+// const manifest: Plugin = _manifest;
 
 const NODE_VERSION = "14";
 const CHROME_VERSION = "91";
@@ -50,12 +50,14 @@ const install: esbuild.Plugin = {
   name: "install",
   setup: (build) => {
     build.onEnd(() => {
-      if (!process.env.NO_INSTALL) {
-        const dest = join(CONFIG_PATH, "plugins", manifest.id);
+      const id = build.initialOptions.outfile?.split("/")[1];
+      if (!id) return;
+      if (!process.argv.includes("--no-install")) {
+        const dest = join(CONFIG_PATH, "plugins", id);
         if (existsSync(dest)) {
           rmSync(dest, { recursive: true });
         }
-        fs.cpSync("dist", dest, { recursive: true });
+        fs.cpSync(join("dist", id), dest, { recursive: true });
         console.log("Installed updated version");
       }
     });
@@ -75,74 +77,85 @@ const common: esbuild.BuildOptions = {
   plugins: [install],
 };
 
-const targets = [];
+async function buildPlugin(path: string): Promise<void> {
+  // dunno why using join on import() errors
+  const manifestPath = join(path, "manifest.json");
+  const manifest: Plugin = { ...(await import(manifestPath)) };
 
-if ("renderer" in manifest) {
-  targets.push(
-    esbuild.build({
-      ...common,
-      entryPoints: [manifest.renderer],
-      platform: "browser",
-      target: `chrome${CHROME_VERSION}`,
-      outfile: "dist/renderer.js",
-      format: "esm" as esbuild.Format,
-      plugins: [globalExternals(globalModules), install],
-    }),
-  );
+  const targets = [];
 
-  manifest.renderer = "renderer.js";
+  if ("renderer" in manifest) {
+    targets.push(
+      esbuild.build({
+        ...common,
+        entryPoints: [join(path, manifest.renderer)],
+        platform: "browser",
+        target: `chrome${CHROME_VERSION}`,
+        outfile: `dist/${manifest.id}/renderer.js`,
+        format: "esm" as esbuild.Format,
+        plugins: [globalExternals(globalModules), install],
+      }),
+    );
+
+    manifest.renderer = "renderer.js";
+  }
+
+  if ("preload" in manifest) {
+    targets.push(
+      esbuild.build({
+        ...common,
+        entryPoints: [join(path, manifest.preload)],
+        platform: "node",
+        target: [`node${NODE_VERSION}`, `chrome${CHROME_VERSION}`],
+        outfile: `dist/${manifest.id}/preload.js`,
+        external: ["electron"],
+      }),
+    );
+
+    manifest.preload = "preload.js";
+  }
+
+  if ("main" in manifest) {
+    targets.push(
+      esbuild.build({
+        ...common,
+        entryPoints: [join(path, manifest.main)],
+        platform: "node",
+        target: `node${NODE_VERSION}`,
+        outfile: `dist/${manifest.id}/main.js`,
+        external: ["electron"],
+      }),
+    );
+
+    manifest.main = "main.js";
+  }
+
+  if ("plaintextPatches" in manifest) {
+    targets.push(
+      esbuild.build({
+        ...common,
+        entryPoints: [join(path, manifest.plaintextPatches)],
+        platform: "browser",
+        target: `chrome${CHROME_VERSION}`,
+        outfile: `dist/${manifest.id}/plaintextPatches.js`,
+        format: "esm" as esbuild.Format,
+        plugins: [globalExternals(globalModules), install],
+      }),
+    );
+
+    manifest.plaintextPatches = "plaintextPatches.js";
+  }
+
+  if (!fs.existsSync("dist")) fs.mkdirSync("dist");
+  if (!fs.existsSync(join("dist", manifest.id))) fs.mkdirSync(`dist/${manifest.id}`);
+  fs.writeFileSync(join("dist", manifest.id, "manifest.json"), JSON.stringify(manifest));
+
+  Promise.all(targets);
 }
 
-if ("preload" in manifest) {
-  targets.push(
-    esbuild.build({
-      ...common,
-      entryPoints: [manifest.preload],
-      platform: "node",
-      target: [`node${NODE_VERSION}`, `chrome${CHROME_VERSION}`],
-      outfile: "dist/preload.js",
-      external: ["electron"],
-    }),
-  );
+if (existsSync(`dist`)) rmSync(`dist`, { recursive: true });
 
-  manifest.preload = "preload.js";
-}
-
-if ("main" in manifest) {
-  targets.push(
-    esbuild.build({
-      ...common,
-      entryPoints: [manifest.main],
-      platform: "node",
-      target: `node${NODE_VERSION}`,
-      outfile: "dist/main.js",
-      external: ["electron"],
-    }),
-  );
-
-  manifest.main = "main.js";
-}
-
-if ("plaintextPatches" in manifest) {
-  targets.push(
-    esbuild.build({
-      ...common,
-      entryPoints: [manifest.plaintextPatches],
-      platform: "browser",
-      target: `chrome${CHROME_VERSION}`,
-      outfile: "dist/plaintextPatches.js",
-      format: "esm" as esbuild.Format,
-      plugins: [globalExternals(globalModules), install],
-    }),
-  );
-
-  manifest.plaintextPatches = "plaintextPatches.js";
-}
-
-if (!fs.existsSync("dist")) {
-  fs.mkdirSync("dist");
-}
-
-fs.writeFileSync("dist/manifest.json", JSON.stringify(manifest));
-
-Promise.all(targets);
+readdirSync(join(__dirname, "..", "plugins"), { withFileTypes: true }).forEach((dirent) => {
+  if (!dirent.isDirectory()) return;
+  buildPlugin(join(__dirname, "..", "plugins", dirent.name));
+});
