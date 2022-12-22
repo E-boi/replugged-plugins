@@ -15,5 +15,5 @@
   "license": "MIT",
   "type": "replugged-plugin",
   "renderer": "src/index.ts",
-  "plaintextPatches": "src/plaintextPatches.tsx"
+  "plaintextPatches": "src/plaintextPatches.ts"
 }
