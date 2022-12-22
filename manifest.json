@@ -1,18 +1,19 @@
 {
-  "id": "dev.replugged.PluginTemplate",
-  "name": "Plugin Template",
-  "description": "A plugin template",
+  "id": "dev.eboi.linkchannels",
+  "name": "Link Channels",
+  "description": "Adds an Icon to channels that copys <#channelId>. (channelId is replaced)",
   "author": {
-    "name": "replugged",
-    "discordID": "1000992611840049192",
-    "github": "replugged-org"
+    "name": "ugly-patootie",
+    "discordID": "458805348669718559",
+    "github": "E-boi"
   },
-  "version": "1.0.3",
+  "version": "1.0.0",
   "updater": {
     "type": "github",
-    "id": "replugged-org/plugin-template"
+    "id": "E-boi/LinkChannels"
   },
   "license": "MIT",
   "type": "replugged-plugin",
-  "renderer": "src/index.ts"
+  "renderer": "src/index.ts",
+  "plaintextPatches": "src/plaintextPatches.tsx"
 }

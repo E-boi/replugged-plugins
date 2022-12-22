@@ -1,25 +1,27 @@
-import { Injector, webpack } from "replugged";
+import { webpack } from "replugged";
+import linkButton from "./LinkButton";
 
-const inject = new Injector();
-
-export async function start(): Promise<void> {
-  const typingMod = await webpack.waitForModule<{
-    startTyping: (channelId: string) => void;
-  }>(webpack.filters.byProps("startTyping"));
-  const getChannelMod = await webpack.waitForModule<{
-    getChannel: (id: string) => {
-      name: string;
+declare global {
+  interface Window {
+    linkChannels: {
+      linkButton: React.FC<{ channel: { id: string } }>;
     };
-  }>(webpack.filters.byProps("getChannel"));
-
-  if (typingMod && getChannelMod) {
-    inject.instead(typingMod, "startTyping", ([channel]) => {
-      const channelObj = getChannelMod.getChannel(channel);
-      console.log(`Typing prevented! Channel: #${channelObj?.name ?? "unknown"} (${channel}).`);
-    });
+    DiscordNative: {
+      clipboard: {
+        copy: (text: string) => void;
+      };
+    };
   }
 }
 
-export function stop(): void {
-  inject.uninjectAll();
+export async function start(): Promise<void> {
+  const tooltipMod = await webpack.waitForModule<Record<string, React.FC>>(
+    webpack.filters.bySource(/shouldShowTooltip:!1/),
+  );
+  const Tooltip =
+    tooltipMod && webpack.getFunctionBySource<React.FC>(/shouldShowTooltip:!1/, tooltipMod);
+  if (!Tooltip) return;
+  window.linkChannels = { linkButton: await linkButton(Tooltip) };
 }
+
+export function stop(): void {}
