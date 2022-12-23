@@ -10,7 +10,7 @@
   "version": "1.0.1",
   "updater": {
     "type": "github",
-    "id": "E-boi/LinkChannels"
+    "id": "E-boi/replugged-plugins"
   },
   "license": "MIT",
   "type": "replugged-plugin",
