@@ -1,0 +1,18 @@
+:root {
+  --blur-effect: blur(10px);
+  --blur-timing: 1s;
+}
+
+.rp-blurNsfw [class*="originalLink-"] {
+  z-index: 0;
+}
+.rp-blurNsfw img,
+.rp-blurNsfw video {
+  transition: var(--blur-timing) !important;
+  filter: var(--blur-effect) !important;
+}
+.rp-blurNsfw img:hover,
+.rp-blurNsfw video:hover {
+  transition: var(--blur-timing) !important;
+  filter: none !important;
+}

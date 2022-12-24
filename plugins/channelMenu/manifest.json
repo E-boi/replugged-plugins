@@ -1,0 +1,19 @@
+{
+  "id": "dev.eboi.blurnsfw",
+  "name": "Blur NSFW",
+  "description": "Blur Images/Videos in NSFW channels until hovered",
+  "author": {
+    "name": "ugly-patootie",
+    "discordID": "458805348669718559",
+    "github": "E-boi"
+  },
+  "version": "1.0.0",
+  "updater": {
+    "type": "github",
+    "id": "E-boi/replugged-plugins"
+  },
+  "license": "MIT",
+  "type": "replugged-plugin",
+  "renderer": "index.ts",
+  "plaintextPatches": "plaintextPatches.ts"
+}
