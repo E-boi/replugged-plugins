@@ -1,0 +1,19 @@
+{
+  "id": "dev.eboi.githubindiscord",
+  "name": "Github in Discord",
+  "description": "Look at github repos within discord",
+  "author": {
+    "name": "ugly-patootie",
+    "discordID": "458805348669718559",
+    "github": "E-boi"
+  },
+  "version": "0.0.1",
+  "updater": {
+    "type": "github",
+    "id": "E-boi/replugged-plugins"
+  },
+  "license": "MIT",
+  "type": "replugged-plugin",
+  "renderer": "index.tsx",
+  "plaintextPatches": "plaintextPatches.ts"
+}

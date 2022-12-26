@@ -26,6 +26,10 @@ const globalModules = {
     ],
     defaultExport: true,
   },
+  react: {
+    varName: "replugged.common.React",
+    namedExports: ["useEffect", "useState", "memo", "useCallback"],
+  },
 };
 
 const REPLUGGED_FOLDER_NAME = "replugged";
@@ -66,7 +70,7 @@ const watch = process.argv.includes("--watch");
 const common: esbuild.BuildOptions = {
   absWorkingDir: path.join(__dirname, ".."),
   bundle: true,
-  minify: false,
+  minify: true,
   sourcemap: true,
   format: "cjs" as esbuild.Format,
   logLevel: "info",
