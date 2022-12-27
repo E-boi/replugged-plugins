@@ -1,14 +1,15 @@
 import esbuild from "esbuild";
 import { globalExternals } from "@fal-works/esbuild-plugin-global-externals";
 import { sassPlugin } from "esbuild-sass-plugin";
-import path, { join } from "path";
-import fs, { existsSync, readdirSync, rmSync } from "fs";
+import { join } from "path";
+import { existsSync } from "fs";
+import { cp, mkdir, readdir, rm, writeFile } from "fs/promises";
 import { Plugin } from "replugged/dist/types/addon";
 import { pathToFileURL } from "url";
 
 const NODE_VERSION = "14";
 const CHROME_VERSION = "91";
-console.log(process.argv);
+
 const globalModules = {
   replugged: {
     varName: "replugged",
@@ -52,15 +53,13 @@ export const CONFIG_PATH = (() => {
 const install: esbuild.Plugin = {
   name: "install",
   setup: (build) => {
-    build.onEnd(() => {
+    build.onEnd(async () => {
       const id = build.initialOptions.outfile?.split("/")[1];
       if (!id) return;
       if (!process.argv.includes("--no-install")) {
         const dest = join(CONFIG_PATH, "plugins", id);
-        if (existsSync(dest)) {
-          rmSync(dest, { recursive: true });
-        }
-        fs.cpSync(join("dist", id), dest, { recursive: true });
+        // if (existsSync(dest)) await rm(dest, { recursive: true });
+        await cp(join("dist", id), dest, { recursive: true, force: true });
         console.log("Installed updated version");
       }
     });
@@ -70,14 +69,15 @@ const install: esbuild.Plugin = {
 const watch = process.argv.includes("--watch");
 
 const common: esbuild.BuildOptions = {
-  absWorkingDir: path.join(__dirname, ".."),
+  absWorkingDir: join(__dirname, ".."),
   bundle: true,
   minify: true,
   sourcemap: true,
   format: "cjs" as esbuild.Format,
   logLevel: "info",
   watch,
-  plugins: [install],
+  // @ts-expect-error dumb types but works
+  plugins: [install, globalExternals(globalModules), sassPlugin()],
 };
 
 async function buildPlugin(path: string): Promise<void> {
@@ -96,8 +96,6 @@ async function buildPlugin(path: string): Promise<void> {
         target: `chrome${CHROME_VERSION}`,
         outfile: `dist/${manifest.id}/renderer.js`,
         format: "esm" as esbuild.Format,
-        // @ts-expect-error dumb types it works tho
-        plugins: [globalExternals(globalModules), install, sassPlugin()],
       }),
     );
 
@@ -143,23 +141,28 @@ async function buildPlugin(path: string): Promise<void> {
         target: `chrome${CHROME_VERSION}`,
         outfile: `dist/${manifest.id}/plaintextPatches.js`,
         format: "esm" as esbuild.Format,
-        plugins: [globalExternals(globalModules), install],
       }),
     );
 
     manifest.plaintextPatches = "plaintextPatches.js";
   }
 
-  if (!fs.existsSync("dist")) fs.mkdirSync("dist");
-  if (!fs.existsSync(join("dist", manifest.id))) fs.mkdirSync(`dist/${manifest.id}`);
-  fs.writeFileSync(join("dist", manifest.id, "manifest.json"), JSON.stringify(manifest));
+  if (!existsSync(join("dist", manifest.id)))
+    await mkdir(`dist/${manifest.id}`, { recursive: true });
+  await writeFile(join("dist", manifest.id, "manifest.json"), JSON.stringify(manifest));
 
   Promise.all(targets);
 }
 
-if (existsSync(`dist`)) rmSync(`dist`, { recursive: true });
-
-readdirSync(join(__dirname, "..", "plugins"), { withFileTypes: true }).forEach((dirent) => {
-  if (!dirent.isDirectory()) return;
-  buildPlugin(join(__dirname, "..", "plugins", dirent.name));
-});
+(async () => {
+  if (existsSync("dist")) await rm("dist", { recursive: true });
+  const plugin = process.argv.find((e) => e.includes("plugin"))?.split("=")?.[1];
+  const pluginFolder = await readdir(join(__dirname, "..", "plugins"), { withFileTypes: true });
+  if (plugin && pluginFolder.find((e) => e.isDirectory() && e.name === plugin))
+    buildPlugin(join(__dirname, "..", "plugins", plugin));
+  else
+    pluginFolder.forEach((dirent) => {
+      if (!dirent.isDirectory()) return;
+      buildPlugin(join(__dirname, "..", "plugins", dirent.name));
+    });
+})();
