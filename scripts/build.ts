@@ -1,5 +1,6 @@
 import esbuild from "esbuild";
 import { globalExternals } from "@fal-works/esbuild-plugin-global-externals";
+import { sassPlugin } from "esbuild-sass-plugin";
 import path, { join } from "path";
 import fs, { existsSync, readdirSync, rmSync } from "fs";
 import { Plugin } from "replugged/dist/types/addon";
@@ -7,7 +8,7 @@ import { pathToFileURL } from "url";
 
 const NODE_VERSION = "14";
 const CHROME_VERSION = "91";
-
+console.log(process.argv);
 const globalModules = {
   replugged: {
     varName: "replugged",
@@ -95,7 +96,8 @@ async function buildPlugin(path: string): Promise<void> {
         target: `chrome${CHROME_VERSION}`,
         outfile: `dist/${manifest.id}/renderer.js`,
         format: "esm" as esbuild.Format,
-        plugins: [globalExternals(globalModules), install],
+        // @ts-expect-error dumb types it works tho
+        plugins: [globalExternals(globalModules), install, sassPlugin()],
       }),
     );
 

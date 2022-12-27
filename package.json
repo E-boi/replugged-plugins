@@ -25,9 +25,11 @@
     "@electron/asar": "^3.2.1",
     "@fal-works/esbuild-plugin-global-externals": "^2.1.2",
     "@types/node": "^18.11.2",
+    "@types/react": "^18.0.26",
     "@typescript-eslint/eslint-plugin": "^5.40.1",
     "@typescript-eslint/parser": "^5.40.1",
     "esbuild": "^0.15.11",
+    "esbuild-sass-plugin": "^2.4.4",
     "eslint": "^8.25.0",
     "eslint-config-dmitmel": "github:dmitmel/eslint-config-dmitmel",
     "eslint-plugin-node": "^11.1.0",
@@ -36,8 +38,5 @@
     "replugged": "4.0.0-beta0.19",
     "tsx": "^3.10.3",
     "typescript": "^4.8.4"
-  },
-  "dependencies": {
-    "@types/react": "^18.0.26"
   }
 }
