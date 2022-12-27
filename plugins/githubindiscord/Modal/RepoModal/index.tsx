@@ -1,6 +1,6 @@
 import { FC, memo, useEffect, useState } from "react";
 import { Spinner } from "../../components";
-import { Branch, File, Folder, Repo, getFile, getFolder } from "../../utils";
+import { Branch, File, Folder, Repo, getFile, getFolder, pluginSettings } from "../../utils";
 import FileModal from "./File";
 import FolderModal from "./Folder";
 
@@ -14,7 +14,7 @@ const RepoModal: FC<Props> = ({ url, repo, branch }) => {
   const [rootDir, setRootDir] = useState<Folder[] | null>(null);
   const [folder, setFolder] = useState<Folder[] | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  const key = "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";
+  const key = pluginSettings.get("key", "") as string;
 
   useEffect(() => {
     (async () => {

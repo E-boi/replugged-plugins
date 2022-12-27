@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { webpack } from "replugged";
 import { Spinner } from "../../components";
-import { CommitWithFiles, CommitWithoutFiles, getCommit } from "../../utils";
+import { CommitWithFiles, CommitWithoutFiles, getCommit, pluginSettings } from "../../utils";
 
 const classes = {
   markup: webpack.getByProps("markup")?.markup,
@@ -12,10 +12,11 @@ const parser: any = webpack.getByProps("parse", "parseTopic");
 export default memo(
   ({ url, commitWithooutFile }: { url: string; commitWithooutFile: CommitWithoutFiles }): any => {
     const [commit, setCommit] = useState<CommitWithFiles | null>(null);
+    const key = pluginSettings.get("key", "") as string;
 
     useEffect(() => {
       (async () => {
-        setCommit(await getCommit(url, commitWithooutFile.sha));
+        setCommit(await getCommit(url, commitWithooutFile.sha, key));
       })();
     }, []);
 

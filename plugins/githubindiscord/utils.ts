@@ -1,3 +1,5 @@
+import { settings } from "replugged";
+
 export interface Branch {
   name: string;
   commit: {
@@ -182,6 +184,8 @@ export type CommitWithFiles = CommitWithoutFiles & {
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
+export const pluginSettings = await settings.init("dev.eboi.githubindiscord");
+
 export function back(dir: Folder[]): string | null {
   const folder: string[] = dir[0].path.split("/");
   if (folder.length <= 2) return null;
@@ -209,7 +213,7 @@ export async function getRepo(url: string, key?: string): Promise<Repo> {
 export async function getFolder(
   url: string,
   branch: string,
-  key: string,
+  key?: string,
   folder?: string,
 ): Promise<Folder[] | null> {
   const folderF = await fetch(

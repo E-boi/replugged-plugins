@@ -1,6 +1,6 @@
 import { FC, memo, useEffect, useState } from "react";
 import { Spinner } from "../../components";
-import { Branch, CommitWithoutFiles, getCommits } from "../../utils";
+import { Branch, CommitWithoutFiles, getCommits, pluginSettings } from "../../utils";
 import Commit from "./Commit";
 
 type Props = { url: string; branch: Branch | null };
@@ -8,7 +8,7 @@ type Props = { url: string; branch: Branch | null };
 const CommitsModal: FC<Props> = ({ url, branch }) => {
   const [commits, setCommits] = useState<CommitWithoutFiles[] | null>(null);
   const [selectedCommit, setCommit] = useState<any>(null);
-  const key = "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";
+  const key = pluginSettings.get("key", "") as string;
 
   useEffect(() => {
     (async () => {

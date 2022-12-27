@@ -24,7 +24,7 @@ async function github() {
       <ContextMenu.kS>
         <ContextMenu.sN
           id="githubindiscord"
-          label="Open Link"
+          label="Open Repo"
           action={() => buildGitModal(`${url.split("/")[3]}/${url.split("/")[4]}`)}
         />
       </ContextMenu.kS>

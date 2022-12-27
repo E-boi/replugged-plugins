@@ -7,7 +7,7 @@ import {
   ModalRoot,
   openModal,
 } from "../Modals";
-import { Branch, Repo, getBranches, getRepo } from "../utils";
+import { Branch, Repo, getBranches, getRepo, pluginSettings } from "../utils";
 import { SelectMenu, TabBar } from "../components";
 import CommitsModal from "./CommitsModal";
 import RepoModal from "./RepoModal";
@@ -32,7 +32,7 @@ export function GithubModal({ url, ...props }: ModalProps<{ url: string }>) {
   const [selectedBranch, changeBranch] = useState<Branch | null>(null);
   const [tab, setTab] = useState<keyof typeof tabs>("repo");
   const [err, setError] = useState();
-  const key = "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";
+  const key = pluginSettings.get("key", "") as string;
   useEffect(() => {
     (async () => {
       const repo = await getRepo(url, key).catch((e) => setError(e.message));
