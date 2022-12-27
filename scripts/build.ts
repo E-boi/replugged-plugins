@@ -3,6 +3,7 @@ import { globalExternals } from "@fal-works/esbuild-plugin-global-externals";
 import path, { join } from "path";
 import fs, { existsSync, readdirSync, rmSync } from "fs";
 import { Plugin } from "replugged/dist/types/addon";
+import { pathToFileURL } from "url";
 
 const NODE_VERSION = "14";
 const CHROME_VERSION = "91";
@@ -80,7 +81,7 @@ const common: esbuild.BuildOptions = {
 
 async function buildPlugin(path: string): Promise<void> {
   // dunno why using join on import() errors
-  const manifestPath = join(path, "manifest.json");
+  const manifestPath = pathToFileURL(join(path, "manifest.json")).toString();
   const manifest: Plugin = { ...(await import(manifestPath)) };
 
   const targets = [];
