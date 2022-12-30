@@ -1,0 +1,99 @@
+// Styled by https://github.com/loremly
+
+.githubModel {
+  color: var(--text-normal);
+  width: fit-content;
+  max-width: 80vw;
+  max-height: 70vh;
+
+  .header-1zd7se {
+    justify-content: space-between;
+    align-items: center;
+    white-space: nowrap;
+    flex-direction: row;
+    display: flex;
+
+    .repo-visibility-icon {
+      color: var(--text-muted);
+      margin-right: 8px;
+    }
+
+    .repo-path {
+      flex-direction: row;
+      align-items: center;
+      margin-right: 15vw;
+      display: flex;
+
+      .separator {
+        color: var(--text-muted);
+        margin: 0 4px;
+      }
+
+      .visibility {
+        text-transform: capitalize;
+        margin-left: 8px;
+      }
+
+      a {
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+
+    .extlink-buttons {
+      flex-direction: row;
+      align-items: center;
+      display: flex;
+      gap: 15px;
+    }
+  }
+  .content-2hZxGK{
+    padding-right: 10px !important;
+    padding-bottom: 16px;
+    .repository-options {
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      display: flex;
+      .branches{
+        align-items: center;
+        display: flex;
+        .select-1Ia3hD{
+          margin-right: 20px;
+          min-width: 11rem;
+        }
+        a{
+          display: flex;
+        }
+      }
+      div.miscLinks{
+        display: flex;
+        .taglink{
+          margin-left: 16px;
+        }
+      }
+    }
+    .Gout-folder,
+    .Gin-folder{
+      border-radius: 4px;
+      margin-top: 8px;
+      .Gfolder:nth-child(1) > div{
+        border-top: none !important;
+      }
+      a:hover{
+        text-decoration: underline !important;
+      }
+      .Box-sc-1gh2r6s-0{
+        display: flex;
+        &:hover{
+          background-color: var(--background-modifier-hover);
+        }
+      }
+    }
+  }
+
+  a:not(.repo-path>*):not(.Gout-folder a:hover):not(.Gin-folder a:hover):not(.branches a:hover):not(.backbtn a) {
+    color: var(--text-normal);
+  }
+}
