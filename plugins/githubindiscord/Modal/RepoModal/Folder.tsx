@@ -1,5 +1,5 @@
 import { Arrow } from "../../components";
-import { Folder, back } from "../../utils";
+import { FolderWithCommit, back } from "../../utils";
 
 const FolderIcon = "https://raw.githubusercontent.com/E-boi/assets/main/folder.svg";
 const FileIcon = "https://raw.githubusercontent.com/E-boi/assets/main/ghfile.svg";
@@ -9,7 +9,7 @@ export default ({
   onClick,
   path,
 }: {
-  dir: Folder[];
+  dir: FolderWithCommit[];
   onClick: (type: "folder" | "file", path?: string) => void;
   path?: string;
 }) => {
@@ -24,12 +24,11 @@ export default ({
               const goBack = back(dir);
               if (!goBack) return onClick("folder");
               return onClick("folder", goBack);
-              // getFolder(url, goBack, selectedBranch, key).then((e) => setFolder(e));
             }}
           />
         </div>
       )}
-      {dir?.map((tree: { type: string; name: string; path: string }) => (
+      {dir?.map((tree) => (
         <p
           className={
             tree.type === "dir"

@@ -76,7 +76,14 @@ export interface Repo {
   labels_url: string;
   language: string;
   languages_url: string;
-  license?: string;
+  license?: {
+    key: string;
+    name: string;
+    url?: string;
+    spdx_id?: string;
+    html_url: string;
+  };
+  organization?: User;
   merges_url: string;
   milestones_url: string;
   mirror_url?: string;
@@ -182,9 +189,191 @@ export type CommitWithFiles = CommitWithoutFiles & {
     patch: string;
   }>;
 };
+
+export type FolderWithCommit = Folder & { commit: CommitWithFiles };
+
+export interface Label {
+  url: string;
+  name: string;
+  color?: string;
+  default: boolean;
+  description?: string;
+}
+
+export interface Milestone {
+  url: string;
+  html_url: string;
+  labels_url: string;
+  number: number;
+  state: "open" | "closed";
+  title: string;
+  description?: string;
+  creater?: User;
+  open_issues: number;
+  closed_issues: number;
+  created_at: string;
+  updated_at: string;
+  closed_at?: string;
+  due_on?: string;
+}
+
+export type authorAssociation =
+  | "COLLABORATOR"
+  | "CONTRIBUTOR"
+  | "FIRST_TIMER"
+  | "FIRST_TIME_CONTRIBUTOR"
+  | "MANNEQUIN"
+  | "MEMBER"
+  | "NONE"
+  | "OWNER";
+
+export interface Issue {
+  url: string;
+  repository_url: string;
+  labels_url: string;
+  comments_url: string;
+  events_url: string;
+  html_url: string;
+  number: number;
+  title: string;
+  user?: User;
+  labels: Array<Label | string>;
+  state: "open" | "closed";
+  state_reason?: "completed" | "reopened" | "not_planned";
+  locked: boolean;
+  assignee?: User;
+  assignees?: User[];
+  milestone?: Milestone;
+  active_lock_reason?: string;
+  comments: number;
+  created_at: string;
+  updated_at: string;
+  closed_at?: string;
+  body?: string;
+  pull_request?: {
+    merged_at?: string;
+    diff_url?: string;
+    html_url?: string;
+    patch_url?: string;
+    url?: string;
+  };
+  draft: boolean;
+  closed_by?: User;
+  timeline_url: string;
+  author_association: authorAssociation;
+  reactions: {
+    url: string;
+    total_count: number;
+    "+1": number;
+    "-1": number;
+    laugh: number;
+    confused: number;
+    heart: number;
+    hooray: number;
+    eyes: number;
+    rocket: number;
+  };
+}
+
+export interface PullRequest {
+  url: string;
+  html_url: string;
+  diff_url: string;
+  patch_url: string;
+  issue_url: string;
+  commits_url: string;
+  review_comments_url: string;
+  review_comment_url: string;
+  comments_url: string;
+  statuses_url: string;
+  number: number;
+  state: "closed" | "open";
+  locked: boolean;
+  title: string;
+  user?: User;
+  body?: string;
+  labels?: Label[];
+  milestone?: Milestone;
+  active_lock_reason?: string;
+  created_at: string;
+  updated_at: string;
+  closed_at?: string;
+  merged_at?: string;
+  merge_commit_sha?: string;
+  assignee?: User;
+  assignees?: User[];
+  requested_reviewers?: User[];
+  head: {
+    label: string;
+    ref: string;
+    repo: Repo;
+    sha: string;
+    user?: User;
+  };
+  base: {
+    label: string;
+    ref: string;
+    repo: Repo;
+    sha: string;
+    user?: User;
+  };
+  auto_merge?: boolean;
+  draft: boolean;
+  author_association: authorAssociation;
+}
+
+export interface Release {
+  url: string;
+  html_url: string;
+  assets_url: string;
+  upload_url: string;
+  tarball_url?: string;
+  zipball_url?: string;
+  tag_name: string;
+  target_commitish: string;
+  name?: string;
+  body?: string;
+  draft: boolean;
+  prerelease: boolean;
+  created_at: string;
+  published_at?: string;
+  author?: User;
+  assets: Array<{
+    url: string;
+    browser_download_url: string;
+    name: string;
+    label?: string;
+    state: "uploaded" | "open";
+    content_type: string;
+    size: number;
+    download_count: number;
+    created_at: string;
+    updated_at: string;
+    uploader?: User;
+    discussion_url: string;
+    reactions: {
+      url: string;
+      total_count: number;
+      "+1": number;
+      "-1": number;
+      laugh: number;
+      confused: number;
+      heart: number;
+      hooray: number;
+      eyes: number;
+      rocket: number;
+    };
+  }>;
+}
+
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export const pluginSettings = await settings.init("dev.eboi.githubindiscord");
+
+const headers = (): HeadersInit => ({
+  accept: "application/vnd.github+json",
+  Authorization: pluginSettings.get("key") ? `token ${pluginSettings.get("key") as string}` : "",
+});
 
 export function back(dir: Folder[]): string | null {
   const folder: string[] = dir[0].path.split("/");
@@ -192,18 +381,18 @@ export function back(dir: Folder[]): string | null {
   return dir[0].path.replace(`/${folder[folder.length - 2]}/${folder[folder.length - 1]}`, "");
 }
 
-export async function getBranches(url: string, key?: string): Promise<Branch[]> {
+export async function getBranches(url: string): Promise<Branch[]> {
   const branches = await fetch(`https://api.github.com/repos/${url}/branches?per_page=100`, {
-    headers: key ? { Authorization: `token ${key}` } : {},
+    headers: headers(),
   });
   if (!branches.ok) return [];
   const json = await branches.json();
   return json;
 }
 
-export async function getRepo(url: string, key?: string): Promise<Repo> {
+export async function getRepo(url: string): Promise<Repo> {
   const repo = await fetch(`https://api.github.com/repos/${url}`, {
-    headers: key ? { Authorization: `token ${key}` } : {},
+    headers: headers(),
   });
   if (!repo.ok) throw Error((await repo.json()).message);
   const json = await repo.json();
@@ -213,20 +402,31 @@ export async function getRepo(url: string, key?: string): Promise<Repo> {
 export async function getFolder(
   url: string,
   branch: string,
-  key?: string,
   folder?: string,
-): Promise<Folder[] | null> {
+): Promise<FolderWithCommit[] | null> {
   const folderF = await fetch(
     `https://api.github.com/repos/${url}/contents/${folder || ""}?ref=${branch}`,
     {
-      headers: key ? { Authorization: `token ${key}` } : {},
+      headers: headers(),
     },
   );
   if (!folderF.ok) return null;
   const json = await folderF.json();
-  const folders = json.map((e: Folder) => e.type === "dir" && e).filter((e: Folder) => e);
-  const files = json.map((e: Folder) => e.type === "file" && e).filter((e: Folder) => e);
-  return [...folders, ...files];
+  const folders: Array<Promise<FolderWithCommit>> = json.map(async (e: Folder) => {
+    const isFolder = e.type === "dir";
+    if (isFolder) return { ...e, commit: (await getCommits(url, `path=${e.path}`))![0] };
+    return isFolder && e;
+  });
+  const files: Array<Promise<FolderWithCommit>> = json.map(async (e: Folder) => {
+    const isFile = e.type === "file";
+    if (isFile) return { ...e, commit: (await getCommits(url, `path=${e.path}`))![0] };
+    return isFile && e;
+  });
+
+  return [
+    ...(await Promise.all(folders)).filter(Boolean),
+    ...(await Promise.all(files)).filter(Boolean),
+  ];
 }
 
 const imageTypes = ["png", "jpg"];
@@ -248,17 +448,10 @@ export async function getFile(folder: Folder[], fileName: string): Promise<File 
   return { path: file[0].path, content, type: type[type.length - 1], isImage };
 }
 
-export async function getCommits(
-  url: string,
-  sha?: string,
-  key?: string,
-): Promise<CommitWithoutFiles[] | null> {
-  const commits = await fetch(
-    `https://api.github.com/repos/${url}/commits${sha ? `?sha=${sha}` : ""}`,
-    {
-      headers: key ? { Authorization: `token ${key}` } : {},
-    },
-  );
+export async function getCommits(url: string, query: string): Promise<CommitWithoutFiles[] | null> {
+  const commits = await fetch(`https://api.github.com/repos/${url}/commits?${query}`, {
+    headers: headers(),
+  });
 
   if (!commits.ok) return null;
 
@@ -266,17 +459,74 @@ export async function getCommits(
   return json;
 }
 
-export async function getCommit(
-  url: string,
-  sha: string,
-  key?: string,
-): Promise<CommitWithFiles | null> {
-  const commits = await fetch(`https://api.github.com/repos/${url}/commits/${sha}`, {
-    headers: key ? { Authorization: `token ${key}` } : {},
+export async function getCommit(url: string, ref: string): Promise<CommitWithFiles | null> {
+  const commits = await fetch(`https://api.github.com/repos/${url}/commits/${ref}`, {
+    headers: headers(),
   });
 
   if (!commits.ok) return null;
 
   const json = await commits.json();
   return json;
+}
+
+export async function getIssues(url: string, query: string): Promise<Issue[] | null> {
+  const issues = await fetch(`https://api.github.com/repos/${url}/issues?${query}`, {
+    headers: headers(),
+  });
+  if (!issues.ok) return null;
+  const json: Issue[] = await issues.json();
+  return json.filter((issue) => !issue.pull_request);
+}
+
+export async function getIssue(url: string, issueNumber: string): Promise<Issue | null> {
+  const issue = await fetch(`https://api.github.com/repos/${url}/issues/${issueNumber}`, {
+    headers: headers(),
+  });
+  if (!issue.ok) return null;
+  const json = await issue.json();
+  return json;
+}
+
+export async function getPRs(url: string, query: string): Promise<PullRequest | null> {
+  const prs = await fetch(`https://api.github.com/repos/${url}/pulls?${query}`, {
+    headers: headers(),
+  });
+  if (!prs.ok) return null;
+  const json = await prs.json();
+  return json;
+}
+
+export async function getPR(url: string, prNumber: number): Promise<PullRequest | null> {
+  const pr = await fetch(`https://api.github.com/repos/${url}/pulls/${prNumber}`);
+  if (!pr.ok) return null;
+  const json = await pr.json();
+  return json;
+}
+
+export async function getReleases(url: string, lastest?: boolean): Promise<Release[] | null> {
+  const releases = await fetch(
+    `https://api.github.com/repos/${url}/releases${lastest ? "/lastest" : ""}`,
+  );
+  if (!releases.ok) return null;
+  const json = await releases.json();
+  return json;
+}
+
+export function abbreviateNumber(value: number): string {
+  let newValue = value.toString();
+  if (value >= 1000) {
+    const suffixes = ["", "k", "m", "b", "t"];
+    const suffixNum = Math.floor(value.toString().length / 3);
+    let shortValue = 0;
+    for (let precision = 2; precision >= 1; precision--) {
+      shortValue = parseFloat(
+        (suffixNum ? value / Math.pow(1000, suffixNum) : value).toPrecision(precision),
+      );
+      const dotLessShortValue = shortValue.toString().replace(/[^a-zA-Z 0-9]+/g, "");
+      if (dotLessShortValue.length <= 2) break;
+    }
+    newValue = shortValue.toString() + suffixes[suffixNum];
+  }
+  return newValue;
 }

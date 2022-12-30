@@ -6,12 +6,8 @@ export default [
     replacements: [
       {
         match: /function ..\((.)\){var.+channel[\s\S]+onSelect:.,children:\[.+\w}\)/g,
-        replace(substring, ...args) {
-          console.log(substring, args);
-          // console.log(substring.replace("})]", "}),(()=>{console.log(this);return null;})()]"));
-          return `${substring},(()=>window.githubindiscord?.({link:${args[0]}?.target?.href})||null)()`;
-        },
-        // replace: "$&,(()=>{console.log(this);return null;})()",
+        replace:
+          "$&,(()=>window.githubindiscord?.checkMessage?.($1?.message?.content,$1?.target?.href)||null)()",
       },
     ],
   },

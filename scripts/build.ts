@@ -26,6 +26,7 @@ const globalModules = {
       "plugins",
       "util",
       "types",
+      "components",
     ],
     defaultExport: true,
   },

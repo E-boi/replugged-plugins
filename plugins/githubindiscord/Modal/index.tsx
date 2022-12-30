@@ -1,17 +1,10 @@
-import {
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalProps,
-  ModalRoot,
-  openModal,
-} from "../Modals";
-import { Branch, Repo, getBranches, getRepo, pluginSettings } from "../utils";
+import { ModalProps } from "../Modals";
+import { Branch, Repo, getBranches, getRepo } from "../utils";
 import { SelectMenu, TabBar } from "../components";
 import CommitsModal from "./CommitsModal";
 import RepoModal from "./RepoModal";
-import { webpack } from "replugged";
+// @ts-ignore wait for rp to update package
+import { common, components, webpack } from "replugged";
 import { useEffect, useState } from "react";
 
 const StarSvg = "https://raw.githubusercontent.com/E-boi/assets/main/star.svg";
@@ -20,6 +13,8 @@ const ForkSvg = "https://raw.githubusercontent.com/E-boi/assets/main/ghfork.svg"
 const wumpus = {
   ...webpack.getByProps("emptyStateImage", "emptyStateSubtext"),
 };
+
+const { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot } = components.Modal;
 
 const tabs = {
   repo: RepoModal,
@@ -32,12 +27,11 @@ export function GithubModal({ url, ...props }: ModalProps<{ url: string }>) {
   const [selectedBranch, changeBranch] = useState<Branch | null>(null);
   const [tab, setTab] = useState<keyof typeof tabs>("repo");
   const [err, setError] = useState();
-  const key = pluginSettings.get("key", "") as string;
   useEffect(() => {
     (async () => {
-      const repo = await getRepo(url, key).catch((e) => setError(e.message));
+      const repo = await getRepo(url).catch((e) => setError(e.message));
       if (!repo) return;
-      const branches = await getBranches(url, key);
+      const branches = await getBranches(url);
       setBranches(branches);
       changeBranch(branches.find((branch) => branch.name === repo.default_branch)!);
       setInfo(repo);
@@ -117,5 +111,6 @@ export function GithubModal({ url, ...props }: ModalProps<{ url: string }>) {
 }
 
 export function buildGitModal(url: string) {
-  openModal((props) => <GithubModal {...props} url={url} />);
+  // @ts-ignore
+  common.modal.openModal((props) => <GithubModal {...props} url={url} />);
 }

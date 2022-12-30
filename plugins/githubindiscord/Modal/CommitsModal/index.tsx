@@ -1,19 +1,18 @@
 import { FC, memo, useEffect, useState } from "react";
 import { Spinner } from "../../components";
-import { Branch, CommitWithoutFiles, getCommits, pluginSettings } from "../../utils";
+import { Branch, CommitWithoutFiles, getCommits } from "../../utils";
 import Commit from "./Commit";
 
 type Props = { url: string; branch: Branch | null };
 
 const CommitsModal: FC<Props> = ({ url, branch }) => {
   const [commits, setCommits] = useState<CommitWithoutFiles[] | null>(null);
-  const [selectedCommit, setCommit] = useState<any>(null);
-  const key = pluginSettings.get("key", "") as string;
+  const [selectedCommit, setCommit] = useState<CommitWithoutFiles | null>(null);
 
   useEffect(() => {
     (async () => {
       if (!branch) return;
-      setCommits(await getCommits(url, branch.commit.sha, key)!);
+      setCommits(await getCommits(url, `sha=${branch.commit.sha}`)!);
     })();
   }, [branch]);
   console.log(commits);
@@ -29,7 +28,7 @@ const CommitsModal: FC<Props> = ({ url, branch }) => {
       <div className="Gbrancheslist">
         {commits?.map((commit) => (
           <div>
-            <a onClick={() => setCommit(commit.url)}>{commit.commit.message}</a>
+            <a onClick={() => setCommit(commit)}>{commit.commit.message}</a>
           </div>
         ))}
       </div>

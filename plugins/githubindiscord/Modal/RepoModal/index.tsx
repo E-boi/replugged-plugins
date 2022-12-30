@@ -1,6 +1,6 @@
 import { FC, memo, useEffect, useState } from "react";
 import { Spinner } from "../../components";
-import { Branch, File, Folder, Repo, getFile, getFolder, pluginSettings } from "../../utils";
+import { Branch, File, FolderWithCommit, Repo, getFile, getFolder } from "../../utils";
 import FileModal from "./File";
 import FolderModal from "./Folder";
 
@@ -11,15 +11,14 @@ type Props = {
 };
 
 const RepoModal: FC<Props> = ({ url, repo, branch }) => {
-  const [rootDir, setRootDir] = useState<Folder[] | null>(null);
-  const [folder, setFolder] = useState<Folder[] | null>(null);
+  const [rootDir, setRootDir] = useState<FolderWithCommit[] | null>(null);
+  const [folder, setFolder] = useState<FolderWithCommit[] | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  const key = pluginSettings.get("key", "") as string;
 
   useEffect(() => {
     (async () => {
       if (!branch) return;
-      const rootDir = await getFolder(url, branch.name, key);
+      const rootDir = await getFolder(url, branch.name);
       setRootDir(rootDir);
       setFolder(null);
       setFile(null);
@@ -45,8 +44,7 @@ const RepoModal: FC<Props> = ({ url, repo, branch }) => {
         dir={folder || rootDir}
         onClick={(type, to) => {
           if (!to) return setFolder(null);
-          if (type === "folder")
-            return getFolder(url, branch!.name, key, to).then((e) => setFolder(e));
+          if (type === "folder") return getFolder(url, branch!.name, to).then((e) => setFolder(e));
           else return getFile(folder || rootDir, to).then((e) => setFile(e));
         }}
         path={path}
