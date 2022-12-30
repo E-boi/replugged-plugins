@@ -1,8 +1,9 @@
 import { FC, memo, useEffect, useState } from "react";
 import { Spinner } from "../../components";
 import { Branch, CommitWithoutFiles, getCommits } from "../../utils";
-import Commit from "./Commit";
-
+import  Commit from "./Commit";
+import { GitCommitIcon } from "@primer/styled-octicons";
+ 
 type Props = { url: string; branch: Branch | null };
 
 const CommitsModal: FC<Props> = ({ url, branch }) => {
@@ -25,10 +26,11 @@ const CommitsModal: FC<Props> = ({ url, branch }) => {
     );
   if (!selectedCommit)
     return (
-      <div className="Gbrancheslist">
+      <div className="Gcommitlist">
         {commits?.map((commit) => (
           <div>
-            <a onClick={() => setCommit(commit)}>{commit.commit.message}</a>
+            <GitCommitIcon size={16}/>
+            <a onClick={() => setCommit(commit.url)}>{commit.commit.message}</a>
           </div>
         ))}
       </div>

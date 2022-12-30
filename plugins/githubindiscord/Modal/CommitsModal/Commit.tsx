@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { webpack } from "replugged";
-import { Spinner } from "../../components";
 import { CommitWithFiles, CommitWithoutFiles, getCommit } from "../../utils";
+import { Spinner } from "@primer/react";
 
 const classes = {
   markup: webpack.getByProps("markup")?.markup,
@@ -34,7 +34,7 @@ export default memo(
       return (
         <p className="Gfetching">
           Fetching commit
-          <Spinner type="wanderingCubes" />
+          <Spinner size="medium"/>
         </p>
       );
     else if (commit)
@@ -47,7 +47,9 @@ export default memo(
                 null,
                 {},
               );
-            else return <p>{patch}</p>;
+            else return <p className="commit">
+              {patch}
+            </p>;
           })}
         </div>
       ));
