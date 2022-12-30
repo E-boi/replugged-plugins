@@ -48,7 +48,7 @@
       gap: 15px;
     }
   }
-  .content-2hZxGK{
+  .content-2hZxGK {
     padding-right: 10px !important;
     padding-bottom: 16px;
     .repository-options {
@@ -56,44 +56,46 @@
       align-items: center;
       padding: 8px 0;
       display: flex;
-      .branches{
+      .branches {
         align-items: center;
         display: flex;
-        .select-1Ia3hD{
+        .select-1Ia3hD {
           margin-right: 20px;
           min-width: 11rem;
         }
-        a{
+        a {
           display: flex;
         }
       }
-      div.miscLinks{
+      div.miscLinks {
         display: flex;
-        .taglink{
+        .taglink {
           margin-left: 16px;
         }
       }
     }
     .Gout-folder,
-    .Gin-folder{
+    .Gin-folder {
       border-radius: 4px;
       margin-top: 8px;
-      .Gfolder:nth-child(1) > div{
+      .Gfolder:nth-child(1) > div {
         border-top: none !important;
       }
-      a:hover{
+      a:hover {
         text-decoration: underline !important;
       }
-      .Box-sc-1gh2r6s-0{
+      .Box-sc-1gh2r6s-0 {
         display: flex;
-        &:hover{
+        &:hover {
           background-color: var(--background-modifier-hover);
         }
       }
     }
   }
 
-  a:not(.repo-path>*):not(.Gout-folder a:hover):not(.Gin-folder a:hover):not(.branches a:hover):not(.backbtn a) {
+  a:not(.repo-path > *):not(.Gout-folder a:hover):not(.Gin-folder a:hover):not(
+      .branches a:hover
+    ):not(.backbtn a) {
     color: var(--text-normal);
   }
 }

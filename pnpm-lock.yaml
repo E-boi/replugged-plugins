@@ -3,7 +3,6 @@ lockfileVersion: 5.4
 specifiers:
   '@electron/asar': ^3.2.1
   '@fal-works/esbuild-plugin-global-externals': ^2.1.2
-  '@primer/octicons-react': ^17.10.0
   '@primer/react': ^35.16.0
   '@primer/styled-octicons': ^17.10.0
   '@types/node': ^18.11.2
@@ -27,7 +26,6 @@ specifiers:
   typescript: ^4.8.4
 
 dependencies:
-  '@primer/octicons-react': 17.10.0_react@18.2.0
   '@primer/react': 35.16.0_2zpt4ilzykmne4yndyzrqd4gdm
   '@primer/styled-octicons': 17.10.0_56nicwxcbpehznvjhlpvpy75bu
   deepmerge: 4.2.2

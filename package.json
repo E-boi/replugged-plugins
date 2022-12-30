@@ -40,7 +40,6 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
-    "@primer/octicons-react": "^17.10.0",
     "@primer/react": "^35.16.0",
     "@primer/styled-octicons": "^17.10.0",
     "deepmerge": "^4.2.2",
