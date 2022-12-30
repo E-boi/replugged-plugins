@@ -34,7 +34,7 @@ export default memo(
       return (
         <p className="Gfetching">
           Fetching commit
-          <Spinner size="medium"/>
+          <Spinner size="medium" />
         </p>
       );
     else if (commit)
@@ -47,9 +47,7 @@ export default memo(
                 null,
                 {},
               );
-            else return <p className="commit">
-              {patch}
-            </p>;
+            else return <p className="commit">{patch}</p>;
           })}
         </div>
       ));

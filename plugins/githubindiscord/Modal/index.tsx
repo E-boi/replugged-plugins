@@ -1,11 +1,5 @@
-import { ModalContent, ModalHeader, ModalProps, ModalRoot, openModal } from "../Modals";
-import {
-  Branch,
-  Repo,
-  abbreviateNumber,
-  getBranches,
-  getRepo,
-} from "../utils";
+import { ModalProps } from "../Modals";
+import { Branch, Repo, abbreviateNumber, getBranches, getRepo } from "../utils";
 import {
   GitBranchIcon,
   LockIcon,
@@ -14,14 +8,15 @@ import {
   StarIcon,
   TagIcon,
 } from "@primer/styled-octicons";
-import { AnchoredOverlay, Box, Button, Label, ThemeProvider } from "@primer/react";
+import { Button, Label, ThemeProvider } from "@primer/react";
 import { SelectMenu, TabBar } from "../components";
 import CommitsModal from "./CommitsModal";
 import RepoModal from "./RepoModal";
 // @ts-ignore wait for rp to update package
-import { common,  webpack } from "replugged";
+import { common, components, webpack } from "replugged";
 import { useEffect, useState } from "react";
 
+const { ModalContent, ModalHeader, ModalRoot } = components.Modal;
 const wumpus = {
   ...webpack.getByProps("emptyStateImage", "emptyStateSubtext"),
 };
