@@ -470,49 +470,6 @@ export async function getCommit(url: string, ref: string): Promise<CommitWithFil
   return json;
 }
 
-export async function getIssues(url: string, query: string): Promise<Issue[] | null> {
-  const issues = await fetch(`https://api.github.com/repos/${url}/issues?${query}`, {
-    headers: headers(),
-  });
-  if (!issues.ok) return null;
-  const json: Issue[] = await issues.json();
-  return json.filter((issue) => !issue.pull_request);
-}
-
-export async function getIssue(url: string, issueNumber: string): Promise<Issue | null> {
-  const issue = await fetch(`https://api.github.com/repos/${url}/issues/${issueNumber}`, {
-    headers: headers(),
-  });
-  if (!issue.ok) return null;
-  const json = await issue.json();
-  return json;
-}
-
-export async function getPRs(url: string, query: string): Promise<PullRequest | null> {
-  const prs = await fetch(`https://api.github.com/repos/${url}/pulls?${query}`, {
-    headers: headers(),
-  });
-  if (!prs.ok) return null;
-  const json = await prs.json();
-  return json;
-}
-
-export async function getPR(url: string, prNumber: number): Promise<PullRequest | null> {
-  const pr = await fetch(`https://api.github.com/repos/${url}/pulls/${prNumber}`);
-  if (!pr.ok) return null;
-  const json = await pr.json();
-  return json;
-}
-
-export async function getReleases(url: string, lastest?: boolean): Promise<Release[] | null> {
-  const releases = await fetch(
-    `https://api.github.com/repos/${url}/releases${lastest ? "/lastest" : ""}`,
-  );
-  if (!releases.ok) return null;
-  const json = await releases.json();
-  return json;
-}
-
 export function abbreviateNumber(value: number): string {
   let newValue = value.toString();
   if (value >= 1000) {
