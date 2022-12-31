@@ -6,7 +6,6 @@ import { existsSync } from "fs";
 import { cp, mkdir, readdir, rm, writeFile } from "fs/promises";
 import { Plugin } from "replugged/dist/types/addon";
 import { pathToFileURL } from "url";
-import { createElement } from "react";
 
 const NODE_VERSION = "14";
 const CHROME_VERSION = "91";
@@ -50,6 +49,7 @@ const globalModules = {
       "isValidElement",
       "cloneElement",
       "useReducer",
+      "useDebugValue",
     ],
   },
 };
@@ -95,7 +95,6 @@ const common: esbuild.BuildOptions = {
   format: "cjs" as esbuild.Format,
   logLevel: "info",
   watch,
-  // @ts-expect-error dumb types but works
   plugins: [install, globalExternals(globalModules), sassPlugin()],
 };
 
