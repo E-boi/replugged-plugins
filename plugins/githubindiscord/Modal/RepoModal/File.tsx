@@ -7,11 +7,10 @@ const classes = {
 };
 const parser: any = webpack.getByProps("parse", "parseTopic");
 
-export default ({ file, path, onClose }: { file: any; path: string; onClose: () => void }) => {
+export default ({ file, onClose }: { file: any; onClose: () => void }) => {
   return (
     <>
       <div className="Gpath">
-        <span>{`/${path}`}</span>
         <Arrow direction="LEFT" onClick={onClose} />
       </div>
       <div className={`${classes.markup} infile`}>

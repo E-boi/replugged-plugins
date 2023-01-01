@@ -1,19 +1,20 @@
 import { FC, memo, useEffect, useState } from "react";
 import { Spinner } from "../../components";
-import { Branch, CommitWithoutFiles, getCommits } from "../../utils";
+import { getCommits } from "../../utils";
 import Commit from "./Commit";
 import { GitCommitIcon } from "@primer/styled-octicons";
+import { components } from "@octokit/openapi-types";
 
-type Props = { url: string; branch: Branch | null };
+type Props = { url: string; branch: components["schemas"]["branch-short"] | null };
 
 const CommitsModal: FC<Props> = ({ url, branch }) => {
-  const [commits, setCommits] = useState<CommitWithoutFiles[] | null>(null);
-  const [selectedCommit, setCommit] = useState<CommitWithoutFiles | null>(null);
+  const [commits, setCommits] = useState<components["schemas"]["commit"][] | null>(null);
+  const [selectedCommit, setCommit] = useState<components["schemas"]["commit"] | null>(null);
 
   useEffect(() => {
     (async () => {
       if (!branch) return;
-      setCommits(await getCommits(url, `sha=${branch.commit.sha}`)!);
+      setCommits(await getCommits(url, { sha: branch.commit.sha })!);
     })();
   }, [branch]);
   console.log(commits);
@@ -35,7 +36,7 @@ const CommitsModal: FC<Props> = ({ url, branch }) => {
         ))}
       </div>
     );
-  if (selectedCommit) return <Commit commitWithooutFile={selectedCommit} url={url} />;
+  if (selectedCommit) return <Commit committ={selectedCommit} url={url} />;
   return null;
 };
 

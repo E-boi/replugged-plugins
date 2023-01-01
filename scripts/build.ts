@@ -76,10 +76,14 @@ const install: esbuild.Plugin = {
       const id = build.initialOptions.outfile?.split("/")[1];
       if (!id) return;
       if (!process.argv.includes("--no-install")) {
-        const dest = join(CONFIG_PATH, "plugins", id);
-        // if (existsSync(dest)) await rm(dest, { recursive: true });
-        await cp(join("dist", id), dest, { recursive: true, force: true });
-        console.log("Installed updated version");
+        try {
+          const dest = join(CONFIG_PATH, "plugins", id);
+          // if (existsSync(dest)) await rm(dest, { recursive: true });
+          await cp(join("dist", id), dest, { recursive: true, force: true });
+          console.log("Installed updated version");
+        } catch (err) {
+          console.error(err);
+        }
       }
     });
   },
