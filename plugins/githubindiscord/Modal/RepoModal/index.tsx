@@ -1,57 +1,57 @@
+import { components } from "@octokit/openapi-types";
+import { Spinner } from "@primer/react";
 import { FC, memo, useEffect, useState } from "react";
-import { Spinner } from "../../components";
-import { Branch, File, FolderWithCommit, Repo, getFile, getFolder } from "../../utils";
-import FileModal from "./File";
+import { File, getFile, getFolder } from "../../utils";
 import FolderModal from "./Folder";
+import FileModal from "./File";
 
 type Props = {
   url: string;
-  repo: Repo | null;
-  branch: Branch | null;
+  repo: (components["schemas"]["repository"] & { commit: components["schemas"]["commit"] }) | null;
+  branch: components["schemas"]["branch-short"] | null;
+  trigger: (path?: string) => void;
+  path?: string;
 };
 
-const RepoModal: FC<Props> = ({ url, repo, branch }) => {
-  const [rootDir, setRootDir] = useState<FolderWithCommit[] | null>(null);
-  const [folder, setFolder] = useState<FolderWithCommit[] | null>(null);
+const RepoModal: FC<Props> = ({ url, repo, branch, trigger, path }) => {
+  const [folder, setFolder] = useState<{
+    commit: components["schemas"]["commit"];
+    content: components["schemas"]["content-directory"];
+    path?: string;
+  } | null>(null);
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
     (async () => {
       if (!branch) return;
-      const rootDir = await getFolder(url, branch.name);
-      setRootDir(rootDir);
-      setFolder(null);
+      const rootDir = await getFolder(url, branch.name, path);
+      setFolder(rootDir as any);
       setFile(null);
     })();
-  }, [branch]);
+  }, [branch, path]);
 
-  let path;
-  if (folder && !file) {
-    const dir = folder[0]?.path.split("/");
-    path = folder[0].path.replace(`/${dir[dir.length - 1]}`, "");
-  } else if (file) path = file.path;
+  if (!folder)
+    return (
+      <div>
+        <p>Fetching Issues</p>
+        <Spinner size="medium" />
+      </div>
+    );
 
-  if ((!repo || !rootDir) && Spinner)
-    return (
-      <p className="Gfetching">
-        Fetching repo
-        <Spinner type="wanderingCubes" />
-      </p>
-    );
-  else if (rootDir && !file)
-    return (
-      <FolderModal
-        dir={folder || rootDir}
-        onClick={(type, to) => {
-          if (!to) return setFolder(null);
-          if (type === "folder") return getFolder(url, branch!.name, to).then((e) => setFolder(e));
-          else return getFile(folder || rootDir, to).then((e) => setFile(e));
-        }}
-        path={path}
-      />
-    );
-  else if (file && path) return <FileModal file={file} path={path} onClose={() => setFile(null)} />;
-  return null;
+  return (
+    <>
+      {folder && repo && !file && (
+        <FolderModal
+          dir={folder}
+          onClick={(type, to) => {
+            if (type === "folder") trigger(to);
+            else getFile(folder.content, to as string).then((e) => setFile(e));
+          }}
+        />
+      )}
+      {file && <FileModal file={file} onClose={() => setFile(null)} />}
+    </>
+  );
 };
 
 export default memo(RepoModal);

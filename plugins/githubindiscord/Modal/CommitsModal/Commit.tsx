@@ -1,7 +1,8 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { webpack } from "replugged";
-import { CommitWithFiles, CommitWithoutFiles, getCommit } from "../../utils";
+import { getCommit } from "../../utils";
 import { Spinner } from "@primer/react";
+import { components } from "@octokit/openapi-types";
 
 const classes = {
   markup: webpack.getByProps("markup")?.markup,
@@ -10,12 +11,12 @@ const classes = {
 const parser: any = webpack.getByProps("parse", "parseTopic");
 
 export default memo(
-  ({ url, commitWithooutFile }: { url: string; commitWithooutFile: CommitWithoutFiles }): any => {
-    const [commit, setCommit] = useState<CommitWithFiles | null>(null);
+  ({ url, committ }: { url: string; committ: components["schemas"]["commit"] }): any => {
+    const [commit, setCommit] = useState<components["schemas"]["commit"] | null>(null);
 
     useEffect(() => {
       (async () => {
-        setCommit(await getCommit(url, commitWithooutFile.sha));
+        setCommit(await getCommit(url, committ.sha));
       })();
     }, []);
 
@@ -38,9 +39,9 @@ export default memo(
         </p>
       );
     else if (commit)
-      return commit.files.map((file) => (
+      return commit.files!.map((file) => (
         <div className={`${classes.markup} infile`}>
-          {parseCommit(file.patch).map((patch, idx) => {
+          {parseCommit(file.patch!).map((patch, idx) => {
             if (idx % 2)
               return parser.defaultRules.codeBlock.react(
                 { content: patch.trimStart(), lang: "diff" },
