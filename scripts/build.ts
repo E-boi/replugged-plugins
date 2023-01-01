@@ -178,7 +178,7 @@ async function buildPlugin(path: string): Promise<void> {
 
 (async () => {
   if (existsSync("dist")) await rm("dist", { recursive: true });
-  const plugin = process.argv.find((e) => e.includes("plugin"))?.split("=")?.[1];
+  const plugin = process.argv.find((e) => e.includes("plugin="))?.split("=")?.[1];
   const pluginFolder = await readdir(join(__dirname, "..", "plugins"), { withFileTypes: true });
   if (plugin && pluginFolder.find((e) => e.isDirectory() && e.name === plugin))
     buildPlugin(join(__dirname, "..", "plugins", plugin));
