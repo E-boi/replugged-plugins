@@ -27,7 +27,7 @@ export function stop(): void {
 
 function checkMessage(content: string, href?: string): JSX.Element | null {
   const match = [...(href?.matchAll(ghRegex) || content.matchAll(ghRegex))]?.[0];
-  const tab = match[2] === "issues" ? "Issues" : "";
+  const tab = match?.[2] === "issues" ? "Issues" : "";
   if (match?.[1])
     return (
       <MenuGroup>
