@@ -95,7 +95,7 @@ const common: esbuild.BuildOptions = {
   absWorkingDir: join(__dirname, ".."),
   bundle: true,
   minify: true,
-  sourcemap: true,
+  sourcemap: false,
   format: "cjs" as esbuild.Format,
   logLevel: "info",
   watch,
