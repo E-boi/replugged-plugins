@@ -2,8 +2,11 @@ import { components } from "@octokit/openapi-types";
 import { Box, Label, LabelGroup, RelativeTime, Spinner, Text } from "@primer/react";
 import { IssueOpenedIcon } from "@primer/styled-octicons";
 import { FC, memo, useEffect, useState } from "react";
+import { webpack } from "replugged";
 import { getIssues } from "../../utils";
 import IssueComp from "./Issue";
+
+const textClasses = webpack.getByProps("heading-lg/bold");
 
 interface Props {
   url: string;
@@ -25,21 +28,22 @@ const Issues: FC<Props> = ({ url, repo }) => {
 
   if (!issues)
     return (
-      <div>
-        <p>Fetching Issues</p>
-        <Spinner size="medium" />
+      <div className={[textClasses?.['heading-lg/medium'], 'fetching'].join(' ')}>
+        <span>Fetching Issues...</span>
+        <Spinner size="large"/>
       </div>
     );
 
   if (issue) return <IssueComp issue={issue} url={url} />;
 
   return (
-    <Box borderColor="border.subtle" borderWidth={1} borderStyle="solid">
+    <Box borderColor="border.subtle" className="issueList" borderWidth={1} borderStyle="solid">
       {issues.map((issue) => (
         <Box
           borderColor="border.subtle"
           borderTopWidth={1}
           borderStyle="solid"
+          className="issue"
           px={3}
           py={2}
           sx={{ display: "flex" }}>
@@ -49,7 +53,7 @@ const Issues: FC<Props> = ({ url, repo }) => {
               <Text as="a" onClick={() => setIssue(issue)}>
                 {issue.title}
               </Text>
-              <LabelGroup>
+              <LabelGroup sx={{ml: 2}}>
                 {issue.labels.map((label) => (
                   <Label
                     sx={{
