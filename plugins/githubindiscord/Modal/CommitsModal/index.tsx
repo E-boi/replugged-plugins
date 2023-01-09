@@ -1,9 +1,12 @@
 import { FC, memo, useEffect, useState } from "react";
-import { Spinner } from "../../components";
 import { getCommits } from "../../utils";
 import Commit from "./Commit";
 import { GitCommitIcon } from "@primer/styled-octicons";
 import { components } from "@octokit/openapi-types";
+import { Spinner } from "@primer/react";
+import { webpack } from "replugged";
+
+const textClasses = webpack.getByProps("heading-lg/bold");
 
 type Props = { url: string; branch: components["schemas"]["branch-short"] | null };
 
@@ -20,10 +23,10 @@ const CommitsModal: FC<Props> = ({ url, branch }) => {
   console.log(commits);
   if (!commits && Spinner)
     return (
-      <p className="Gfetching">
-        Fetching commits
-        <Spinner type="wanderingCubes" />
-      </p>
+      <div className={[textClasses?.['heading-lg/medium'], 'fetching'].join(' ')}>
+        <span>Fetching Commits...</span>
+        <Spinner size="large"/>
+      </div>
     );
   if (!selectedCommit)
     return (

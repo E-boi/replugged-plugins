@@ -5,13 +5,14 @@ import {
   CommitIcon,
   GitBranchIcon,
   IssueOpenedIcon,
+  LinkExternalIcon,
   LockIcon,
   RepoForkedIcon,
   RepoIcon,
   StarIcon,
   TagIcon,
 } from "@primer/styled-octicons";
-import { Breadcrumbs, Button, Label, ThemeProvider, theme } from "@primer/react";
+import { Breadcrumbs, Button, ButtonGroup, Label, Text, ThemeProvider, theme } from "@primer/react";
 import { UnderlineNav } from "@primer/react/drafts";
 import { SelectMenu } from "../components";
 import CommitsModal from "./CommitsModal";
@@ -21,13 +22,56 @@ import { common, components as rpC, webpack } from "replugged";
 import { useEffect, useState } from "react";
 import Issues from "./Issues";
 import { components } from "@octokit/openapi-types";
+import deepmerge from "deepmerge";
+
+const discordtheme = deepmerge(theme, {
+  colorSchemes: {
+    dark: {
+      colors: {
+        border: {
+          default: "var(--primary-dark-700)",
+          muted: "var(--primary-dark-700)",
+          subtle: "var(--primary-dark-700)",
+        },
+        btn: {
+          text: "var(--text-normal)",
+          bg: "var(--button-secondary-background)",
+          border: "transparent",
+          hoverBg: "var(--button-secondary-background-hover)",
+          hoverBorder: "transparent",
+          activeBg: "red",
+          activeBorder: "transparent",
+          selectedBg: "red",
+          focusBg: "red",
+          focusBorder: "transparent",
+          counterBg: "rgba(27,31,36,0.08)",
+          primary: {
+            text: "var(--text-normal)",
+            bg: "#2da44e",
+            border: "transparent",
+            hoverBg: "#2c974b",
+            hoverBorder: "transparent",
+            selectedBg: "hsla(137,55%,36%,1)",
+            disabledText: "rgba(255,255,255,0.8)",
+            disabledBg: "#94d3a2",
+            disabledBorder: "transparent",
+            focusBg: "#2da44e",
+            focusBorder: "transparent",
+            icon: "rgba(255,255,255,0.8)",
+            counterBg: "rgba(255,255,255,0.2)",
+          },
+        },
+      },
+    },
+  },
+});
 
 const { ModalContent, ModalHeader, ModalRoot } = rpC.Modal;
 const wumpus = {
   ...webpack.getByProps("emptyStateImage", "emptyStateSubtext"),
 };
 
-const textClasses = webpack.getByProps("heading-sm/bold");
+const textClasses = webpack.getByProps("heading-lg/bold");
 
 // const tabs = {
 //   repo: RepoModal,
@@ -38,8 +82,6 @@ const tabs = [
   { title: "Commits", component: CommitsModal, icon: CommitIcon },
   { title: "Issues", component: Issues, icon: IssueOpenedIcon },
 ];
-
-// const customTheme = deepmerge(theme)
 
 export function GithubModal({ url, tab, ...props }: ModalProps<{ url: string; tab?: string }>) {
   const [repoInfo, setInfo] = useState<
@@ -67,52 +109,75 @@ export function GithubModal({ url, tab, ...props }: ModalProps<{ url: string; ta
 
   return (
     <ModalRoot {...props} className={`githubModel`}>
-      <ThemeProvider theme={theme} colorMode="auto">
+      <ThemeProvider theme={discordtheme} colorMode="dark">
         <ModalHeader className="githeader">
-          <div className="repo-path">
-            <div className="repo-visibility-icon">
-              {repoInfo?.visibility === "private" ? <LockIcon size={16} /> : <RepoIcon size={16} />}
+          <div className="repository-info">
+            <div className="repo-path">
+              <div className="repo-visibility-icon">
+                {repoInfo?.visibility === "private" ? (
+                  <LockIcon size={16} sx={{ mr: 2 }} />
+                ) : (
+                  <RepoIcon size={16} sx={{ mr: 2 }} />
+                )}
+              </div>
+              <Breadcrumbs>
+                <Breadcrumbs.Item
+                  href={repoInfo?.owner.html_url}
+                  className={textClasses?.["heading-lg/normal"]}
+                  target="_blank">
+                  {repoInfo?.owner.login}
+                </Breadcrumbs.Item>
+                <Breadcrumbs.Item
+                  href={repoInfo?.html_url}
+                  className={textClasses?.["heading-lg/medium"]}
+                  target="_blank">
+                  {repoInfo?.name}
+                </Breadcrumbs.Item>
+              </Breadcrumbs>
+              <Label className="visibility">{repoInfo?.visibility}</Label>
             </div>
-            <a
-              className={[textClasses?.["heading-lg/normal"], "repository-owner"].join(" ")}
-              href={repoInfo?.owner.html_url || `https://github.com/${repoInfo?.owner}`}
-              target="_blank">
-              {repoInfo?.owner.login}
-            </a>
-            <span className="separator">/</span>
-            <a
-              className={[textClasses?.["heading-lg/medium"], "repository-name"].join(" ")}
-              href={repoInfo?.html_url || `https://github.com/${url}`}
-              target="_blank">
-              {repoInfo?.name || url}
-            </a>
-            <Label className="visibility">{repoInfo?.visibility}</Label>
+            <div className={[textClasses?.["heading-sm/medium"], "extlink-buttons"].join(" ")}>
+              {repoInfo && (
+                <ButtonGroup sx={{ display: "flex" }}>
+                  <Button leadingIcon={StarIcon} verticalAlign={"middle"} sx={{ mr: 1 }}>
+                    Stars
+                    <Button.Counter>{abbreviateNumber(repoInfo?.stargazers_count)}</Button.Counter>
+                  </Button>
+                  <Button>
+                    <a className="starLink" href={`${repoInfo.html_url}/stargazers`} target="_blank">
+                      <LinkExternalIcon size={16} />
+                    </a>
+                  </Button>
+                </ButtonGroup>
+              )}
+              {repoInfo && (
+                <ButtonGroup sx={{ display: "flex" }}>
+                  <Button leadingIcon={RepoForkedIcon} verticalAlign={"middle"} sx={{ mr: 1 }}>
+                    Fork
+                    <Button.Counter>{abbreviateNumber(repoInfo.forks_count)}</Button.Counter>
+                  </Button>
+                  <Button>
+                    <a
+                      className="forklink"
+                      href={`${repoInfo?.html_url}/network/members`}
+                      target="_blank">
+                      <LinkExternalIcon size={16} />
+                    </a>
+                  </Button>
+                </ButtonGroup>
+              )}
+            </div>
           </div>
-          <div className={[textClasses?.["heading-sm/medium"], "extlink-buttons"].join(" ")}>
-            {repoInfo && (
-              <a
-                className="stargazers button"
-                href={`${repoInfo.html_url}/stargazers`}
-                target="_blank">
-                <Button leadingIcon={StarIcon} verticalAlign={"middle"} sx={{ mr: 1 }}>
-                  <span></span>
-                  Stars
-                  <Button.Counter>{abbreviateNumber(repoInfo?.stargazers_count)}</Button.Counter>
-                </Button>
-              </a>
-            )}
-            {repoInfo && (
-              <a
-                className="forks button"
-                href={`${repoInfo?.html_url}/network/members`}
-                target="_blank">
-                <Button leadingIcon={RepoForkedIcon} verticalAlign={"middle"} sx={{ mr: 1 }}>
-                  Fork
-                  <Button.Counter>{abbreviateNumber(repoInfo.forks_count)}</Button.Counter>
-                </Button>
-              </a>
-            )}
-          </div>
+          <UnderlineNav aria-label="tabs">
+            {tabs.map(({ title, icon }) => (
+              <UnderlineNav.Item
+                icon={icon}
+                aria-current={title === currentTab}
+                onSelect={() => setTab(title)}>
+                {title}
+              </UnderlineNav.Item>
+            ))}
+          </UnderlineNav>
         </ModalHeader>
         <ModalContent>
           <div className="repository-options">
@@ -127,57 +192,56 @@ export function GithubModal({ url, tab, ...props }: ModalProps<{ url: string; ta
                   }}
                 />
               )}
-              {path ? (
-                <Breadcrumbs>
-                  {path.split("/").map((inPath, idx) => (
-                    <Breadcrumbs.Item
-                      selected={idx === path.split("/").length - 1}
-                      onClick={() =>
-                        setPath(
-                          path
-                            .split("/")
-                            .splice(0, idx + 1)
-                            .join("/"),
-                        )
-                      }>
-                      {inPath}
-                    </Breadcrumbs.Item>
-                  ))}
-                </Breadcrumbs>
-              ) : (
-                <div className="miscLinks">
-                  <a
-                    href={`${repoInfo?.html_url}/branches`}
-                    target="_blank"
-                    className={[textClasses?.["heading-sm/normal"], "branchlink"].join(" ")}>
-                    <GitBranchIcon size={16} mr={2} />
-                    <span className={textClasses?.["heading-sm/normal"]}>Branches</span>
-                  </a>
-                  <a
-                    href={`${repoInfo?.html_url}/tags`}
-                    target="_blank"
-                    className={[textClasses?.["heading-sm/normal"], "taglink"].join(" ")}>
-                    <TagIcon size={16} mr={2} />
-                    <span className={textClasses?.["heading-sm/normal"]}>Tags</span>
-                  </a>
-                </div>
-              )}
             </div>
-            <UnderlineNav aria-label="tabs">
-              {tabs.map(({ title, icon }) => (
-                <UnderlineNav.Item
-                  icon={icon}
-                  aria-current={title === currentTab}
-                  onSelect={() => setTab(title)}>
-                  {title}
-                </UnderlineNav.Item>
-              ))}
-            </UnderlineNav>
+            {path ? (
+              <Breadcrumbs className={textClasses?.["heading-md/bold"]}>
+                <Breadcrumbs.Item onClick={() => setPath("")}>{repoInfo?.name}</Breadcrumbs.Item>
+                {path.split("/").map((inPath, idx) => (
+                  <Breadcrumbs.Item
+                    selected={idx === path.split("/").length - 1}
+                    onClick={() =>
+                      setPath(
+                        path
+                          .split("/")
+                          .splice(0, idx + 1)
+                          .join("/"),
+                      )
+                    }>
+                    {inPath}
+                  </Breadcrumbs.Item>
+                ))}
+              </Breadcrumbs>
+            ) : (
+              <div className="miscLinks">
+                <a
+                  href={`${repoInfo?.html_url}/branches`}
+                  target="_blank"
+                  className={[textClasses?.["heading-sm/normal"], "branchlink"].join(" ")}>
+                  <GitBranchIcon size={16} />
+                  <Text className={textClasses?.["heading-sm/bold"]} sx={{ mx: 1 }}>
+                    {branches?.length}
+                  </Text>
+                  <span className={textClasses?.["heading-sm/normal"]}>Branches</span>
+                </a>
+                <a
+                  href={`${repoInfo?.html_url}/tags`}
+                  target="_blank"
+                  className={[textClasses?.["heading-sm/normal"], "taglink"].join(" ")}>
+                  <TagIcon size={16} mr={2} />
+                  <span className={textClasses?.["heading-sm/normal"]}>Tags</span>
+                </a>
+              </div>
+            )}
           </div>
-          {err && (
+          {err && textClasses && (
             <div className="Gerror">
               <div className={wumpus.emptyStateImage as string} />
-              <span className={`Gerror-text ${wumpus.emptyStateSubtext}`}>{err}</span>
+              <span
+                className={[textClasses?.["heading-lg/normal"], `${wumpus.emptyStateSubtext}`].join(
+                  " ",
+                )}>
+                {err}
+              </span>
             </div>
           )}
           {!err && Tab && (

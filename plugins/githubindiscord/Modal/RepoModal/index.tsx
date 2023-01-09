@@ -4,6 +4,9 @@ import { FC, memo, useEffect, useState } from "react";
 import { File, getFile, getFolder } from "../../utils";
 import FolderModal from "./Folder";
 import FileModal from "./File";
+import { webpack } from "replugged";
+
+const textClasses = webpack.getByProps("heading-sm/bold");
 
 type Props = {
   url: string;
@@ -32,9 +35,9 @@ const RepoModal: FC<Props> = ({ url, repo, branch, trigger, path }) => {
 
   if (!folder)
     return (
-      <div>
-        <p>Fetching Issues</p>
-        <Spinner size="medium" />
+      <div className={[textClasses?.['heading-lg/medium'], 'fetching'].join(' ')}>
+        <span>Fetching Repository Contents...</span>
+        <Spinner size="large"/>
       </div>
     );
 

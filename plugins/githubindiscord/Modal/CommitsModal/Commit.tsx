@@ -4,6 +4,8 @@ import { getCommit } from "../../utils";
 import { Spinner } from "@primer/react";
 import { components } from "@octokit/openapi-types";
 
+const textClasses = webpack.getByProps("heading-lg/bold");
+
 const classes = {
   markup: webpack.getByProps("markup")?.markup,
   scrollbarGhostHairline: webpack.getByProps("scrollbarGhostHairline")?.scrollbarGhostHairline,
@@ -33,10 +35,10 @@ export default memo(
 
     if (!commit && Spinner)
       return (
-        <p className="Gfetching">
-          Fetching commit
-          <Spinner size="medium" />
-        </p>
+        <div className={[textClasses?.['heading-lg/medium'], 'fetching'].join(' ')}>
+        <span>Fetching Commits...</span>
+        <Spinner size="large"/>
+      </div>
       );
     else if (commit)
       return commit.files!.map((file) => (

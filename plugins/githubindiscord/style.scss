@@ -1,101 +1,208 @@
-// Styled by https://github.com/loremly
-
 .githubModel {
   color: var(--text-normal);
   width: fit-content;
   max-width: 80vw;
   max-height: 70vh;
+  min-width: 60vw;
+
+  >* {
+    line-height: normal;
+  }
 
   .header-1zd7se {
     justify-content: space-between;
-    align-items: center;
+    padding-bottom: 0 !important;
+    align-items: flex-start;
+    flex-direction: column;
     white-space: nowrap;
-    flex-direction: row;
+    overflow: hidden;
     display: flex;
 
-    .repo-visibility-icon {
-      color: var(--text-muted);
-      margin-right: 8px;
-    }
-
-    .repo-path {
-      flex-direction: row;
-      align-items: center;
-      margin-right: 15vw;
+    .repository-info {
       display: flex;
+      width: 100%;
 
-      .separator {
-        color: var(--text-muted);
-        margin: 0 4px;
+      .repo-path {
+        flex-direction: row;
+        align-items: center;
+        margin-right: auto;
+        display: flex;
+
+        .separator {
+          color: var(--text-muted);
+          margin: 0 4px;
+        }
+
+        .visibility {
+          text-transform: capitalize;
+          margin-left: 8px;
+        }
+
+        a {
+          font-size: 20px !important;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
       }
 
-      .visibility {
-        text-transform: capitalize;
-        margin-left: 8px;
-      }
+      .extlink-buttons {
+        flex-direction: row;
+        align-items: center;
+        margin-left: 15vw;
+        display: flex;
+        gap: 15px;
 
-      a {
-        &:hover {
-          text-decoration: underline;
+        >.ButtonGroup-sc-tk435v-0 {
+          >button {
+            padding-left: 12px;
+            padding-right: 12px;
+          }
         }
       }
     }
 
-    .extlink-buttons {
-      flex-direction: row;
-      align-items: center;
-      display: flex;
-      gap: 15px;
+    nav[aria-label="tabs"] {
+      padding-left: 0 !important;
+      border-bottom: none;
+      margin-top: 12px;
+      width: 100%;
     }
   }
+
   .content-2hZxGK {
     padding-right: 10px !important;
     padding-bottom: 16px;
+    padding-top: 10px;
+
     .repository-options {
-      justify-content: space-between;
       align-items: center;
       padding: 8px 0;
       display: flex;
+
       .branches {
         align-items: center;
         display: flex;
+
         .select-1Ia3hD {
           margin-right: 20px;
           min-width: 11rem;
         }
+
         a {
           display: flex;
         }
       }
+
+      nav.Breadcrumbs__BreadcrumbsBase-sc-zwknu7-1 {
+        .Box-sc-1gh2r6s-0 {
+          display: flex;
+
+          .fLAmDQ {
+            align-items: center;
+            display: flex;
+
+            a {
+              font-size: 17px !important;
+              font-weight: 600;
+
+              &.selected {
+                color: var(--text-normal) !important;
+                font-weight: normal;
+              }
+            }
+          }
+        }
+      }
+
       div.miscLinks {
         display: flex;
-        .taglink {
-          margin-left: 16px;
+
+        a {
+          display: flex;
+
+          &.taglink {
+            margin-left: 16px;
+          }
         }
       }
     }
+
+    .fetching {
+      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      min-height: 25vh;
+      display: flex;
+
+      span {
+        margin-bottom: 16px;
+      }
+    }
+
     .Gout-folder,
     .Gin-folder {
       border-radius: 4px;
       margin-top: 8px;
-      .Gfolder:nth-child(1) > div {
+
+      .Gfolder:nth-child(1)>div {
         border-top: none !important;
       }
+
       a:hover {
         text-decoration: underline !important;
       }
+
       .Box-sc-1gh2r6s-0 {
         display: flex;
-        &:hover {
+
+        &:hover:not(.latestCommitInfo:hover) {
           background-color: var(--background-modifier-hover);
         }
+
+        &.latestCommitInfo {
+          border-radius: 4px 4px 0 0;
+
+          .relativeTime {
+            margin-left: auto;
+          }
+        }
+      }
+    }
+
+    .issueList {
+      border-radius: 4px;
+
+      .issue {
+        &:nth-child(1) {
+          border-top: none !important;
+        }
+      }
+    }
+
+    .Gerror {
+      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 0;
+      display: flex;
+
+      .emptyStateImage-1kilCd {
+        margin: 0;
+      }
+
+      span {
+        padding-top: 15px;
       }
     }
   }
 
-  a:not(.repo-path > *):not(.Gout-folder a:hover):not(.Gin-folder a:hover):not(
-      .branches a:hover
-    ):not(.backbtn a) {
-    color: var(--text-normal);
+  a {
+    color: var(--text-link);
+
+    &:not(.repo-path > *):not(.Gout-folder a:hover):not(.Gin-folder a:hover):not(.branches a:hover):not(.backbtn a):not(.doegSW):not(.miscLinks a:hover) {
+      color: var(--text-normal);
+    }
   }
 }

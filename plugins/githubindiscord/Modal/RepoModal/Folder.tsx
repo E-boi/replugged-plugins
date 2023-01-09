@@ -30,27 +30,34 @@ export default ({
           borderTopWidth={0}
           borderWidth={1}
           px={3}
-          py={2}
-          pt={2}
-          sx={{ alignItems: "center", display: "flex" }}>
+          py={3}
+          sx={{
+            alignItems: "center",
+            display: "flex",
+          }}
+          className="latestCommitInfo">
           {dir.commit.author && (
-            <a href={dir.commit.author.avatar_url} target="_blank">
+            <a href={dir.commit.author.html_url} target="_blank">
               <Avatar src={dir.commit.author.avatar_url} size={24} />
             </a>
           )}
           <Truncate
             maxWidth={"100%"}
             title={`${dir.commit.author?.login} ${dir.commit.commit.message}`}>
-            <Text fontWeight="bold" sx={{ marginLeft: "5px" }}>
-              {dir.commit.author?.login}
-              <Text fontWeight="normal"> {dir.commit.commit.message}</Text>
+            <Text className={textClasses?.["heading-md/semibold"]} sx={{ ml: 2 }}>
+              <a href={dir.commit.author?.html_url} target="_blank">
+                {dir.commit.author?.login}
+              </a>
+              <Text className={textClasses?.["heading-md/normal"]} sx={{ ml: 2 }}>
+                <a href={dir.commit.html_url} target="_blank">
+                  {dir.commit.commit.message}
+                </a>
+              </Text>
             </Text>
           </Truncate>
-          <RelativeTime
-            sx={{ marginLeft: "auto" }}
-            datetime={dir.commit.commit.author?.date}
-            format="relative"
-          />
+          <a href={dir.commit.html_url} target="_blank" className="relativeTime">
+            <RelativeTime sx={{ ml: 8 }} datetime={dir.commit.commit.author?.date} />
+          </a>
         </Box>
         {dir.path && (
           <div className="backbtn">

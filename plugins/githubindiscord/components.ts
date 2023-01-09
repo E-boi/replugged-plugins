@@ -35,7 +35,3 @@ export const TabBar = webpack.getByProps("Header", "Panel", "Item") as unknown a
       }>;
     })
   | undefined;
-export const Spinner = webpack.getExportsForProps(
-  await webpack.waitForModule(webpack.filters.bySource("spinningCircle")),
-  ["Type"],
-) as unknown as React.FC<{ type: string }> | undefined;
