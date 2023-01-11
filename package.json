@@ -23,7 +23,6 @@
   "license": "ISC",
   "devDependencies": {
     "@electron/asar": "^3.2.1",
-    "@fal-works/esbuild-plugin-global-externals": "^2.1.2",
     "@octokit/openapi-types": "^14.0.0",
     "@types/node": "^18.11.2",
     "@types/react": "^18.0.26",
@@ -36,18 +35,18 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-react": "^7.31.10",
     "prettier": "^2.8.1",
-    "replugged": "4.0.0-beta0.19",
+    "replugged": "4.0.0-beta0.20",
     "tsx": "^3.10.3",
     "typescript": "^4.8.4"
   },
   "dependencies": {
+    "@octokit/plugin-paginate-rest": "^5.0.1",
     "@octokit/rest": "^19.0.5",
     "@primer/react": "^35.16.0",
     "@primer/styled-octicons": "^17.10.0",
     "deepmerge": "^4.2.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-is": "^18.2.0",
     "styled-components": "^5.3.6"
   }
 }

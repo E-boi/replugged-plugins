@@ -1,267 +1,208 @@
-import { ModalProps } from "../Modals";
-import { abbreviateNumber, getBranches, getRepo } from "../utils";
+import {
+  BaseStyles,
+  Box,
+  Breadcrumbs,
+  Button,
+  ButtonGroup,
+  Label,
+  Text,
+  ThemeProvider,
+} from "@primer/react";
+import { UnderlineNav } from "@primer/react/drafts";
 import {
   CodeIcon,
-  CommitIcon,
-  GitBranchIcon,
+  GitPullRequestIcon,
   IssueOpenedIcon,
   LinkExternalIcon,
   LockIcon,
   RepoForkedIcon,
   RepoIcon,
   StarIcon,
-  TagIcon,
+  // TagIcon,
 } from "@primer/styled-octicons";
-import { Breadcrumbs, Button, ButtonGroup, Label, Text, ThemeProvider, theme } from "@primer/react";
-import { UnderlineNav } from "@primer/react/drafts";
-import { SelectMenu } from "../components";
-import CommitsModal from "./CommitsModal";
-import RepoModal from "./RepoModal";
-// @ts-ignore wait for rp to update package
-import { common, components as rpC, webpack } from "replugged";
-import { useEffect, useState } from "react";
+import { FC, useLayoutEffect, useState } from "react";
+import { common, components } from "replugged";
+import { ModalProps } from "../Modals";
+import {
+  Branch,
+  Issue,
+  TreeWithContent,
+  abbreviateNumber,
+  pluginSettings,
+  useRepo,
+} from "../utils";
+import Code from "./Code";
 import Issues from "./Issues";
-import { components } from "@octokit/openapi-types";
-import deepmerge from "deepmerge";
+import Pulls from "./Pulls";
+// import Tags from "./Tags";
+import theme from "../theme";
+import Spinner from "./Spinner";
+import { textClasses, wumpus } from "../components";
+import { components as ght } from "@octokit/openapi-types";
 
-const discordtheme = deepmerge(theme, {
-  colorSchemes: {
-    dark: {
-      colors: {
-        border: {
-          default: "var(--primary-dark-700)",
-          muted: "var(--primary-dark-700)",
-          subtle: "var(--primary-dark-700)",
-        },
-        btn: {
-          text: "var(--text-normal)",
-          bg: "var(--button-secondary-background)",
-          border: "transparent",
-          hoverBg: "var(--button-secondary-background-hover)",
-          hoverBorder: "transparent",
-          activeBg: "red",
-          activeBorder: "transparent",
-          selectedBg: "red",
-          focusBg: "red",
-          focusBorder: "transparent",
-          counterBg: "rgba(27,31,36,0.08)",
-          primary: {
-            text: "var(--text-normal)",
-            bg: "#2da44e",
-            border: "transparent",
-            hoverBg: "#2c974b",
-            hoverBorder: "transparent",
-            selectedBg: "hsla(137,55%,36%,1)",
-            disabledText: "rgba(255,255,255,0.8)",
-            disabledBg: "#94d3a2",
-            disabledBorder: "transparent",
-            focusBg: "#2da44e",
-            focusBorder: "transparent",
-            icon: "rgba(255,255,255,0.8)",
-            counterBg: "rgba(255,255,255,0.2)",
-          },
-        },
-      },
-    },
-  },
-});
+const { ModalContent, ModalHeader, ModalRoot } = components.Modal;
 
-const { ModalContent, ModalHeader, ModalRoot } = rpC.Modal;
-const wumpus = {
-  ...webpack.getByProps("emptyStateImage", "emptyStateSubtext"),
-};
-
-const textClasses = webpack.getByProps("heading-lg/bold");
-
-// const tabs = {
-//   repo: RepoModal,
-//   commits: CommitsModal,
-// };
 const tabs = [
-  { title: "Code", component: RepoModal, icon: CodeIcon },
-  { title: "Commits", component: CommitsModal, icon: CommitIcon },
+  { title: "Code", component: Code, icon: CodeIcon },
   { title: "Issues", component: Issues, icon: IssueOpenedIcon },
+  { title: "Pull Requests", component: Pulls, icon: GitPullRequestIcon },
 ];
 
-export function GithubModal({ url, tab, ...props }: ModalProps<{ url: string; tab?: string }>) {
-  const [repoInfo, setInfo] = useState<
-    (components["schemas"]["repository"] & { commit: components["schemas"]["commit"] }) | null
-  >(null);
-  const [branches, setBranches] = useState<components["schemas"]["branch-short"][] | null>(null);
-  const [selectedBranch, changeBranch] = useState<components["schemas"]["branch-short"] | null>(
-    null,
-  );
+export interface TabProps {
+  repo: ght["schemas"]["full-repository"];
+  tags: Array<ght["schemas"]["tag"]>;
+  tree: TreeWithContent[];
+  issues: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
+  prs: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
+  branches: Branch[];
+  branch: Branch;
+  url: string;
+  switchBranches: (branch: string) => void;
+}
+
+const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, ...props }) => {
+  const [selectedBranch, setBranch] = useState<Branch>();
+  const {
+    data: repo,
+    error,
+    status,
+  } = useRepo({
+    url,
+    query: { issues: { state: "all" }, prs: { state: "open" }, branch: selectedBranch?.name },
+  });
   const [currentTab, setTab] = useState<string>(tab || "Code");
-  const [path, setPath] = useState<string>("");
-  const [err, setError] = useState();
-  useEffect(() => {
-    (async () => {
-      const repo = await getRepo(url).catch((e) => setError(e.message));
-      if (!repo) return;
-      const branches = await getBranches(url, { per_page: 100 });
-      setBranches(branches);
-      changeBranch(branches.find((branch) => branch.name === repo.default_branch)!);
-      setInfo(repo as any);
-    })();
-  }, []);
+
+  useLayoutEffect(() => {
+    if (!repo?.branches || selectedBranch) return;
+    setBranch(repo.branches.find((b) => b.name === repo.repo.default_branch));
+  }, [repo]);
 
   const Tab = tabs.find(({ title }) => title === currentTab);
-
   return (
-    <ModalRoot {...props} className={`githubModel`}>
-      <ThemeProvider theme={discordtheme} colorMode="dark">
-        <ModalHeader className="githeader">
-          <div className="repository-info">
-            <div className="repo-path">
-              <div className="repo-visibility-icon">
-                {repoInfo?.visibility === "private" ? (
-                  <LockIcon size={16} sx={{ mr: 2 }} />
+    <ThemeProvider
+      colorMode="auto"
+      theme={theme}
+      nightScheme={pluginSettings.get("darkTheme", "dark_discord")}
+      dayScheme={pluginSettings.get("lightTheme", "light_discord")}>
+      <BaseStyles bg="canvas.default">
+        <ModalRoot {...props} className="githubModel">
+          <ModalHeader>
+            <Box className="repo-info">
+              <Text className="repo-path">
+                {repo?.repo.visibility === "private" ? (
+                  <LockIcon className="repo-visibility-icon" size={16} />
                 ) : (
-                  <RepoIcon size={16} sx={{ mr: 2 }} />
+                  <RepoIcon className="repo-visibility-icon" size={16} />
                 )}
-              </div>
-              <Breadcrumbs>
-                <Breadcrumbs.Item
-                  href={repoInfo?.owner.html_url}
-                  className={textClasses?.["heading-lg/normal"]}
-                  target="_blank">
-                  {repoInfo?.owner.login}
-                </Breadcrumbs.Item>
-                <Breadcrumbs.Item
-                  href={repoInfo?.html_url}
-                  className={textClasses?.["heading-lg/medium"]}
-                  target="_blank">
-                  {repoInfo?.name}
-                </Breadcrumbs.Item>
-              </Breadcrumbs>
-              <Label className="visibility">{repoInfo?.visibility}</Label>
-            </div>
-            <div className={[textClasses?.["heading-sm/medium"], "extlink-buttons"].join(" ")}>
-              {repoInfo && (
+                <Breadcrumbs>
+                  <Breadcrumbs.Item
+                    href={repo?.repo.owner.html_url}
+                    className={textClasses?.["heading-lg/normal"]}
+                    target="_blank">
+                    {repo?.repo?.owner.login}
+                  </Breadcrumbs.Item>
+                  <Breadcrumbs.Item
+                    href={repo?.repo.html_url}
+                    className={textClasses?.["heading-lg/medium"]}
+                    target="_blank">
+                    {repo?.repo.name}
+                  </Breadcrumbs.Item>
+                </Breadcrumbs>
+                <Label className="visibility">{repo?.repo.visibility}</Label>
+              </Text>
+
+              <div className={[textClasses?.["heading-sm/medium"], "extlink-buttons"].join(" ")}>
                 <ButtonGroup sx={{ display: "flex" }}>
                   <Button leadingIcon={StarIcon} verticalAlign={"middle"} sx={{ mr: 1 }}>
                     Stars
-                    <Button.Counter>{abbreviateNumber(repoInfo?.stargazers_count)}</Button.Counter>
-                  </Button>
-                  <Button>
-                    <a className="starLink" href={`${repoInfo.html_url}/stargazers`} target="_blank">
-                      <LinkExternalIcon size={16} />
-                    </a>
-                  </Button>
-                </ButtonGroup>
-              )}
-              {repoInfo && (
-                <ButtonGroup sx={{ display: "flex" }}>
-                  <Button leadingIcon={RepoForkedIcon} verticalAlign={"middle"} sx={{ mr: 1 }}>
-                    Fork
-                    <Button.Counter>{abbreviateNumber(repoInfo.forks_count)}</Button.Counter>
+                    <Button.Counter>
+                      {abbreviateNumber(repo?.repo.stargazers_count ?? 0) as unknown as number}
+                    </Button.Counter>
                   </Button>
                   <Button>
                     <a
-                      className="forklink"
-                      href={`${repoInfo?.html_url}/network/members`}
+                      className="starLink"
+                      href={`${repo?.repo.html_url}/stargazers`}
                       target="_blank">
                       <LinkExternalIcon size={16} />
                     </a>
                   </Button>
                 </ButtonGroup>
-              )}
-            </div>
-          </div>
-          <UnderlineNav aria-label="tabs">
-            {tabs.map(({ title, icon }) => (
-              <UnderlineNav.Item
-                icon={icon}
-                aria-current={title === currentTab}
-                onSelect={() => setTab(title)}>
-                {title}
-              </UnderlineNav.Item>
-            ))}
-          </UnderlineNav>
-        </ModalHeader>
-        <ModalContent>
-          <div className="repository-options">
-            <div className="branches">
-              {branches && SelectMenu && (
-                <SelectMenu
-                  className="Gbranches"
-                  value={selectedBranch!.name}
-                  options={branches.map((branch) => ({ value: branch.name, label: branch.name }))}
-                  onChange={(value: string) => {
-                    changeBranch(branches.find((branch) => branch.name === value)!);
-                  }}
-                />
-              )}
-            </div>
-            {path ? (
-              <Breadcrumbs className={textClasses?.["heading-md/bold"]}>
-                <Breadcrumbs.Item onClick={() => setPath("")}>{repoInfo?.name}</Breadcrumbs.Item>
-                {path.split("/").map((inPath, idx) => (
-                  <Breadcrumbs.Item
-                    selected={idx === path.split("/").length - 1}
-                    onClick={() =>
-                      setPath(
-                        path
-                          .split("/")
-                          .splice(0, idx + 1)
-                          .join("/"),
-                      )
-                    }>
-                    {inPath}
-                  </Breadcrumbs.Item>
-                ))}
-              </Breadcrumbs>
-            ) : (
-              <div className="miscLinks">
-                <a
-                  href={`${repoInfo?.html_url}/branches`}
-                  target="_blank"
-                  className={[textClasses?.["heading-sm/normal"], "branchlink"].join(" ")}>
-                  <GitBranchIcon size={16} />
-                  <Text className={textClasses?.["heading-sm/bold"]} sx={{ mx: 1 }}>
-                    {branches?.length}
-                  </Text>
-                  <span className={textClasses?.["heading-sm/normal"]}>Branches</span>
-                </a>
-                <a
-                  href={`${repoInfo?.html_url}/tags`}
-                  target="_blank"
-                  className={[textClasses?.["heading-sm/normal"], "taglink"].join(" ")}>
-                  <TagIcon size={16} mr={2} />
-                  <span className={textClasses?.["heading-sm/normal"]}>Tags</span>
-                </a>
+                <ButtonGroup sx={{ display: "flex" }}>
+                  <Button leadingIcon={RepoForkedIcon} verticalAlign={"middle"} sx={{ mr: 1 }}>
+                    Fork
+                    <Button.Counter>
+                      {abbreviateNumber(repo?.repo.forks_count ?? 0) as unknown as number}
+                    </Button.Counter>
+                  </Button>
+                  <Button>
+                    <a
+                      className="forklink"
+                      href={`${repo?.repo.html_url}/network/members`}
+                      target="_blank">
+                      <LinkExternalIcon size={16} />
+                    </a>
+                  </Button>
+                </ButtonGroup>
               </div>
+            </Box>
+            <UnderlineNav aria-label="Repository">
+              {tabs.map(({ title, icon }) => (
+                <UnderlineNav.Item
+                  icon={icon}
+                  aria-current={title === currentTab}
+                  onSelect={() => setTab(title)}
+                  counter={
+                    title === "Issues"
+                      ? abbreviateNumber(repo?.issues.total ?? 0)
+                      : title === "Pull Requests"
+                      ? abbreviateNumber(repo?.prs.total ?? 0)
+                      : // eslint-disable-next-line no-undefined
+                        undefined
+                  }>
+                  {title}
+                </UnderlineNav.Item>
+              ))}
+            </UnderlineNav>
+          </ModalHeader>
+          <ModalContent>
+            {status === "loading" ? (
+              <Spinner>Fetching Repository Contents...</Spinner>
+            ) : status === "err" ? (
+              <div>
+                <div className="Gerror">
+                  <div className={wumpus.emptyStateImage as string} />
+                  <span
+                    className={[
+                      textClasses?.["heading-lg/normal"],
+                      `${wumpus.emptyStateSubtext}`,
+                    ].join(" ")}>
+                    {error}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              Tab &&
+              repo &&
+              repo.tree &&
+              selectedBranch && (
+                <Tab.component
+                  {...repo}
+                  url={url}
+                  branch={selectedBranch}
+                  switchBranches={(branch: string) =>
+                    setBranch(repo.branches.find((b) => b.name === branch))
+                  }
+                />
+              )
             )}
-          </div>
-          {err && textClasses && (
-            <div className="Gerror">
-              <div className={wumpus.emptyStateImage as string} />
-              <span
-                className={[textClasses?.["heading-lg/normal"], `${wumpus.emptyStateSubtext}`].join(
-                  " ",
-                )}>
-                {err}
-              </span>
-            </div>
-          )}
-          {!err && Tab && (
-            <Tab.component
-              {...{
-                repo: repoInfo,
-                url,
-                branch: selectedBranch,
-                trigger: (path) => setPath(path ?? ""),
-                path,
-              }}
-            />
-          )}
-        </ModalContent>
-      </ThemeProvider>
-    </ModalRoot>
+          </ModalContent>
+        </ModalRoot>
+      </BaseStyles>
+    </ThemeProvider>
   );
-}
+};
 
-export function buildGitModal(url: string, tab?: string) {
-  // @ts-ignore
+export function openGithubModal(url: string, tab: string) {
   common.modal.openModal((props) => <GithubModal {...props} url={url} tab={tab} />);
 }

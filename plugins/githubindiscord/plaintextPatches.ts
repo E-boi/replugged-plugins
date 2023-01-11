@@ -7,7 +7,7 @@ export default [
       {
         match: /function ..\((.)\){var.+channel[\s\S]+onSelect:.,children:\[.+\w}\)/g,
         replace:
-          "$&,(()=>window.githubindiscord?.checkMessage?.($1?.message?.content,$1?.target?.href)||null)()",
+          "$&,(()=>window.replugged.plugins.getExports('dev.eboi.githubindiscord')?.checkMessage?.($1?.message?.content,$1?.target?.href)||null)()",
       },
     ],
   },

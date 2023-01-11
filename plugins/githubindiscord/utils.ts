@@ -1,131 +1,185 @@
 import { settings } from "replugged";
 import { Octokit } from "@octokit/rest";
-import t, { components } from "@octokit/openapi-types";
+import { components, operations } from "@octokit/openapi-types";
+import { useEffect, useState } from "react";
+import { paginateRest } from "@octokit/plugin-paginate-rest";
 
-export interface File {
-  content: string;
-  isImage: boolean;
-  path: string;
-  type: string;
+export type Branch = components["schemas"]["short-branch"] & {
+  commit: components["schemas"]["commit"];
+};
+
+interface RepoQuery {
+  branches?: operations["repos/list-branches"]["parameters"]["query"];
+  tags?: operations["repos/list-tags"]["parameters"]["query"];
+  issues?: operations["issues/list"]["parameters"]["query"];
+  prs?: operations["pulls/list"]["parameters"]["query"];
+  branch?: string;
 }
+
+export type TreeWithContent = components["schemas"]["git-tree"]["tree"][0] & {
+  tree?: TreeWithContent[];
+  latestCommit?: components["schemas"]["commit"];
+  filename: string;
+};
+
+export type Issue = components["schemas"]["issue-search-result-item"];
 
 export const pluginSettings = await settings.init("dev.eboi.githubindiscord");
-const octokit = new Octokit({ auth: pluginSettings.get("key") });
 
-export function back(dir: components["schemas"]["content-directory"]): string | null {
-  const folder: string[] = dir[0].path.split("/");
-  if (folder.length <= 2) return null;
-  return dir[0].path.replace(`/${folder[folder.length - 2]}/${folder[folder.length - 1]}`, "");
+const MyOctokit = Octokit.plugin(paginateRest);
+const octokit = new MyOctokit({ auth: pluginSettings.get("key") });
+const cache = new Map<
+  string,
+  {
+    repo: components["schemas"]["full-repository"];
+    tags: Array<components["schemas"]["tag"]>;
+    tree: TreeWithContent[];
+    issues: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
+    prs: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
+    branches: Branch[];
+  }
+>();
+
+export async function getAll(url: string, query: RepoQuery) {
+  if (cache.has(`${url}/${JSON.stringify(query)}`))
+    return cache.get(`${url}/${JSON.stringify(query)}`)!;
+  const repo = await getRepo(url);
+  const defaultBranch = await getBranch(url, repo.default_branch);
+  const branches = (await getBranches(url, { ...query?.branches })).filter(
+    (b) => b.name !== defaultBranch.name,
+  );
+  const selectedBranch = query?.branch && branches.find((b) => b.name === query.branch);
+  const issues = await getIssues(url);
+  const tags = await getTags(url, { ...query?.tags });
+  const tree = await getFolder(url, (selectedBranch || defaultBranch).commit.sha, {
+    recursive: "1",
+    branch: (selectedBranch || defaultBranch).name,
+  });
+  const prs = await getPRs(url);
+
+  cache.set(`${url}/${JSON.stringify(query)}`, {
+    repo,
+    branches: [defaultBranch, ...branches],
+    tags,
+    issues,
+    tree,
+    prs,
+  });
+
+  return {
+    repo,
+    branches: [defaultBranch, ...branches],
+    tags,
+    issues,
+    tree,
+    prs,
+  };
 }
+
+export function useRepo({ url, query }: { url: string; query: RepoQuery }) {
+  const [repo, setRepo] = useState<{
+    repo: components["schemas"]["full-repository"];
+    tags: Array<components["schemas"]["tag"]>;
+    tree: TreeWithContent[];
+    issues: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
+    prs: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
+    branches: Branch[];
+  }>();
+  const [status, setStatus] = useState<"loading" | "err" | "complete">("loading");
+  const [error, setError] = useState<string>();
+  useEffect(() => {
+    setStatus("loading");
+    (async () => {
+      try {
+        const r = await getAll(url, query);
+        setRepo(r);
+        setStatus("complete");
+      } catch (err) {
+        // @ts-expect-error stfu
+        setError(err.message as string);
+        setStatus("err");
+        console.error(err);
+      }
+    })();
+  }, [JSON.stringify(query), url]);
+
+  return { data: repo, status, error };
+}
+
+const headers = (): HeadersInit => ({
+  accept: "application/vnd.github+json",
+  Authorization: pluginSettings.get("key") ? `token ${pluginSettings.get("key") as string}` : "",
+});
 
 export async function getBranches(
   url: string,
-  query?: t.operations["repos/list-branches"]["parameters"]["query"],
+  query?: operations["repos/list-branches"]["parameters"]["query"],
 ) {
   const branches = await octokit.repos.listBranches({
     owner: url.split("/")[0]!,
     repo: url.split("/")[1],
     ...query,
   });
-  return branches.data;
+  return await Promise.all(
+    branches.data.map(async (b) => ({ ...b, commit: await getCommit(url, b.name) })),
+  );
+}
+
+export async function getBranch(url: string, branchName: string) {
+  const branch = await octokit.repos.getBranch({
+    owner: url.split("/")[0]!,
+    repo: url.split("/")[1],
+    branch: branchName,
+  });
+  return branch.data;
 }
 
 export async function getRepo(url: string) {
   const repo = await octokit.repos.get({ owner: url.split("/")[0]!, repo: url.split("/")[1] });
-  const commit = await octokit.repos.getCommit({
-    owner: url.split("/")[0]!,
-    repo: url.split("/")[1],
-    ref: repo.data.default_branch,
-  });
-  return { ...repo.data, commit: commit.data };
+  return repo.data;
 }
 
-export async function getFolder(url: string, branch: string, path?: string) {
-  const folder = await octokit.repos.getContent({
+export async function getFolder(
+  url: string,
+  tree_sha: string,
+  query?: operations["git/get-tree"]["parameters"]["query"] & { branch?: string },
+) {
+  const folder = await octokit.git.getTree({
     owner: url.split("/")[0]!,
     repo: url.split("/")[1],
-    path: path || "",
-    ref: branch,
+    tree_sha,
+    ...query,
   });
-
-  if (!Array.isArray(folder.data)) return null;
-  const folders = folder.data.map(async (e) => {
-    const isFolder = e.type === "dir";
-    if (isFolder)
-      return { ...e, commit: (await getCommits(url, { path: e.path, per_page: 1 }))![0] };
-    return isFolder && e;
-  });
-  const files = folder.data.map(async (e) => {
-    const isFile = e.type === "file";
-    if (isFile) return { ...e, commit: (await getCommits(url, { path: e.path, per_page: 1 }))![0] };
-    return isFile && e;
-  });
-
-  const lastestCommit = (await getCommits(url, { path: path || "", per_page: 1 }))![0];
-  return {
-    commit: lastestCommit,
-    path,
-    content: [
-      ...(await Promise.all(folders)).filter(Boolean),
-      ...(await Promise.all(files)).filter(Boolean),
-    ],
-  };
+  return await sortTree(url, folder.data.tree, query?.branch);
 }
 
-const imageTypes = ["png", "jpg"];
-
-export async function getFile(
-  folder: components["schemas"]["content-directory"],
-  fileName: string,
-): Promise<File | null> {
-  const file = folder.filter((f) => f.type === "file" && f.name === fileName);
-  const type = fileName.split(".");
-  const isImage = imageTypes.includes(type[type.length - 1]);
-  if (file.length === 0) return null;
-  if (isImage)
-    return {
-      path: file[0].path,
-      content: file[0].download_url!,
-      type: type[type.length - 1],
-      isImage,
-    };
-  const fileReq = await fetch(file[0].download_url!);
-  const content = await fileReq.text();
-  return { path: file[0].path, content, type: type[type.length - 1], isImage };
+export async function getFile(url: string, fileF: TreeWithContent) {
+  const file = await octokit.git.getBlob({
+    owner: url.split("/")[0]!,
+    repo: url.split("/")[1],
+    file_sha: fileF.sha!,
+  });
+  const type = fileF.filename.split(".");
+  return { ...file.data, filename: fileF.filename, type: type[type.length - 1] };
 }
 
 export async function getCommits(
   url: string,
-  query: t.operations["repos/list-commits"]["parameters"]["query"],
+  query: operations["repos/list-commits"]["parameters"]["query"],
 ) {
   const commits = await octokit.repos.listCommits({
     owner: url.split("/")[0]!,
     repo: url.split("/")[1],
     ...query,
   });
-  // const commits = await fetch(`https://api.github.com/repos/${url}/commits?${query}`, {
-  //   headers: headers(),
-  // });
-
-  // if (!commits.ok) return null;
-
-  // const json = await commits.json();
   return commits.data;
 }
 
 export async function getCommit(
   url: string,
   ref: string,
-  query?: t.operations["repos/get-commit"]["parameters"]["query"],
+  query?: operations["repos/get-commit"]["parameters"]["query"],
 ) {
-  // const commits = await fetch(`https://api.github.com/repos/${url}/commits/${ref}`, {
-  //   headers: headers(),
-  // });
-
-  // if (!commits.ok) return null;
-
-  // const json = await commits.json();
-  // return json;
   const commit = await octokit.repos.getCommit({
     owner: url.split("/")[0]!,
     repo: url.split("/")[1],
@@ -135,83 +189,38 @@ export async function getCommit(
   return commit.data;
 }
 
-export async function getIssues(
-  url: string,
-  query: t.operations["issues/list"]["parameters"]["query"],
-) {
-  // const issues = await fetch(`https://api.github.com/repos/${url}/issues?${query}`, {
-  //   headers: headers(),
-  // });
-  // if (!issues.ok) return null;
-  // const json: Issue[] = await issues.json();
-  // return json.filter((issue) => !issue.pull_request);
-  const issues = await octokit.issues.listForRepo({
-    owner: url.split("/")[0]!,
-    repo: url.split("/")[1],
-    ...query,
-  });
-  return issues.data.filter((issue) => !issue.pull_request);
+export async function getIssues(url: string) {
+  const res = await fetch(
+    `https://api.github.com/search/issues?q=${encodeURIComponent(
+      `repo:${url} type:issue state:open`,
+    )}`,
+    { headers: headers() },
+  );
+  const page: Issue[] = (await res.json()).items;
+  const all = [...page] as unknown as Issue[];
+  const open = page.filter((i) => i.state === "open").filter(Boolean) as unknown as Issue[];
+  const closed = page.filter((i) => i.state === "closed").filter(Boolean) as unknown as Issue[];
+  return { total: all.length, open, closed, all };
 }
 
-export async function getIssue(url: string, issueNumber: number) {
-  // const issue = await fetch(`https://api.github.com/repos/${url}/issues/${issueNumber}`, {
-  //   headers: headers(),
-  // });
-  // if (!issue.ok) return null;
-  // const json = await issue.json();
-  // return json;
-  const issue = await octokit.issues.get({
-    owner: url.split("/")[0]!,
-    repo: url.split("/")[1],
-    issue_number: issueNumber,
-  });
-  return issue;
-}
-
-export async function getPRs(
-  url: string,
-  query?: t.operations["pulls/list"]["parameters"]["query"],
-) {
-  // const prs = await fetch(`https://api.github.com/repos/${url}/pulls?${query}`, {
-  //   headers: headers(),
-  // });
-  // if (!prs.ok) return null;
-  // const json = await prs.json();
-  // return json;
-  const prs = await octokit.pulls.list({
-    owner: url.split("/")[0]!,
-    repo: url.split("/")[1],
-    ...query,
-  });
-  return prs.data;
-}
-
-export async function getPR(url: string, prNumber: number) {
-  // const pr = await fetch(`https://api.github.com/repos/${url}/pulls/${prNumber}`, {
-  //   headers: headers(),
-  // });
-  // if (!pr.ok) return null;
-  // const json = await pr.json();
-  // return json;
-  const pr = await octokit.pulls.get({
-    owner: url.split("/")[0]!,
-    repo: url.split("/")[1],
-    pull_number: prNumber,
-  });
-  return pr.data;
+export async function getPRs(url: string) {
+  const res = await fetch(
+    `https://api.github.com/search/issues?q=${encodeURIComponent(
+      `repo:${url} type:pr state:open`,
+    )}`,
+    { headers: headers() },
+  );
+  const page: Issue[] = (await res.json()).items;
+  const all = [...page] as unknown as Issue[];
+  const open = page.filter((i) => i.state === "open").filter(Boolean) as unknown as Issue[];
+  const closed = page.filter((i) => i.state === "closed").filter(Boolean) as unknown as Issue[];
+  return { total: all.length, open, closed, all };
 }
 
 export async function getReleases(
   url: string,
-  query?: t.operations["repos/list-releases"]["parameters"]["query"],
+  query?: operations["repos/list-releases"]["parameters"]["query"],
 ) {
-  // const releases = await fetch(
-  //   `https://api.github.com/repos/${url}/releases${lastest ? "/lastest" : ""}`,
-  //   { headers: headers() },
-  // );
-  // if (!releases.ok) return null;
-  // const json = await releases.json();
-  // return json;
   const releases = await octokit.repos.listReleases({
     owner: url.split("/")[0]!,
     repo: url.split("/")[1],
@@ -223,35 +232,100 @@ export async function getReleases(
 export async function getTimeline(
   url: string,
   issue: number,
-  query?: t.operations["issues/list-events-for-timeline"]["parameters"]["query"],
+  query?: operations["issues/list-events-for-timeline"]["parameters"]["query"],
 ) {
-  // const timeline = await fetch(url, { headers: headers() });
-  // if (!timeline) return null;
-  // const json = await timeline.json();
-  // return json;
   const timeline = await octokit.issues.listEventsForTimeline({
     owner: url.split("/")[0]!,
     repo: url.split("/")[1],
     issue_number: issue,
     ...query,
   });
-  return timeline.data;
+  return await Promise.all(
+    timeline.data.map(async (t) => {
+      t.body = await getMarkdown(t.body ?? "*No description provided.*");
+      // @ts-expect-error now it does
+      if (t.event === "committed") t.commit = await getCommit(url, t.sha!);
+      return t;
+    }),
+  );
+}
+
+export async function getMarkdown(text: string) {
+  const markdown = await octokit.markdown.render({ text });
+  return markdown.data;
+}
+
+export async function getTags(
+  url: string,
+  query?: operations["repos/list-tags"]["parameters"]["query"],
+) {
+  const tags = await octokit.repos.listTags({
+    owner: url.split("/")[0]!,
+    repo: url.split("/")[1],
+    ...query,
+  });
+  return tags.data;
+}
+
+function addToTree(
+  tree: TreeWithContent[],
+  pathToFind: string,
+  add: TreeWithContent & { latestCommit?: components["schemas"]["commit"] },
+) {
+  tree.find((t) => {
+    const split = pathToFind.split("/");
+    const withoutLast = split.slice(0, split.length - 1);
+    if (withoutLast.join("/") === t.path) {
+      if (add) t.tree!.push(add);
+      return t;
+    } else return t.tree && addToTree(t.tree, pathToFind, add);
+  });
+}
+
+// sorts folder first the files
+function sortFolder(tree: TreeWithContent[]) {
+  tree.sort((a, b) => {
+    if (a.tree) sortFolder(a.tree as never);
+    if (b.tree) sortFolder(b.tree as never);
+    return (b.type === "tree" ? 1 : 0) - (a.type === "tree" ? 1 : 0);
+  });
+}
+
+async function sortTree(
+  url: string,
+  tree: components["schemas"]["git-tree"]["tree"],
+  branch?: string,
+) {
+  const withCommit = await Promise.all(
+    tree.map(async (t) => {
+      const commit =
+        (t.type === "tree" &&
+          (await getCommits(url, { per_page: 1, path: t.path!, sha: branch }))[0]) ||
+        // eslint-disable-next-line no-undefined
+        undefined;
+      return {
+        ...t,
+        latestCommit: commit,
+        filename: t.path!.split("/")[t.path!.split("/").length - 1],
+      };
+    }),
+  );
+  const arr: TreeWithContent[] = [];
+
+  for (const t of withCommit) {
+    // @ts-expect-error dont care
+    if (t.type === "tree") t.tree = [];
+    const l = t.path?.split("/");
+    if (l?.length === 1) arr.push(t);
+    else addToTree(arr, t.path!, t);
+  }
+
+  sortFolder(arr);
+
+  return arr;
 }
 
 export function abbreviateNumber(value: number): string {
-  let newValue = value.toString();
-  if (value >= 1000) {
-    const suffixes = ["", "k", "m", "b", "t"];
-    const suffixNum = Math.floor(value.toString().length / 3);
-    let shortValue = 0;
-    for (let precision = 2; precision >= 1; precision--) {
-      shortValue = parseFloat(
-        (suffixNum ? value / Math.pow(1000, suffixNum) : value).toPrecision(precision),
-      );
-      const dotLessShortValue = shortValue.toString().replace(/[^a-zA-Z 0-9]+/g, "");
-      if (dotLessShortValue.length <= 2) break;
-    }
-    newValue = shortValue.toString() + suffixes[suffixNum];
-  }
-  return newValue;
+  // eslint-disable-next-line new-cap, no-undefined
+  return Intl.NumberFormat(undefined, { notation: "compact" }).format(value);
 }

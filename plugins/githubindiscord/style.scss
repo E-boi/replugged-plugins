@@ -1,11 +1,12 @@
 .githubModel {
-  color: var(--text-normal);
+  // color: var(--text-normal);
   width: fit-content;
   max-width: 80vw;
   max-height: 70vh;
+  background-color: inherit;
   min-width: 60vw;
 
-  >* {
+  > * {
     line-height: normal;
   }
 
@@ -17,8 +18,10 @@
     white-space: nowrap;
     overflow: hidden;
     display: flex;
+    padding-bottom: 0;
+    overflow: hidden;
 
-    .repository-info {
+    .repo-info {
       display: flex;
       width: 100%;
 
@@ -54,8 +57,8 @@
         display: flex;
         gap: 15px;
 
-        >.ButtonGroup-sc-tk435v-0 {
-          >button {
+        > .ButtonGroup-sc-tk435v-0 {
+          > button {
             padding-left: 12px;
             padding-right: 12px;
           }
@@ -63,7 +66,7 @@
       }
     }
 
-    nav[aria-label="tabs"] {
+    nav[aria-label="Repository"] {
       padding-left: 0 !important;
       border-bottom: none;
       margin-top: 12px;
@@ -81,39 +84,9 @@
       padding: 8px 0;
       display: flex;
 
-      .branches {
-        align-items: center;
-        display: flex;
-
-        .select-1Ia3hD {
-          margin-right: 20px;
-          min-width: 11rem;
-        }
-
-        a {
-          display: flex;
-        }
-      }
-
-      nav.Breadcrumbs__BreadcrumbsBase-sc-zwknu7-1 {
-        .Box-sc-1gh2r6s-0 {
-          display: flex;
-
-          .fLAmDQ {
-            align-items: center;
-            display: flex;
-
-            a {
-              font-size: 17px !important;
-              font-weight: 600;
-
-              &.selected {
-                color: var(--text-normal) !important;
-                font-weight: normal;
-              }
-            }
-          }
-        }
+      .select-1Ia3hD {
+        margin-right: 20px;
+        min-width: 11rem;
       }
 
       div.miscLinks {
@@ -124,6 +97,27 @@
 
           &.taglink {
             margin-left: 16px;
+          }
+        }
+      }
+    }
+
+    nav.Breadcrumbs__BreadcrumbsBase-sc-zwknu7-1 {
+      .Box-sc-1gh2r6s-0 {
+        display: flex;
+
+        .fLAmDQ {
+          align-items: center;
+          display: flex;
+
+          a {
+            font-size: 17px !important;
+            font-weight: 600;
+
+            &.selected {
+              color: var(--text-normal) !important;
+              font-weight: normal;
+            }
           }
         }
       }
@@ -146,7 +140,7 @@
       border-radius: 4px;
       margin-top: 8px;
 
-      .Gfolder:nth-child(1)>div {
+      .Gfolder:nth-child(1) > div {
         border-top: none !important;
       }
 
@@ -201,7 +195,9 @@
   a {
     color: var(--text-link);
 
-    &:not(.repo-path > *):not(.Gout-folder a:hover):not(.Gin-folder a:hover):not(.branches a:hover):not(.backbtn a):not(.doegSW):not(.miscLinks a:hover) {
+    &:not(.repo-path > *):not(.Gout-folder a:hover):not(.Gin-folder a:hover):not(
+        .branches a:hover
+      ):not(.backbtn a):not(.doegSW):not(.miscLinks a:hover) {
       color: var(--text-normal);
     }
   }

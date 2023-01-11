@@ -1,56 +1,57 @@
 import esbuild from "esbuild";
-import { globalExternals } from "@fal-works/esbuild-plugin-global-externals";
 import { sassPlugin } from "esbuild-sass-plugin";
 import { join } from "path";
 import { existsSync } from "fs";
 import { cp, mkdir, readdir, rm, writeFile } from "fs/promises";
-import { Plugin } from "replugged/dist/types/addon";
+import { PluginManifest } from "replugged/dist/types/addon";
 import { pathToFileURL } from "url";
 
 const NODE_VERSION = "14";
 const CHROME_VERSION = "91";
 
-const globalModules = {
-  replugged: {
-    varName: "replugged",
-    namedExports: [
-      "Injector",
-      "webpack",
-      "common",
-      "notices",
-      "commands",
-      "settings",
-      "quickCSS",
-      "themes",
-      "ignition",
-      "plugins",
-      "util",
-      "types",
-      "components",
-    ],
-    defaultExport: true,
-  },
-  react: {
-    varName: "replugged.common.React",
-    namedExports: [
-      "useEffect",
-      "useState",
-      "memo",
-      "useCallback",
-      "useContext",
-      "useMemo",
-      "useRef",
-      "createElement",
-      "useLayoutEffect",
-      "useImperativeHandle",
-      "forwardRef",
-      "createContext",
-      "Children",
-      "isValidElement",
-      "cloneElement",
-      "useReducer",
-      "useDebugValue",
-    ],
+const globalModules: esbuild.Plugin = {
+  name: "globalModules",
+  setup: (build) => {
+    build.onResolve({ filter: /^react$/ }, (args) => {
+      if (args.kind !== "import-statement") return;
+      return { path: args.path, namespace: "react" };
+    });
+
+    build.onResolve({ filter: /^react-dom$/ }, (args) => {
+      if (args.kind !== "import-statement") return;
+      return { path: args.path, namespace: "react-dom" };
+    });
+
+    build.onResolve({ filter: /^replugged.+$/ }, (args) => {
+      if (args.kind !== "import-statement") return;
+      return {
+        errors: [
+          {
+            text: `Importing from a path (${args.path}) is not supported. Instead, please import from "replugged" and destructure the required modules.`,
+          },
+        ],
+      };
+    });
+
+    build.onResolve({ filter: /^replugged$/ }, (args) => {
+      if (args.kind !== "import-statement") return;
+      return {
+        path: args.path,
+        namespace: "replugged",
+      };
+    });
+
+    build.onLoad({ filter: /.*/, namespace: "replugged" }, () => ({
+      contents: "module.exports = window.replugged",
+    }));
+
+    build.onLoad({ filter: /.*/, namespace: "react" }, () => ({
+      contents: "module.exports = window.replugged.common.React",
+    }));
+
+    build.onLoad({ filter: /.*/, namespace: "react-dom" }, () => ({
+      contents: "module.exports = window.replugged.common.ReactDOM",
+    }));
   },
 };
 
@@ -99,13 +100,13 @@ const common: esbuild.BuildOptions = {
   format: "cjs" as esbuild.Format,
   logLevel: "info",
   watch,
-  plugins: [install, globalExternals(globalModules), sassPlugin()],
+  plugins: [install, globalModules, sassPlugin()],
 };
 
 async function buildPlugin(path: string): Promise<void> {
   // dunno why using join on import() errors
   const manifestPath = pathToFileURL(join(path, "manifest.json")).toString();
-  const manifest: Plugin = { ...(await import(manifestPath)) };
+  const manifest: PluginManifest = { ...(await import(manifestPath)) };
 
   const targets = [];
 
