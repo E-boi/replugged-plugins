@@ -50,10 +50,10 @@ export default ({ prs, url }: TabProps) => {
           {prs.page.totalClosed} Closed
         </Button>
       </Box>
-      {!page.length ? (
+      {!page?.length ? (
         <Heading sx={{ p: 4, textAlign: "center" }}>There aren't any open pull requests</Heading>
       ) : (
-        page.map((pr) => (
+        page?.map((pr) => (
           <Box
             borderColor="border.default"
             borderStyle="solid"

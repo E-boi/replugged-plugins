@@ -49,10 +49,10 @@ export default ({ issues, url }: TabProps) => {
           {issues.page.totalClosed} Closed
         </Button>
       </Box>
-      {!page.length ? (
+      {!page?.length ? (
         <Heading sx={{ p: 4, textAlign: "center" }}>There aren't any open issues</Heading>
       ) : (
-        page.map((issue) => (
+        page?.map((issue) => (
           <Box
             borderColor="border.subtle"
             borderStyle="solid"

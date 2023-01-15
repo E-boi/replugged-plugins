@@ -46,8 +46,8 @@ function StandardView({ tree, branch, branches, url, switchBranches }: TabProps)
     }));
     setFile(file);
   }, []);
-  let path: string[] = folder.current.tree[0].path!.split("/");
-  path.pop();
+  let path: string[] = (file?.path || folder.current.tree[0].path)!.split("/");
+  let ending = path.pop();
   const latestCommit = file ? file.latestCommit : folder.current.latestCommit;
 
   return (
@@ -60,30 +60,31 @@ function StandardView({ tree, branch, branches, url, switchBranches }: TabProps)
             options={branches.map((branch) => ({ value: branch.name, label: branch.name }))}
             onChange={(value: string) => {
               switchBranches(value);
-              // changeBranch(branches.find((branch) => branch.name === value)!);
             }}
           />
         )}
         {folder.prevs.length ? (
           <Breadcrumbs>
             <Breadcrumbs.Item
-              onClick={() =>
-                setFolder({ current: { tree, latestCommit: branch.commit }, prevs: [] })
-              }>
+              onClick={() => {
+                setFolder({ current: { tree, latestCommit: branch.commit }, prevs: [] });
+                setFile(null);
+              }}>
               {url.split("/")[1]}
             </Breadcrumbs.Item>
             {path.map((inPath, idx) => (
               <Breadcrumbs.Item
-                selected={idx === path.length - 1}
+                selected={!file && idx === path.length - 1}
                 onClick={() => {
                   const goIn = folder.prevs[idx + 1];
                   folder.prevs.splice(idx + 1, folder.prevs.length);
-                  console.log(folder.prevs);
                   setFolder({ current: goIn, prevs: folder.prevs });
+                  setFile(null);
                 }}>
                 {inPath}
               </Breadcrumbs.Item>
             ))}
+            {file && <Breadcrumbs.Item selected>{ending}</Breadcrumbs.Item>}
           </Breadcrumbs>
         ) : null}
       </Box>
