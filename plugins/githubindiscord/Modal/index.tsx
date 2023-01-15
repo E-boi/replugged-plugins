@@ -18,29 +18,22 @@ import {
   RepoForkedIcon,
   RepoIcon,
   StarIcon,
-  // TagIcon,
 } from "@primer/styled-octicons";
 import { FC, useLayoutEffect, useState } from "react";
-import { common, components } from "replugged";
+import { common, components, webpack } from "replugged";
 import { ModalProps } from "../Modals";
-import {
-  Branch,
-  Issue,
-  TreeWithContent,
-  abbreviateNumber,
-  pluginSettings,
-  useRepo,
-} from "../utils";
+import { Branch, TreeWithContent, abbreviateNumber, pluginSettings, useRepo } from "../utils";
 import Code from "./Code";
 import Issues from "./Issues";
 import Pulls from "./Pulls";
-// import Tags from "./Tags";
 import theme from "../theme";
 import Spinner from "./Spinner";
 import { textClasses, wumpus } from "../components";
 import { components as ght } from "@octokit/openapi-types";
+import { Paginate } from "../paginate";
+import { openSettingsModal } from "./SettingsModal";
 
-const { ModalContent, ModalHeader, ModalRoot } = components.Modal;
+const { ModalContent, ModalHeader, ModalRoot, ModalFooter } = components.Modal;
 
 const tabs = [
   { title: "Code", component: Code, icon: CodeIcon },
@@ -52,8 +45,8 @@ export interface TabProps {
   repo: ght["schemas"]["full-repository"];
   tags: Array<ght["schemas"]["tag"]>;
   tree: TreeWithContent[];
-  issues: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
-  prs: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
+  issues: Paginate;
+  prs: Paginate;
   branches: Branch[];
   branch: Branch;
   url: string;
@@ -66,9 +59,10 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
     data: repo,
     error,
     status,
+    refetch,
   } = useRepo({
     url,
-    query: { issues: { state: "all" }, prs: { state: "open" }, branch: selectedBranch?.name },
+    query: { issues: { state: "all" }, prs: { state: "open" } },
   });
   const [currentTab, setTab] = useState<string>(tab || "Code");
 
@@ -80,7 +74,7 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
   const Tab = tabs.find(({ title }) => title === currentTab);
   return (
     <ThemeProvider
-      colorMode="auto"
+      colorMode={(webpack.getByProps("theme")?.theme as "dark" | "light") || "auto"}
       theme={theme}
       nightScheme={pluginSettings.get("darkTheme", "dark_discord")}
       dayScheme={pluginSettings.get("lightTheme", "light_discord")}>
@@ -154,11 +148,10 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
                   onSelect={() => setTab(title)}
                   counter={
                     title === "Issues"
-                      ? abbreviateNumber(repo?.issues.total ?? 0)
+                      ? abbreviateNumber(repo?.issues.page.totalOpen ?? 0)
                       : title === "Pull Requests"
-                      ? abbreviateNumber(repo?.prs.total ?? 0)
-                      : // eslint-disable-next-line no-undefined
-                        undefined
+                      ? abbreviateNumber(repo?.prs.page.totalOpen ?? 0)
+                      : undefined
                   }>
                   {title}
                 </UnderlineNav.Item>
@@ -190,13 +183,17 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
                   {...repo}
                   url={url}
                   branch={selectedBranch}
-                  switchBranches={(branch: string) =>
-                    setBranch(repo.branches.find((b) => b.name === branch))
-                  }
+                  switchBranches={(branch: string) => {
+                    setBranch(repo.branches.find((b) => b.name === branch));
+                    refetch({ issues: { state: "all" }, prs: { state: "open" }, branch });
+                  }}
                 />
               )
             )}
           </ModalContent>
+          <ModalFooter>
+            <Button onClick={openSettingsModal}>Open Settings</Button>
+          </ModalFooter>
         </ModalRoot>
       </BaseStyles>
     </ThemeProvider>

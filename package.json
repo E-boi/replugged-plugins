@@ -35,12 +35,11 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-react": "^7.31.10",
     "prettier": "^2.8.1",
-    "replugged": "4.0.0-beta0.20",
+    "replugged": "4.0.0-beta0.21",
     "tsx": "^3.10.3",
     "typescript": "^4.8.4"
   },
   "dependencies": {
-    "@octokit/plugin-paginate-rest": "^5.0.1",
     "@octokit/rest": "^19.0.5",
     "@primer/react": "^35.16.0",
     "@primer/styled-octicons": "^17.10.0",

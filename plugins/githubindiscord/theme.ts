@@ -37,10 +37,10 @@ export default deepmerge(baseTheme, {
           border: "transparent",
           hoverBg: "var(--button-secondary-background-hover)",
           hoverBorder: "transparent",
-          activeBg: "red",
+          // activeBg: "red",
           activeBorder: "transparent",
-          selectedBg: "red",
-          focusBg: "red",
+          // selectedBg: "red",
+          // focusBg: "red",
           focusBorder: "transparent",
           counterBg: "rgba(27,31,36,0.08)",
           primary: {

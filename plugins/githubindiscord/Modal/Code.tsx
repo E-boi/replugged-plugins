@@ -3,12 +3,13 @@ import { Avatar, Box, Breadcrumbs, Link, RelativeTime, Text, Truncate } from "@p
 import { TreeView } from "@primer/react/drafts";
 import { FileDirectoryFillIcon, FileIcon } from "@primer/styled-octicons";
 import { useCallback, useEffect, useState } from "react";
-import { webpack } from "replugged";
+import { common, webpack } from "replugged";
 import { TabProps } from ".";
 import { SelectMenu } from "../components";
-import { TreeWithContent, getFile, pluginSettings } from "../utils";
+import { TreeWithContent, getCommits, getFile, pluginSettings } from "../utils";
 
-const parser: any = webpack.getByProps("parse", "parseTopic");
+const { parser } = common;
+const blober = webpack.getByProps("blob");
 
 export default (props: TabProps) => {
   return pluginSettings.get("view", "standard") === "treeview" ? (
@@ -20,15 +21,13 @@ export default (props: TabProps) => {
 
 function StandardView({ tree, branch, branches, url, switchBranches }: TabProps) {
   const [folder, setFolder] = useState<{
-    current: { latestCommit: components["schemas"]["commit"]; tree: TreeWithContent[] };
-    prevs: Array<{ latestCommit: components["schemas"]["commit"]; tree: TreeWithContent[] }>;
+    current: { latestCommit?: components["schemas"]["commit"]; tree: TreeWithContent[] };
+    prevs: Array<{ latestCommit?: components["schemas"]["commit"]; tree: TreeWithContent[] }>;
   }>({
     current: { tree, latestCommit: branch.commit },
     prevs: [],
   });
-  const [file, setFile] = useState<
-    (components["schemas"]["blob"] & { filename: string; type: string }) | null
-  >(null);
+  const [file, setFile] = useState<TreeWithContent | null>(null);
 
   useEffect(
     () =>
@@ -40,11 +39,17 @@ function StandardView({ tree, branch, branches, url, switchBranches }: TabProps)
   );
 
   const getBlob = useCallback(async (file: TreeWithContent) => {
-    const f = await getFile(url, file);
-    setFile(f);
+    if (!file.content) file.content = (await getFile(url, file)).content;
+    setFolder((prev) => ({
+      current: prev.current,
+      prevs: [...prev.prevs, prev.current],
+    }));
+    setFile(file);
   }, []);
   let path: string[] = folder.current.tree[0].path!.split("/");
   path.pop();
+  const latestCommit = file ? file.latestCommit : folder.current.latestCommit;
+
   return (
     <>
       <Box className="repository-options">
@@ -90,23 +95,32 @@ function StandardView({ tree, branch, branches, url, switchBranches }: TabProps)
           alignItems="center"
           borderTopLeftRadius={6}
           borderTopRightRadius={6}>
-          <Avatar src={folder.current.latestCommit.author!.avatar_url} />
-          <Truncate
-            maxWidth={"100%"}
-            title={`${folder.current.latestCommit.author?.login} ${folder.current.latestCommit.commit.message}`}>
-            <Text fontWeight="bold" sx={{ marginLeft: "5px" }}>
-              {folder.current.latestCommit.author?.login}
-              <Text fontWeight="normal">
-                {" "}
-                {folder.current.latestCommit.commit.message.split("\n\n")[0]}
-              </Text>
-            </Text>
-          </Truncate>
-          <RelativeTime
-            sx={{ marginLeft: "auto" }}
-            datetime={folder.current.latestCommit.commit.author?.date}
-            format="auto"
-          />
+          {latestCommit ? (
+            <>
+              <Avatar src={latestCommit.author!.avatar_url} />
+              <Truncate
+                maxWidth={"100%"}
+                title={`${latestCommit.author!.login} ${latestCommit.commit.message}`}>
+                <Text fontWeight="bold" sx={{ marginLeft: "5px" }}>
+                  {latestCommit?.author?.login}
+                  <Text fontWeight="normal"> {latestCommit.commit.message.split("\n\n")[0]}</Text>
+                </Text>
+              </Truncate>
+              <RelativeTime
+                sx={{ marginLeft: "auto" }}
+                datetime={latestCommit.commit.author?.date}
+                format="auto"
+              />
+            </>
+          ) : (
+            <Box
+              className={blober?.blob as string}
+              width={"100%"}
+              height={20}
+              bg="fg.default"
+              opacity={0.03}
+            />
+          )}
         </Box>
         {folder.prevs.length > 0 && (
           <Box
@@ -136,7 +150,8 @@ function StandardView({ tree, branch, branches, url, switchBranches }: TabProps)
             borderStyle="solid"
             sx={{ userSelect: "text", code: { bg: "inherit" } }}>
             {parser.defaultRules.codeBlock.react(
-              { content: window.atob(file.content), lang: file.type },
+              { content: window.atob(file.content!), lang: file.fileType },
+              // @ts-ignore okay
               null,
               {},
             )}
@@ -161,18 +176,31 @@ function StandardView({ tree, branch, branches, url, switchBranches }: TabProps)
               <Link
                 sx={{ color: "fg.default" }}
                 onClick={() => {
-                  if (c.type === "tree")
+                  if (c.type === "tree") {
                     setFolder((prev) => ({
                       current: c as any,
                       prevs: [...prev.prevs, folder.current],
                     }));
-                  else {
+                  } else {
                     getBlob(c);
-                    setFolder((prev) => ({
-                      current: prev.current,
-                      prevs: [...prev.prevs, prev.current],
-                    }));
                   }
+
+                  if (!c.latestCommit)
+                    getCommits(url, { path: c.path, sha: branch.name }).then((o) => {
+                      if (o[0]) {
+                        c.latestCommit = o[0];
+                        if (c.type === "tree")
+                          setFolder((prev) => ({
+                            current: c as any,
+                            prevs: [...prev.prevs],
+                          }));
+                        else
+                          setFile((prev) => {
+                            if (prev) return { ...prev, latestCommit: c.latestCommit };
+                            return null;
+                          });
+                      }
+                    });
                 }}>
                 {c.filename}
               </Link>

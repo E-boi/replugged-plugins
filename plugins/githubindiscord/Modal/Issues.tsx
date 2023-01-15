@@ -1,16 +1,18 @@
-import { operations } from "@octokit/openapi-types";
 import {
   Box,
+  Button,
   Heading,
   Label,
   LabelGroup,
   Link,
+  Pagination,
   RelativeTime,
   StateLabel,
   Text,
   Timeline,
 } from "@primer/react";
 import {
+  CheckIcon,
   CommentIcon,
   IssueClosedIcon,
   IssueOpenedIcon,
@@ -18,26 +20,43 @@ import {
 } from "@primer/styled-octicons";
 import { useEffect, useState } from "react";
 import { TabProps } from ".";
-import { getTimeline } from "../utils";
+import { Issue, getMarkdown, getTimeline } from "../utils";
 import { TimelineComment } from "./Comment";
 import Spinner from "./Spinner";
 import TimelineItems from "./TimelineItems";
 
 export default ({ issues, url }: TabProps) => {
-  const [selectedIssue, setIssue] = useState<TabProps["issues"]["all"][0] | null>(null);
+  const [selectedIssue, setIssue] = useState<Issue | null>(null);
 
+  const page: Issue[] = issues.page[issues.state][issues.info.currentPage - 1];
   if (selectedIssue) return <Issue issue={selectedIssue} url={url} />;
 
   return (
     <Box borderColor="border.default" borderStyle="solid" borderWidth={1} borderRadius={2}>
-      {!issues.open.length ? (
+      <Box bg="canvas.subtle" display="flex" p={2} borderTopLeftRadius={2} borderTopRightRadius={2}>
+        <Button
+          leadingIcon={IssueOpenedIcon}
+          variant="invisible"
+          sx={{ color: issues.state === "open" ? "fg.default" : "fg.muted" }}
+          onClick={() => issues.viewOpen()}>
+          {issues.page.totalOpen} Open
+        </Button>
+        <Button
+          leadingIcon={CheckIcon}
+          variant="invisible"
+          sx={{ color: issues.state === "closed" ? "fg.default" : "fg.muted" }}
+          onClick={() => issues.viewClosed()}>
+          {issues.page.totalClosed} Closed
+        </Button>
+      </Box>
+      {!page.length ? (
         <Heading sx={{ p: 4, textAlign: "center" }}>There aren't any open issues</Heading>
       ) : (
-        issues.open.map((issue, i) => (
+        page.map((issue) => (
           <Box
-            borderColor="border.default"
+            borderColor="border.subtle"
             borderStyle="solid"
-            borderTopWidth={i ? 1 : 0}
+            borderTopWidth={1}
             px={3}
             py={2}
             sx={{ ":hover": { bg: "canvas.subtle" } }}
@@ -85,21 +104,38 @@ export default ({ issues, url }: TabProps) => {
           </Box>
         ))
       )}
+      {issues.info.pages[issues.state] && (
+        <Box borderColor="border.default" borderStyle="solid" borderTopWidth={1}>
+          <Pagination
+            currentPage={issues.info.currentPage}
+            pageCount={issues.info.pages[issues.state]!.last}
+            showPages={false}
+            onPageChange={(_, page) => {
+              if (page > issues.info.currentPage) issues.nextPage();
+              else issues.previousPage();
+            }}
+          />
+        </Box>
+      )}
     </Box>
   );
 };
 
-function Issue({ issue, url }: { issue: TabProps["issues"]["all"][0]; url: string }) {
-  const [timeline, setTimeline] = useState<
-    | operations["issues/list-events-for-timeline"]["responses"]["200"]["content"]["application/json"]
-    | null
-  >(null);
-
+function Issue({ issue, url }: { issue: Issue; url: string }) {
+  const forceUpdate = useState({})[1];
   useEffect(() => {
-    (async () => setTimeline(await getTimeline(url, issue.number)))();
+    (async () => {
+      if (!issue.timeline) issue.timeline = await getTimeline(url, issue.number);
+      const markdown = issue.marked
+        ? issue.body
+        : await getMarkdown(issue.body ?? "*No description provided.*");
+      issue.body = markdown;
+      issue.marked = true;
+      forceUpdate({});
+    })();
   }, []);
 
-  if (!timeline) return <Spinner>Fetching Issue...</Spinner>;
+  if (!issue.timeline) return <Spinner>Fetching issue...</Spinner>;
 
   return (
     <Box>
@@ -113,10 +149,10 @@ function Issue({ issue, url }: { issue: TabProps["issues"]["all"][0]; url: strin
           borderBottomWidth={1}
           borderStyle="solid"
           borderColor="border.default"
-          pb={2}>
+          pb={3}>
           <StateLabel
             status={issue.state === "closed" ? "issueClosed" : "issueOpened"}
-            sx={{ mr: 2, mb: 2 }}>
+            sx={{ mr: 2 }}>
             {issue.state === "closed" ? "Closed" : "Open"}
           </StateLabel>
           <Text>
@@ -127,7 +163,7 @@ function Issue({ issue, url }: { issue: TabProps["issues"]["all"][0]; url: strin
       </Box>
       <Timeline clipSidebar>
         <TimelineComment comment={issue} />
-        {timeline?.map((t) => (
+        {issue.timeline?.map((t) => (
           <TimelineItems event={t} />
         ))}
       </Timeline>

@@ -2,7 +2,7 @@ import { settings } from "replugged";
 import { Octokit } from "@octokit/rest";
 import { components, operations } from "@octokit/openapi-types";
 import { useEffect, useState } from "react";
-import { paginateRest } from "@octokit/plugin-paginate-rest";
+import { usePaginate } from "./paginate";
 
 export type Branch = components["schemas"]["short-branch"] & {
   commit: components["schemas"]["commit"];
@@ -17,25 +17,30 @@ interface RepoQuery {
 }
 
 export type TreeWithContent = components["schemas"]["git-tree"]["tree"][0] & {
-  tree?: TreeWithContent[];
-  latestCommit?: components["schemas"]["commit"];
   filename: string;
+  fileType?: string;
+  tree?: TreeWithContent[];
+  content?: string;
+  latestCommit?: components["schemas"]["commit"];
 };
 
-export type Issue = components["schemas"]["issue-search-result-item"];
+export type Issue = components["schemas"]["issue-search-result-item"] & {
+  pull?: components["schemas"]["pull-request"];
+  timeline?: operations["issues/list-events-for-timeline"]["responses"]["200"]["content"]["application/json"];
+  marked?: boolean;
+};
 
 export const pluginSettings = await settings.init("dev.eboi.githubindiscord");
 
-const MyOctokit = Octokit.plugin(paginateRest);
-const octokit = new MyOctokit({ auth: pluginSettings.get("key") });
+const octokit = new Octokit({ auth: pluginSettings.get("key") });
 const cache = new Map<
   string,
   {
     repo: components["schemas"]["full-repository"];
     tags: Array<components["schemas"]["tag"]>;
     tree: TreeWithContent[];
-    issues: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
-    prs: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
+    // issues: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
+    // prs: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
     branches: Branch[];
   }
 >();
@@ -49,31 +54,25 @@ export async function getAll(url: string, query: RepoQuery) {
     (b) => b.name !== defaultBranch.name,
   );
   const selectedBranch = query?.branch && branches.find((b) => b.name === query.branch);
-  const issues = await getIssues(url);
   const tags = await getTags(url, { ...query?.tags });
   const tree = await getFolder(url, (selectedBranch || defaultBranch).commit.sha, {
     recursive: "1",
     branch: (selectedBranch || defaultBranch).name,
   });
-  const prs = await getPRs(url);
 
-  cache.set(`${url}/${JSON.stringify(query)}`, {
+  const data = {
     repo,
     branches: [defaultBranch, ...branches],
     tags,
-    issues,
     tree,
-    prs,
-  });
-
-  return {
-    repo,
-    branches: [defaultBranch, ...branches],
-    tags,
-    issues,
-    tree,
-    prs,
   };
+
+  cache.set(`${url}/${JSON.stringify(query)}`, data);
+  // safe to assume that the default branch was fetched so cache
+  if (!query.branch)
+    cache.set(`${url}/${JSON.stringify({ ...query, branch: repo.default_branch })}`, data);
+
+  return data;
 }
 
 export function useRepo({ url, query }: { url: string; query: RepoQuery }) {
@@ -81,17 +80,19 @@ export function useRepo({ url, query }: { url: string; query: RepoQuery }) {
     repo: components["schemas"]["full-repository"];
     tags: Array<components["schemas"]["tag"]>;
     tree: TreeWithContent[];
-    issues: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
-    prs: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
     branches: Branch[];
   }>();
   const [status, setStatus] = useState<"loading" | "err" | "complete">("loading");
   const [error, setError] = useState<string>();
+  const [iQuery, setQuery] = useState(query);
+  const issues = usePaginate(octokit, { q: `repo:${url} is:issue` });
+  const prs = usePaginate(octokit, { q: `repo:${url} is:pr` });
+
   useEffect(() => {
     setStatus("loading");
     (async () => {
       try {
-        const r = await getAll(url, query);
+        const r = await getAll(url, iQuery);
         setRepo(r);
         setStatus("complete");
       } catch (err) {
@@ -101,15 +102,31 @@ export function useRepo({ url, query }: { url: string; query: RepoQuery }) {
         console.error(err);
       }
     })();
-  }, [JSON.stringify(query), url]);
+  }, [JSON.stringify(iQuery), url]);
 
-  return { data: repo, status, error };
+  // cool epic proxy, makes it so data can be added/changed later on and the modal will rerender and save to cache
+  const p =
+    repo &&
+    new Proxy(repo, {
+      get(target, p: keyof typeof repo) {
+        return target[p];
+      },
+      set(target, p: keyof typeof repo, newValue) {
+        if (target[p] === newValue) return true;
+        target[p] = newValue;
+        cache.set(`${url}/${JSON.stringify(query)}`, target);
+        setRepo(target);
+        return true;
+      },
+    });
+
+  const refetch = (q: RepoQuery) => {
+    if (JSON.stringify(q) === JSON.stringify(iQuery)) return;
+    setQuery(q);
+  };
+
+  return { data: p && { ...p, issues, prs }, status, error, refetch };
 }
-
-const headers = (): HeadersInit => ({
-  accept: "application/vnd.github+json",
-  Authorization: pluginSettings.get("key") ? `token ${pluginSettings.get("key") as string}` : "",
-});
 
 export async function getBranches(
   url: string,
@@ -150,7 +167,7 @@ export async function getFolder(
     tree_sha,
     ...query,
   });
-  return await sortTree(url, folder.data.tree, query?.branch);
+  return sortTree(folder.data.tree);
 }
 
 export async function getFile(url: string, fileF: TreeWithContent) {
@@ -159,8 +176,7 @@ export async function getFile(url: string, fileF: TreeWithContent) {
     repo: url.split("/")[1],
     file_sha: fileF.sha!,
   });
-  const type = fileF.filename.split(".");
-  return { ...file.data, filename: fileF.filename, type: type[type.length - 1] };
+  return file.data;
 }
 
 export async function getCommits(
@@ -189,32 +205,13 @@ export async function getCommit(
   return commit.data;
 }
 
-export async function getIssues(url: string) {
-  const res = await fetch(
-    `https://api.github.com/search/issues?q=${encodeURIComponent(
-      `repo:${url} type:issue state:open`,
-    )}`,
-    { headers: headers() },
-  );
-  const page: Issue[] = (await res.json()).items;
-  const all = [...page] as unknown as Issue[];
-  const open = page.filter((i) => i.state === "open").filter(Boolean) as unknown as Issue[];
-  const closed = page.filter((i) => i.state === "closed").filter(Boolean) as unknown as Issue[];
-  return { total: all.length, open, closed, all };
-}
-
-export async function getPRs(url: string) {
-  const res = await fetch(
-    `https://api.github.com/search/issues?q=${encodeURIComponent(
-      `repo:${url} type:pr state:open`,
-    )}`,
-    { headers: headers() },
-  );
-  const page: Issue[] = (await res.json()).items;
-  const all = [...page] as unknown as Issue[];
-  const open = page.filter((i) => i.state === "open").filter(Boolean) as unknown as Issue[];
-  const closed = page.filter((i) => i.state === "closed").filter(Boolean) as unknown as Issue[];
-  return { total: all.length, open, closed, all };
+export async function getPR(url: string, prNumber: number) {
+  const pr = await octokit.pulls.get({
+    owner: url.split("/")[0]!,
+    repo: url.split("/")[1],
+    pull_number: prNumber,
+  });
+  return pr.data;
 }
 
 export async function getReleases(
@@ -242,7 +239,8 @@ export async function getTimeline(
   });
   return await Promise.all(
     timeline.data.map(async (t) => {
-      t.body = await getMarkdown(t.body ?? "*No description provided.*");
+      if (t.event === "commented")
+        t.body = await getMarkdown(t.body ?? "*No description provided.*");
       // @ts-expect-error now it does
       if (t.event === "committed") t.commit = await getCommit(url, t.sha!);
       return t;
@@ -267,19 +265,26 @@ export async function getTags(
   return tags.data;
 }
 
+function loop(tree: TreeWithContent[], path: string): TreeWithContent | undefined {
+  for (const t of tree) {
+    if (t.type !== "tree") continue;
+    if (path === t.path) return t;
+    // the replace is for lets say path is "something/somethings/somemore" and t.path is "something/something" doesnt cause issues, without the replace some files/folders would be lost
+    else if (path.includes(t.path!) && path.replace(`${t.path!}`, "").startsWith("/"))
+      return loop(t.tree!, path);
+  }
+}
+
 function addToTree(
   tree: TreeWithContent[],
   pathToFind: string,
   add: TreeWithContent & { latestCommit?: components["schemas"]["commit"] },
 ) {
-  tree.find((t) => {
-    const split = pathToFind.split("/");
-    const withoutLast = split.slice(0, split.length - 1);
-    if (withoutLast.join("/") === t.path) {
-      if (add) t.tree!.push(add);
-      return t;
-    } else return t.tree && addToTree(t.tree, pathToFind, add);
-  });
+  const split = pathToFind.split("/");
+  const withoutLast = split.slice(0, split.length - 1);
+  const addTo = loop(tree, withoutLast.join("/"));
+  if (!addTo) console.info(addTo, pathToFind, withoutLast.join("/"));
+  addTo?.tree?.push(add);
 }
 
 // sorts folder first the files
@@ -291,41 +296,28 @@ function sortFolder(tree: TreeWithContent[]) {
   });
 }
 
-async function sortTree(
-  url: string,
-  tree: components["schemas"]["git-tree"]["tree"],
-  branch?: string,
-) {
-  const withCommit = await Promise.all(
-    tree.map(async (t) => {
-      const commit =
-        (t.type === "tree" &&
-          (await getCommits(url, { per_page: 1, path: t.path!, sha: branch }))[0]) ||
-        // eslint-disable-next-line no-undefined
-        undefined;
-      return {
-        ...t,
-        latestCommit: commit,
-        filename: t.path!.split("/")[t.path!.split("/").length - 1],
-      };
-    }),
-  );
+function sortTree(tree: components["schemas"]["git-tree"]["tree"]) {
   const arr: TreeWithContent[] = [];
 
-  for (const t of withCommit) {
-    // @ts-expect-error dont care
-    if (t.type === "tree") t.tree = [];
+  for (const t of tree) {
     const l = t.path?.split("/");
-    if (l?.length === 1) arr.push(t);
-    else addToTree(arr, t.path!, t);
+    const filename = t.path!.split("/")[t.path!.split("/").length - 1];
+    const type = filename.split(".");
+    const h = {
+      ...t,
+      filename,
+      tree: t.type === "tree" ? [] : undefined,
+      fileType: t.type === "blob" ? filename.split(".")[type.length - 1] : undefined,
+    };
+    if (l?.length === 1) arr.push(h);
+    else addToTree(arr, t.path!, h);
   }
 
   sortFolder(arr);
-
   return arr;
 }
 
 export function abbreviateNumber(value: number): string {
-  // eslint-disable-next-line new-cap, no-undefined
+  // eslint-disable-next-line new-cap
   return Intl.NumberFormat(undefined, { notation: "compact" }).format(value);
 }
