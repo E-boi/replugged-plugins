@@ -2,11 +2,18 @@
   "id": "dev.eboi.githubindiscord",
   "name": "Github in Discord",
   "description": "Look at github repos within discord",
-  "author": {
-    "name": "ugly-patootie",
-    "discordID": "458805348669718559",
-    "github": "E-boi"
-  },
+  "author": [
+    {
+      "name": "ugly-patootie",
+      "discordID": "458805348669718559",
+      "github": "E-boi"
+    },
+    {
+      "name": "loremly",
+      "discordID": "597072695875600385",
+      "github": "Loremly"
+    }
+  ],
   "version": "0.0.1",
   "updater": {
     "type": "github",

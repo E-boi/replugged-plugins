@@ -196,13 +196,13 @@
     background-color: inherit;
   }
 
-  a {
-    color: var(--text-link);
+  // a {
+  //   color: var(--text-link);
 
-    &:not(.repo-path > *):not(.Gout-folder a:hover):not(.Gin-folder a:hover):not(
-        .branches a:hover
-      ):not(.backbtn a):not(.doegSW):not(.miscLinks a:hover) {
-      color: var(--text-normal);
-    }
-  }
+  //   &:not(.repo-path > *):not(.Gout-folder a:hover):not(.Gin-folder a:hover):not(
+  //       .branches a:hover
+  //     ):not(.backbtn a):not(.doegSW):not(.miscLinks a:hover) {
+  //     color: var(--text-normal);
+  //   }
+  // }
 }
