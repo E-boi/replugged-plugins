@@ -23,7 +23,7 @@ function SettingsModal(props: ModalProps) {
 
   const darkThemes = Object.keys(customTheme.colorSchemes).filter((t) => t.includes("dark"));
   const lightThemes = Object.keys(customTheme.colorSchemes).filter((t) => t.includes("light"));
-  console.log(lightThemes);
+
   return (
     <ModalRoot {...props}>
       <ModalHeader>
