@@ -45,9 +45,10 @@ const cache = new Map<
   }
 >();
 
-export async function getAll(url: string, query: RepoQuery) {
-  if (cache.has(`${url}/${JSON.stringify(query)}`))
+export async function getAll(url: string, query: RepoQuery, force?: boolean) {
+  if (!force && cache.has(`${url}/${JSON.stringify(query)}`))
     return cache.get(`${url}/${JSON.stringify(query)}`)!;
+  else if (force) cache.forEach((_, k) => k.includes(url) && cache.delete(k));
   const repo = await getRepo(url);
   const defaultBranch = await getBranch(url, repo.default_branch);
   const branches = (await getBranches(url, { ...query?.branches })).filter(
@@ -85,15 +86,37 @@ export function useRepo({ url, query }: { url: string; query: RepoQuery }) {
   const [status, setStatus] = useState<"loading" | "err" | "complete">("loading");
   const [error, setError] = useState<string>();
   const [iQuery, setQuery] = useState(query);
-  const issues = usePaginate(octokit, { q: `repo:${url} is:issue` });
-  const prs = usePaginate(octokit, { q: `repo:${url} is:pr` });
+  const [force, setForce] = useState(false);
+  const issues = usePaginate(
+    octokit,
+    { q: `repo:${url} is:issue` },
+    {
+      force,
+      onError: (e) => {
+        setStatus("err");
+        setError(e);
+      },
+    },
+  );
+  const prs = usePaginate(
+    octokit,
+    { q: `repo:${url} is:pr` },
+    {
+      force,
+      onError: (e) => {
+        setStatus("err");
+        setError(e);
+      },
+    },
+  );
 
   useEffect(() => {
     setStatus("loading");
     (async () => {
       try {
-        const r = await getAll(url, iQuery);
+        const r = await getAll(url, iQuery, force);
         setRepo(r);
+        setForce(false);
         setStatus("complete");
       } catch (err) {
         // @ts-expect-error stfu
@@ -102,7 +125,7 @@ export function useRepo({ url, query }: { url: string; query: RepoQuery }) {
         console.error(err);
       }
     })();
-  }, [JSON.stringify(iQuery), url]);
+  }, [JSON.stringify(iQuery), url, force]);
 
   // cool epic proxy, makes it so data can be added/changed later on and the modal will rerender and save to cache
   const p =
@@ -120,8 +143,9 @@ export function useRepo({ url, query }: { url: string; query: RepoQuery }) {
       },
     });
 
-  const refetch = (q: RepoQuery) => {
-    if (JSON.stringify(q) === JSON.stringify(iQuery)) return;
+  const refetch = (q: RepoQuery, force?: boolean) => {
+    if (!force && JSON.stringify(q) === JSON.stringify(iQuery)) return;
+    setForce(Boolean(force));
     setQuery(q);
   };
 

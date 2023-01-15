@@ -42,6 +42,7 @@ const cache = new Map<string, { info: Paginate["info"]["pages"]; page: Paginate[
 export function usePaginate(
   Octokit: Octokit,
   params: RestEndpointMethodTypes["search"]["issuesAndPullRequests"]["parameters"],
+  { force, onError }: { force?: boolean; onError: (err: string) => void },
 ) {
   const [page, setPage] = useState<Paginate["page"]>({
     open: [],
@@ -57,77 +58,90 @@ export function usePaginate(
   const [state, setState] = useState<"open" | "closed">("open");
 
   useEffect(() => {
-    (async () => {
-      if (cache.has(params.q)) {
-        setPage(cache.get(params.q)!.page);
-        setPageInfo({ currentPage: 1, pages: cache.get(params.q)!.info });
-        return;
-      }
-      const openedIssues = await Octokit.search.issuesAndPullRequests({
-        ...params,
-        q: `${params.q} state:open`,
-      });
-      setPage((prev) => ({
-        ...prev,
-        open: [[...openedIssues.data.items]],
-        totalOpen: openedIssues.data.total_count,
-      }));
-
-      const info = openedIssues.headers.link
-        ? lastAndNextPage(openedIssues.headers.link)
-        : undefined;
-      setPageInfo((prev) => ({ ...prev, pages: { open: info } }));
-      cache.set(params.q, {
-        info: {
-          open: info,
-        },
-        page: {
+    try {
+      (async () => {
+        if (!force && cache.has(params.q)) {
+          setPage(cache.get(params.q)!.page);
+          setPageInfo({ currentPage: 1, pages: cache.get(params.q)!.info });
+          return;
+        } else cache.forEach((_, k) => k === params.q && cache.delete(k));
+        const openedIssues = await Octokit.search.issuesAndPullRequests({
+          ...params,
+          q: `${params.q} state:open`,
+        });
+        setPage({
           all: [],
           closed: [],
           open: [[...openedIssues.data.items]],
-          totalClosed: 0,
           totalOpen: openedIssues.data.total_count,
-        },
-      });
-    })();
-  }, []);
+          totalClosed: 0,
+        });
+
+        const info = openedIssues.headers.link
+          ? lastAndNextPage(openedIssues.headers.link)
+          : undefined;
+        setPageInfo({ currentPage: 1, pages: { open: info } });
+        setState("open");
+        cache.set(params.q, {
+          info: {
+            open: info,
+          },
+          page: {
+            all: [],
+            closed: [],
+            open: [[...openedIssues.data.items]],
+            totalClosed: 0,
+            totalOpen: openedIssues.data.total_count,
+          },
+        });
+      })();
+    } catch (err) {
+      // @ts-expect-error stfu
+      onError(err.message as string);
+    }
+  }, [force]);
 
   const nextPage = () => {
-    // "page" won't be update to date so use this
-    setPage((prevPageState) => {
-      setPageInfo((prevInfoState) => {
-        const info = prevInfoState.pages[state];
-        if (!info?.next) return prevInfoState;
-        // setting the next page
-        if (prevPageState[state].length >= info.next) {
-          info.prev = prevInfoState.currentPage;
-          if (info.last <= info.next) info.next = undefined;
-          else ++info.next;
-          ++prevInfoState.currentPage;
-          return { ...prevInfoState };
-        }
-        (async () => {
-          if (!info?.next) return;
-          const request = await Octokit.search.issuesAndPullRequests({
-            ...params,
-            q: `${params.q} state:${state}`,
-            page: info.next,
-          });
-          prevPageState[state].push([...request.data.items]);
-          setPage(prevPageState);
-          setPageInfo((p) => ({
-            currentPage: ++prevInfoState.currentPage,
-            pages: {
-              ...p.pages,
-              [state]: { ...lastAndNextPage(request.headers.link!), last: p.pages[state]!.last },
-            },
-          }));
-        })();
-        return prevInfoState;
+    try {
+      // "page" won't be update to date so use this
+      setPage((prevPageState) => {
+        setPageInfo((prevInfoState) => {
+          const info = prevInfoState.pages[state];
+          if (!info?.next) return prevInfoState;
+          // setting the next page
+          if (prevPageState[state].length >= info.next) {
+            info.prev = prevInfoState.currentPage;
+            if (info.last <= info.next) info.next = undefined;
+            else ++info.next;
+            ++prevInfoState.currentPage;
+            return { ...prevInfoState };
+          }
+          (async () => {
+            if (!info?.next) return;
+            const request = await Octokit.search.issuesAndPullRequests({
+              ...params,
+              q: `${params.q} state:${state}`,
+              page: info.next,
+            });
+            prevPageState[state].push([...request.data.items]);
+            setPage(prevPageState);
+            setPageInfo((p) => ({
+              currentPage: ++prevInfoState.currentPage,
+              pages: {
+                ...p.pages,
+                [state]: { ...lastAndNextPage(request.headers.link!), last: p.pages[state]!.last },
+              },
+            }));
+          })();
+          return prevInfoState;
+        });
+        // return we only need the current state
+        return prevPageState;
       });
-      // return we only need the current state
-      return prevPageState;
-    });
+    } catch (err) {
+      // @ts-expect-error stfu
+      onError(err.message);
+    }
   };
 
   const previousPage = () => {

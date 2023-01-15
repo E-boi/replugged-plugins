@@ -62,7 +62,7 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
     refetch,
   } = useRepo({
     url,
-    query: { issues: { state: "all" }, prs: { state: "open" } },
+    query: { issues: { state: "open" }, prs: { state: "open" } },
   });
   const [currentTab, setTab] = useState<string>(tab || "Code");
 
@@ -185,14 +185,29 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
                   branch={selectedBranch}
                   switchBranches={(branch: string) => {
                     setBranch(repo.branches.find((b) => b.name === branch));
-                    refetch({ issues: { state: "all" }, prs: { state: "open" }, branch });
+                    refetch({ issues: { state: "open" }, prs: { state: "open" }, branch });
                   }}
                 />
               )
             )}
           </ModalContent>
           <ModalFooter>
-            <Button onClick={openSettingsModal}>Open Settings</Button>
+            <ButtonGroup>
+              <Button
+                onClick={() =>
+                  refetch(
+                    {
+                      issues: { state: "open" },
+                      prs: { state: "open" },
+                      branch: selectedBranch?.name,
+                    },
+                    true,
+                  )
+                }>
+                Refetch Repository
+              </Button>
+              <Button onClick={openSettingsModal}>Open Settings</Button>
+            </ButtonGroup>
           </ModalFooter>
         </ModalRoot>
       </BaseStyles>
