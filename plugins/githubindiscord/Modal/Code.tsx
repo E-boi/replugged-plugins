@@ -2,24 +2,28 @@ import { components } from "@octokit/openapi-types";
 import { Avatar, Box, Breadcrumbs, Link, RelativeTime, Text, Truncate } from "@primer/react";
 import { TreeView } from "@primer/react/drafts";
 import { FileDirectoryFillIcon, FileIcon } from "@primer/styled-octicons";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { common, webpack } from "replugged";
 import { TabProps } from ".";
 import { SelectMenu } from "../components";
+import { Context } from "../context";
 import { TreeWithContent, getCommits, getFile, pluginSettings } from "../utils";
+import CommitsView from "./Commits/CommitsView";
 
 const { parser } = common;
 const blober = webpack.getByProps("blob");
 
 export default (props: TabProps) => {
   return pluginSettings.get("view", "standard") === "treeview" ? (
-    <Tree {...props} />
+    <Tree />
   ) : (
     <StandardView {...props} />
   );
 };
 
-function StandardView({ tree, branch, branches, url, switchBranches }: TabProps) {
+function StandardView({ branch, url, switchBranches }: TabProps) {
+  const { data } = useContext(Context)!;
+  const { tree, branches } = data!;
   const [folder, setFolder] = useState<{
     current: { latestCommit?: components["schemas"]["commit"]; tree: TreeWithContent[] };
     prevs: Array<{ latestCommit?: components["schemas"]["commit"]; tree: TreeWithContent[] }>;
@@ -28,6 +32,7 @@ function StandardView({ tree, branch, branches, url, switchBranches }: TabProps)
     prevs: [],
   });
   const [file, setFile] = useState<TreeWithContent | null>(null);
+  const [commit, setCommit] = useState<TreeWithContent["latestCommit"] | null>(null);
 
   useEffect(
     () =>
@@ -50,6 +55,7 @@ function StandardView({ tree, branch, branches, url, switchBranches }: TabProps)
   let ending = path.pop();
   const latestCommit = file ? file.latestCommit : folder.current.latestCommit;
 
+  if (commit) return <CommitsView commit={commit} url={url} />;
   return (
     <>
       <Box className="repository-options">
@@ -104,7 +110,9 @@ function StandardView({ tree, branch, branches, url, switchBranches }: TabProps)
                 title={`${latestCommit.author!.login} ${latestCommit.commit.message}`}>
                 <Text fontWeight="bold" sx={{ marginLeft: "5px" }}>
                   {latestCommit?.author?.login}
-                  <Text fontWeight="normal"> {latestCommit.commit.message.split("\n\n")[0]}</Text>
+                  <Link muted onClick={() => setCommit(latestCommit)}>
+                    <Text fontWeight="normal"> {latestCommit.commit.message.split("\n\n")[0]}</Text>
+                  </Link>
                 </Text>
               </Truncate>
               <RelativeTime
@@ -151,7 +159,7 @@ function StandardView({ tree, branch, branches, url, switchBranches }: TabProps)
             borderStyle="solid"
             sx={{ userSelect: "text", code: { bg: "inherit" } }}>
             {parser.defaultRules.codeBlock.react(
-              { content: window.atob(file.content!), lang: file.fileType },
+              { content: window.atob(file.content!).trimEnd(), lang: file.fileType },
               // @ts-ignore okay
               null,
               {},
@@ -212,7 +220,9 @@ function StandardView({ tree, branch, branches, url, switchBranches }: TabProps)
   );
 }
 
-function Tree({ tree }: TabProps) {
+function Tree() {
+  const { data } = useContext(Context)!;
+  const { tree } = data!;
   return (
     <TreeView aria-label="Files">
       {tree.map((tree) => (

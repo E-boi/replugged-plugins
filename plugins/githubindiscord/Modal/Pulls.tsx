@@ -5,19 +5,30 @@ import {
   Heading,
   Pagination,
   StateLabel,
+  TabNav,
   Text,
   Timeline,
 } from "@primer/react";
-import { CheckIcon, GitPullRequestIcon } from "@primer/styled-octicons";
-import { useEffect, useState } from "react";
+import {
+  CheckIcon,
+  CommentDiscussionIcon,
+  FileDiffIcon,
+  GitPullRequestIcon,
+} from "@primer/styled-octicons";
+import { useContext, useEffect, useState } from "react";
 import { TabProps } from ".";
-import { Issue, getMarkdown, getPR, getTimeline } from "../utils";
+import { Context } from "../context";
+import { Issue, TreeWithContent, getMarkdown, getPR, getPrFiles, getTimeline } from "../utils";
 import { TimelineComment } from "./Comment";
+import CommitsView from "./Commits/CommitsView";
+import CommitView from "./Commits/CommitView";
 import IssueCard from "./IssueCard";
 import Spinner from "./Spinner";
 import TimelineItems from "./TimelineItems";
 
-export default ({ prs, url }: TabProps) => {
+export default ({ url }: TabProps) => {
+  const { data } = useContext(Context)!;
+  const { prs } = data!;
   const [selectedPr, setPr] = useState<Issue | null>(null);
 
   const page: Issue[] = prs.page[prs.state][prs.info.currentPage - 1];
@@ -63,8 +74,19 @@ export default ({ prs, url }: TabProps) => {
   );
 };
 
+const tabs = [
+  {
+    title: "Conversations",
+    component: ConversationsTab,
+    icon: CommentDiscussionIcon,
+  },
+  { title: "Files", component: FilesTab, icon: FileDiffIcon },
+];
+
 function PR({ pr, url }: { pr: Issue; url: string }) {
   const forceUpdate = useState({})[1];
+  const [tab, setTab] = useState("Conversations");
+
   useEffect(() => {
     (async () => {
       if (!pr.timeline) pr.timeline = await getTimeline(url, pr.number);
@@ -79,6 +101,7 @@ function PR({ pr, url }: { pr: Issue; url: string }) {
   }, []);
 
   if (!pr.timeline) return <Spinner>Fetching pull request...</Spinner>;
+  const Tab = tabs.find(({ title }) => title === tab);
 
   return (
     <Box>
@@ -86,29 +109,65 @@ function PR({ pr, url }: { pr: Issue; url: string }) {
         <Heading>
           {pr.title} #{pr.number}
         </Heading>
-        <Box
-          display="flex"
-          alignItems="center"
-          borderBottomWidth={1}
-          borderStyle="solid"
-          borderColor="border.default"
-          pb={3}>
-          <StateLabel status={pr.state === "closed" ? "pullClosed" : "pullOpened"} sx={{ mr: 2 }}>
-            {pr.state === "closed" ? "Closed" : "Open"}
+        <Box display="flex" alignItems="center" pb={3}>
+          <StateLabel
+            status={
+              pr.state === "closed" ? (pr.pull?.merged ? "pullMerged" : "pullClosed") : "pullOpened"
+            }
+            sx={{ mr: 2 }}>
+            {pr.state === "closed" ? (pr.pull?.merged ? "Merged" : "Closed") : "Open"}
           </StateLabel>
           <Text>
-            {pr.user?.login} wants to merge {pr.pull?.commits} into{" "}
+            {pr.pull?.merged_by?.login || pr.user?.login}{" "}
+            {pr.pull?.merged ? "merged" : "wants to merge"} {pr.pull?.commits} into{" "}
             <BranchName>{pr.pull?.base.label}</BranchName> from{" "}
             <BranchName>{pr.pull?.head.label}</BranchName>
           </Text>
         </Box>
+        <TabNav>
+          {tabs.map((t) => (
+            <TabNav.Link selected={t.title === tab} onClick={() => setTab(t.title)}>
+              <t.icon /> {t.title}
+            </TabNav.Link>
+          ))}
+        </TabNav>
       </Box>
-      <Timeline clipSidebar>
-        <TimelineComment comment={pr} />
-        {pr.timeline?.map((t) => (
-          <TimelineItems event={t} />
-        ))}
-      </Timeline>
+      {Tab && <Tab.component {...{ pr, url }} />}
     </Box>
+  );
+}
+
+function ConversationsTab({ pr, url }: { pr: Issue; url: string }) {
+  const [commit, setCommit] = useState<TreeWithContent["latestCommit"] | null>(null);
+
+  if (commit) return <CommitsView commit={commit} url={url} />;
+  return (
+    <Timeline clipSidebar>
+      <TimelineComment comment={pr} />
+      {pr.timeline?.map((t) => (
+        <TimelineItems event={{ ...t, issue: pr, onCommitClick: (commit) => setCommit(commit) }} />
+      ))}
+    </Timeline>
+  );
+}
+
+function FilesTab({ pr, url }: { pr: Issue; url: string }) {
+  const forceUpdate = useState({})[1];
+
+  useEffect(() => {
+    (async () => {
+      pr.files ??= await getPrFiles(url, pr.number);
+      forceUpdate({});
+    })();
+  }, []);
+
+  if (!pr.files) return <Spinner>Fetching files...</Spinner>;
+
+  return (
+    <>
+      {pr.files.map((p) => (
+        <CommitView commit={p} sx={{ marginBottom: 3 }} />
+      ))}
+    </>
   );
 }

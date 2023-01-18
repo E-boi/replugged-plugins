@@ -9,15 +9,18 @@ import {
   Timeline,
 } from "@primer/react";
 import { CheckIcon, IssueOpenedIcon } from "@primer/styled-octicons";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { TabProps } from ".";
+import { Context } from "../context";
 import { Issue, getMarkdown, getTimeline } from "../utils";
 import { TimelineComment } from "./Comment";
 import IssueCard from "./IssueCard";
 import Spinner from "./Spinner";
 import TimelineItems from "./TimelineItems";
 
-export default ({ issues, url }: TabProps) => {
+export default ({ url }: TabProps) => {
+  const { data } = useContext(Context)!;
+  const { issues } = data!;
   const [selectedIssue, setIssue] = useState<Issue | null>(null);
 
   const page: Issue[] = issues.page[issues.state][issues.info.currentPage - 1];
@@ -106,7 +109,7 @@ function Issue({ issue, url }: { issue: Issue; url: string }) {
       <Timeline clipSidebar>
         <TimelineComment comment={issue} />
         {issue.timeline?.map((t) => (
-          <TimelineItems event={t} />
+          <TimelineItems event={{ ...t, issue }} />
         ))}
       </Timeline>
     </Box>

@@ -8,7 +8,7 @@ export type Branch = components["schemas"]["short-branch"] & {
   commit: components["schemas"]["commit"];
 };
 
-interface RepoQuery {
+export interface RepoQuery {
   branches?: operations["repos/list-branches"]["parameters"]["query"];
   tags?: operations["repos/list-tags"]["parameters"]["query"];
   issues?: operations["issues/list"]["parameters"]["query"];
@@ -27,6 +27,7 @@ export type TreeWithContent = components["schemas"]["git-tree"]["tree"][0] & {
 export type Issue = components["schemas"]["issue-search-result-item"] & {
   pull?: components["schemas"]["pull-request"];
   timeline?: operations["issues/list-events-for-timeline"]["responses"]["200"]["content"]["application/json"];
+  files?: operations["pulls/list-files"]["responses"]["200"]["content"]["application/json"];
   marked?: boolean;
 };
 
@@ -39,8 +40,6 @@ const cache = new Map<
     repo: components["schemas"]["full-repository"];
     tags: Array<components["schemas"]["tag"]>;
     tree: TreeWithContent[];
-    // issues: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
-    // prs: { total: number; open: Issue[]; closed: Issue[]; all: Issue[] };
     branches: Branch[];
   }
 >();
@@ -127,29 +126,13 @@ export function useRepo({ url, query }: { url: string; query: RepoQuery }) {
     })();
   }, [JSON.stringify(iQuery), url, force]);
 
-  // cool epic proxy, makes it so data can be added/changed later on and the modal will rerender and save to cache
-  const p =
-    repo &&
-    new Proxy(repo, {
-      get(target, p: keyof typeof repo) {
-        return target[p];
-      },
-      set(target, p: keyof typeof repo, newValue) {
-        if (target[p] === newValue) return true;
-        target[p] = newValue;
-        cache.set(`${url}/${JSON.stringify(query)}`, target);
-        setRepo(target);
-        return true;
-      },
-    });
-
   const refetch = (q: RepoQuery, force?: boolean) => {
     if (!force && JSON.stringify(q) === JSON.stringify(iQuery)) return;
     setForce(Boolean(force));
     setQuery(q);
   };
 
-  return { data: p && { ...p, issues, prs }, status, error, refetch };
+  return { data: (repo && { ...repo, issues, prs }) || null, status, error, refetch };
 }
 
 export async function getBranches(
@@ -238,6 +221,15 @@ export async function getPR(url: string, prNumber: number) {
   return pr.data;
 }
 
+export async function getPrFiles(url: string, prNumber: number) {
+  const files = await octokit.pulls.listFiles({
+    owner: url.split("/")[0]!,
+    repo: url.split("/")[1],
+    pull_number: prNumber,
+  });
+  return files.data;
+}
+
 export async function getReleases(
   url: string,
   query?: operations["repos/list-releases"]["parameters"]["query"],
@@ -263,7 +255,7 @@ export async function getTimeline(
   });
   return await Promise.all(
     timeline.data.map(async (t) => {
-      if (t.event === "commented")
+      if (t.event === "commented" || t.event === "reviewed")
         t.body = await getMarkdown(t.body ?? "*No description provided.*");
       // @ts-expect-error now it does
       if (t.event === "committed") t.commit = await getCommit(url, t.sha!);

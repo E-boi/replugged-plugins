@@ -19,19 +19,18 @@ import {
   RepoIcon,
   StarIcon,
 } from "@primer/styled-octicons";
-import { FC, useLayoutEffect, useState } from "react";
+import { FC, useContext, useLayoutEffect, useState } from "react";
 import { common, components, webpack } from "replugged";
 import { ModalProps } from "../Modals";
-import { Branch, TreeWithContent, abbreviateNumber, pluginSettings, useRepo } from "../utils";
+import { Branch, abbreviateNumber, pluginSettings } from "../utils";
 import Code from "./Code";
 import Issues from "./Issues";
 import Pulls from "./Pulls";
 import theme from "../theme";
 import Spinner from "./Spinner";
 import { textClasses, wumpus } from "../components";
-import { components as ght } from "@octokit/openapi-types";
-import { Paginate } from "../paginate";
 import { openSettingsModal } from "./SettingsModal";
+import { Context, Provider } from "../context";
 
 const { ModalContent, ModalHeader, ModalRoot, ModalFooter } = components.Modal;
 
@@ -42,28 +41,14 @@ const tabs = [
 ];
 
 export interface TabProps {
-  repo: ght["schemas"]["full-repository"];
-  tags: Array<ght["schemas"]["tag"]>;
-  tree: TreeWithContent[];
-  issues: Paginate;
-  prs: Paginate;
-  branches: Branch[];
   branch: Branch;
   url: string;
   switchBranches: (branch: string) => void;
 }
-
+console.log(theme);
 const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, ...props }) => {
   const [selectedBranch, setBranch] = useState<Branch>();
-  const {
-    data: repo,
-    error,
-    status,
-    refetch,
-  } = useRepo({
-    url,
-    query: { issues: { state: "open" }, prs: { state: "open" } },
-  });
+  const { data: repo, error, refetch, status } = useContext(Context)!;
   const [currentTab, setTab] = useState<string>(tab || "Code");
 
   useLayoutEffect(() => {
@@ -145,7 +130,11 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
                 <UnderlineNav.Item
                   icon={icon}
                   aria-current={title === currentTab}
-                  onSelect={() => setTab(title)}
+                  onSelect={() => {
+                    setTab("");
+                    // setTab(title);
+                    setTimeout(() => setTab(title));
+                  }}
                   counter={
                     title === "Issues"
                       ? abbreviateNumber(repo?.issues.page.totalOpen ?? 0)
@@ -180,7 +169,6 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
               repo.tree &&
               selectedBranch && (
                 <Tab.component
-                  {...repo}
                   url={url}
                   branch={selectedBranch}
                   switchBranches={(branch: string) => {
@@ -216,5 +204,9 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
 };
 
 export function openGithubModal(url: string, tab: string) {
-  common.modal.openModal((props) => <GithubModal {...props} url={url} tab={tab} />);
+  common.modal.openModal((props) => (
+    <Provider query={{ issues: { state: "open" }, prs: { state: "open" } }} url={url}>
+      <GithubModal {...props} url={url} tab={tab} />
+    </Provider>
+  ));
 }
