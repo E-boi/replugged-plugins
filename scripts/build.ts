@@ -96,7 +96,7 @@ const common: esbuild.BuildOptions = {
   absWorkingDir: join(__dirname, ".."),
   bundle: true,
   minify: !watch,
-  sourcemap: !watch,
+  sourcemap: watch,
   format: "esm" as esbuild.Format,
   logLevel: "info",
   watch,
