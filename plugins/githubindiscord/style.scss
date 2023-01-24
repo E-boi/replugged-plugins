@@ -1,3 +1,15 @@
+.errorModal {
+  background-color: var(--modal-background) !important;
+}
+
+.gid-heading {
+  padding-bottom: 0.3em;
+  border-style: solid;
+  border-bottom-width: 1px;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
 .githubModel {
   // color: var(--text-normal);
   width: fit-content;

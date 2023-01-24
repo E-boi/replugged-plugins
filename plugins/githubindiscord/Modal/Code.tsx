@@ -4,26 +4,21 @@ import { TreeView } from "@primer/react/drafts";
 import { FileDirectoryFillIcon, FileIcon } from "@primer/styled-octicons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { common, webpack } from "replugged";
-import { TabProps } from ".";
 import { SelectMenu } from "../components";
 import { Context } from "../context";
 import { TreeWithContent, getCommits, getFile, pluginSettings } from "../utils";
-import CommitsView from "./Commits/CommitsView";
+import CommitsView from "./Commits/CommitView";
 
 const { parser } = common;
 const blober = webpack.getByProps("blob");
 
-export default (props: TabProps) => {
-  return pluginSettings.get("view", "standard") === "treeview" ? (
-    <Tree />
-  ) : (
-    <StandardView {...props} />
-  );
+export default () => {
+  return pluginSettings.get("view", "standard") === "treeview" ? <Tree /> : <StandardView />;
 };
 
-function StandardView({ branch, url, switchBranches }: TabProps) {
-  const { data } = useContext(Context)!;
-  const { tree, branches } = data!;
+function StandardView() {
+  const { data, switchBranch } = useContext(Context)!;
+  const { tree, branches, currentBranch: branch, url } = data!;
   const [folder, setFolder] = useState<{
     current: { latestCommit?: components["schemas"]["commit"]; tree: TreeWithContent[] };
     prevs: Array<{ latestCommit?: components["schemas"]["commit"]; tree: TreeWithContent[] }>;
@@ -55,7 +50,7 @@ function StandardView({ branch, url, switchBranches }: TabProps) {
   let ending = path.pop();
   const latestCommit = file ? file.latestCommit : folder.current.latestCommit;
 
-  if (commit) return <CommitsView commit={commit} url={url} />;
+  if (commit) return <CommitsView commit={commit} onClose={() => setCommit(null)} />;
   return (
     <>
       <Box className="repository-options">
@@ -64,9 +59,7 @@ function StandardView({ branch, url, switchBranches }: TabProps) {
             className="Gbranches"
             value={branch.name}
             options={branches.map((branch) => ({ value: branch.name, label: branch.name }))}
-            onChange={(value: string) => {
-              switchBranches(value);
-            }}
+            onChange={switchBranch}
           />
         )}
         {folder.prevs.length ? (
@@ -94,7 +87,22 @@ function StandardView({ branch, url, switchBranches }: TabProps) {
           </Breadcrumbs>
         ) : null}
       </Box>
-      <Box borderColor="border.default" borderStyle="solid" borderWidth={1} borderRadius={2}>
+      <Box
+        borderColor="border.default"
+        borderStyle="solid"
+        borderWidth={1}
+        borderRadius={2}
+        onMouseUp={(event) => {
+          if (event.button !== 2 || event.detail !== 2 || !folder.prevs.length) return;
+          setFolder((prev) => {
+            const current = prev.prevs.pop();
+            return {
+              current: current ?? { tree, latestCommit: branch.commit },
+              prevs: prev.prevs,
+            };
+          });
+          setFile(null);
+        }}>
         <Box
           p={3}
           bg="canvas.subtle"
@@ -160,7 +168,7 @@ function StandardView({ branch, url, switchBranches }: TabProps) {
             sx={{ userSelect: "text", code: { bg: "inherit" } }}>
             {parser.defaultRules.codeBlock.react(
               { content: window.atob(file.content!).trimEnd(), lang: file.fileType },
-              // @ts-ignore okay
+              // @ts-expect-error okay
               null,
               {},
             )}
@@ -187,20 +195,18 @@ function StandardView({ branch, url, switchBranches }: TabProps) {
                 onClick={() => {
                   if (c.type === "tree") {
                     setFolder((prev) => ({
-                      current: c as any,
+                      current: c as typeof prev["current"],
                       prevs: [...prev.prevs, folder.current],
                     }));
-                  } else {
-                    getBlob(c);
-                  }
+                  } else void getBlob(c);
 
                   if (!c.latestCommit)
-                    getCommits(url, { path: c.path, sha: branch.name }).then((o) => {
+                    void getCommits(url, { path: c.path, sha: branch.name }).then((o) => {
                       if (o[0]) {
                         c.latestCommit = o[0];
                         if (c.type === "tree")
                           setFolder((prev) => ({
-                            current: c as any,
+                            current: c as typeof prev["current"],
                             prevs: [...prev.prevs],
                           }));
                         else

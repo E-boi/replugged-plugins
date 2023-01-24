@@ -6,7 +6,7 @@ import { cp, mkdir, readdir, rm, writeFile } from "fs/promises";
 import { PluginManifest } from "replugged/dist/types/addon";
 import { pathToFileURL } from "url";
 
-const NODE_VERSION = "14";
+// const NODE_VERSION = "14";
 const CHROME_VERSION = "91";
 
 const globalModules: esbuild.Plugin = {
@@ -95,12 +95,14 @@ const watch = process.argv.includes("--watch");
 const common: esbuild.BuildOptions = {
   absWorkingDir: join(__dirname, ".."),
   bundle: true,
-  minify: true,
-  sourcemap: false,
-  format: "cjs" as esbuild.Format,
+  minify: !watch,
+  sourcemap: !watch,
+  format: "esm" as esbuild.Format,
   logLevel: "info",
   watch,
   plugins: [install, globalModules, sassPlugin()],
+  platform: "browser",
+  target: `chrome${CHROME_VERSION}`,
 };
 
 async function buildPlugin(path: string): Promise<void> {
@@ -115,44 +117,11 @@ async function buildPlugin(path: string): Promise<void> {
       esbuild.build({
         ...common,
         entryPoints: [join(path, manifest.renderer)],
-        platform: "browser",
-        target: `chrome${CHROME_VERSION}`,
         outfile: `dist/${manifest.id}/renderer.js`,
-        format: "esm" as esbuild.Format,
       }),
     );
 
     manifest.renderer = "renderer.js";
-  }
-
-  if ("preload" in manifest) {
-    targets.push(
-      esbuild.build({
-        ...common,
-        entryPoints: [join(path, manifest.preload)],
-        platform: "node",
-        target: [`node${NODE_VERSION}`, `chrome${CHROME_VERSION}`],
-        outfile: `dist/${manifest.id}/preload.js`,
-        external: ["electron"],
-      }),
-    );
-
-    manifest.preload = "preload.js";
-  }
-
-  if ("main" in manifest) {
-    targets.push(
-      esbuild.build({
-        ...common,
-        entryPoints: [join(path, manifest.main)],
-        platform: "node",
-        target: `node${NODE_VERSION}`,
-        outfile: `dist/${manifest.id}/main.js`,
-        external: ["electron"],
-      }),
-    );
-
-    manifest.main = "main.js";
   }
 
   if ("plaintextPatches" in manifest) {
@@ -160,10 +129,7 @@ async function buildPlugin(path: string): Promise<void> {
       esbuild.build({
         ...common,
         entryPoints: [join(path, manifest.plaintextPatches)],
-        platform: "browser",
-        target: `chrome${CHROME_VERSION}`,
         outfile: `dist/${manifest.id}/plaintextPatches.js`,
-        format: "esm" as esbuild.Format,
       }),
     );
 

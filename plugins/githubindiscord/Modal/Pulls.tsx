@@ -12,27 +12,30 @@ import {
 import {
   CheckIcon,
   CommentDiscussionIcon,
+  CommitIcon,
   FileDiffIcon,
   GitPullRequestIcon,
 } from "@primer/styled-octicons";
 import { useContext, useEffect, useState } from "react";
-import { TabProps } from ".";
 import { Context } from "../context";
-import { Issue, TreeWithContent, getMarkdown, getPR, getPrFiles, getTimeline } from "../utils";
+import { useTimeline } from "../paginate";
+import { Issue, TreeWithContent, getPR, getPrFiles } from "../utils";
 import { TimelineComment } from "./Comment";
-import CommitsView from "./Commits/CommitsView";
-import CommitView from "./Commits/CommitView";
+import CommitHistory from "./Commits/CommitHistory";
+import CommitsView from "./Commits/CommitView";
+import CommitView from "./Commits/Commit";
 import IssueCard from "./IssueCard";
 import Spinner from "./Spinner";
 import TimelineItems from "./TimelineItems";
 
-export default ({ url }: TabProps) => {
+export default () => {
   const { data } = useContext(Context)!;
   const { prs } = data!;
   const [selectedPr, setPr] = useState<Issue | null>(null);
 
-  const page: Issue[] = prs.page[prs.state][prs.info.currentPage - 1];
-  if (selectedPr) return <PR pr={selectedPr} url={url} />;
+  const page: Issue[] =
+    prs.data![prs.data!.state][prs.info[prs.data!.state]!.data!.pageInfo.currentPage - 1];
+  if (selectedPr) return <PR pr={selectedPr} onClose={() => setPr(null)} />;
 
   return (
     <Box borderColor="border.default" borderStyle="solid" borderWidth={1} borderRadius={2}>
@@ -40,16 +43,16 @@ export default ({ url }: TabProps) => {
         <Button
           leadingIcon={GitPullRequestIcon}
           variant="invisible"
-          sx={{ color: prs.state === "open" ? "fg.default" : "fg.muted" }}
+          sx={{ color: prs.data?.state === "open" ? "fg.default" : "fg.muted" }}
           onClick={() => prs.viewOpen()}>
-          {prs.page.totalOpen} Open
+          {prs.data?.totalOpen} Open
         </Button>
         <Button
           leadingIcon={CheckIcon}
           variant="invisible"
-          sx={{ color: prs.state === "closed" ? "fg.default" : "fg.muted" }}
+          sx={{ color: prs.data?.state === "closed" ? "fg.default" : "fg.muted" }}
           onClick={() => prs.viewClosed()}>
-          {prs.page.totalClosed} Closed
+          {prs.data?.totalClosed} Closed
         </Button>
       </Box>
       {!page?.length ? (
@@ -57,14 +60,14 @@ export default ({ url }: TabProps) => {
       ) : (
         page?.map((pr) => <IssueCard issue={pr} onClick={() => setPr(pr)} />)
       )}
-      {prs.info.pages[prs.state] && (
+      {prs.info[prs.data!.state].data?.pageInfo.lastPage && (
         <Box borderColor="border.default" borderStyle="solid" borderTopWidth={1}>
           <Pagination
-            currentPage={prs.info.currentPage}
-            pageCount={prs.info.pages[prs.state]!.last}
+            currentPage={prs.info[prs.data!.state].data!.pageInfo.currentPage}
+            pageCount={prs.info[prs.data!.state].data!.pageInfo.lastPage!}
             showPages={false}
             onPageChange={(_, page) => {
-              if (page > prs.info.currentPage) prs.nextPage();
+              if (page > prs.info[prs.data!.state].data!.pageInfo.currentPage) prs.nextPage();
               else prs.previousPage();
             }}
           />
@@ -80,34 +83,34 @@ const tabs = [
     component: ConversationsTab,
     icon: CommentDiscussionIcon,
   },
+  { title: "Commits", component: CommitsTab, icon: CommitIcon },
   { title: "Files", component: FilesTab, icon: FileDiffIcon },
 ];
 
-function PR({ pr, url }: { pr: Issue; url: string }) {
-  const forceUpdate = useState({})[1];
+function PR({ pr, onClose }: { pr: Issue; onClose: () => void }) {
+  const { url } = useContext(Context)!.data!;
   const [tab, setTab] = useState("Conversations");
+  const timeline = useTimeline(url, pr.number);
+  const forceUpdate = useState({})[1];
 
   useEffect(() => {
     (async () => {
-      if (!pr.timeline) pr.timeline = await getTimeline(url, pr.number);
-      if (!pr.pull) pr.pull = await getPR(url, pr.number);
-      const markdown = pr.marked
-        ? pr.body
-        : await getMarkdown(pr.body ?? "*No description provided.*");
-      pr.body = markdown;
-      pr.marked = true;
+      pr.pull ??= await getPR(url, pr.number);
       forceUpdate({});
     })();
   }, []);
 
-  if (!pr.timeline) return <Spinner>Fetching pull request...</Spinner>;
+  if (!timeline.data.page) return <Spinner>Fetching Pull Request...</Spinner>;
   const Tab = tabs.find(({ title }) => title === tab);
 
   return (
-    <Box>
+    <Box onMouseUp={(event) => event.button === 2 && event.detail === 2 && onClose()}>
       <Box mb={3}>
-        <Heading>
+        <Heading sx={{ display: "flex", alignItems: "center" }}>
           {pr.title} #{pr.number}
+          <Button sx={{ ml: 2 }} onClick={onClose}>
+            Close
+          </Button>
         </Heading>
         <Box display="flex" alignItems="center" pb={3}>
           <StateLabel
@@ -132,26 +135,41 @@ function PR({ pr, url }: { pr: Issue; url: string }) {
           ))}
         </TabNav>
       </Box>
-      {Tab && <Tab.component {...{ pr, url }} />}
+      {Tab && <Tab.component {...{ pr, timeline }} />}
     </Box>
   );
 }
 
-function ConversationsTab({ pr, url }: { pr: Issue; url: string }) {
+function ConversationsTab({
+  pr,
+  timeline,
+}: {
+  pr: Issue;
+  timeline: ReturnType<typeof useTimeline>;
+}) {
   const [commit, setCommit] = useState<TreeWithContent["latestCommit"] | null>(null);
 
-  if (commit) return <CommitsView commit={commit} url={url} />;
+  if (commit) return <CommitsView commit={commit} onClose={() => setCommit(null)} />;
   return (
     <Timeline clipSidebar>
       <TimelineComment comment={pr} />
-      {pr.timeline?.map((t) => (
-        <TimelineItems event={{ ...t, issue: pr, onCommitClick: (commit) => setCommit(commit) }} />
+      {timeline.data?.page?.map((t) => (
+        <TimelineItems event={{ ...t, issue: pr, onCommitClick: setCommit }} />
       ))}
+      {timeline.data.info?.lastPage &&
+        timeline.data.info?.currentPage !== timeline.data.info.lastPage && (
+          <Button onClick={timeline.nextPage}>Load More</Button>
+        )}
     </Timeline>
   );
 }
 
-function FilesTab({ pr, url }: { pr: Issue; url: string }) {
+function CommitsTab({ pr }: { pr: Issue }) {
+  return <CommitHistory pr={pr.pull} />;
+}
+
+function FilesTab({ pr }: { pr: Issue }) {
+  const { url } = useContext(Context)!.data!;
   const forceUpdate = useState({})[1];
 
   useEffect(() => {

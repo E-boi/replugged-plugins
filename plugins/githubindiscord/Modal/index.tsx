@@ -11,6 +11,7 @@ import {
 import { UnderlineNav } from "@primer/react/drafts";
 import {
   CodeIcon,
+  CommitIcon,
   GitPullRequestIcon,
   IssueOpenedIcon,
   LinkExternalIcon,
@@ -19,42 +20,33 @@ import {
   RepoIcon,
   StarIcon,
 } from "@primer/styled-octicons";
-import { FC, useContext, useLayoutEffect, useState } from "react";
+import { FC, useContext, useState } from "react";
 import { common, components, webpack } from "replugged";
 import { ModalProps } from "../Modals";
-import { Branch, abbreviateNumber, pluginSettings } from "../utils";
+import { abbreviateNumber, pluginSettings } from "../utils";
 import Code from "./Code";
 import Issues from "./Issues";
 import Pulls from "./Pulls";
 import theme from "../theme";
 import Spinner from "./Spinner";
-import { textClasses, wumpus } from "../components";
+import { textClasses } from "../components";
 import { openSettingsModal } from "./SettingsModal";
 import { Context, Provider } from "../context";
+import ErrorBoundary from "./ErrorBoundary";
+import Commits from "./Commits";
 
 const { ModalContent, ModalHeader, ModalRoot, ModalFooter } = components.Modal;
 
 const tabs = [
   { title: "Code", component: Code, icon: CodeIcon },
+  { title: "Commits", component: Commits, icon: CommitIcon },
   { title: "Issues", component: Issues, icon: IssueOpenedIcon },
   { title: "Pull Requests", component: Pulls, icon: GitPullRequestIcon },
 ];
 
-export interface TabProps {
-  branch: Branch;
-  url: string;
-  switchBranches: (branch: string) => void;
-}
-console.log(theme);
-const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, ...props }) => {
-  const [selectedBranch, setBranch] = useState<Branch>();
-  const { data: repo, error, refetch, status } = useContext(Context)!;
+const GithubModal: FC<ModalProps & { tab: string }> = ({ tab, ...props }) => {
+  const { data: repo, refetch, status } = useContext(Context)!;
   const [currentTab, setTab] = useState<string>(tab || "Code");
-
-  useLayoutEffect(() => {
-    if (!repo?.branches || selectedBranch) return;
-    setBranch(repo.branches.find((b) => b.name === repo.repo.default_branch));
-  }, [repo]);
 
   const Tab = tabs.find(({ title }) => title === currentTab);
   return (
@@ -130,16 +122,12 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
                 <UnderlineNav.Item
                   icon={icon}
                   aria-current={title === currentTab}
-                  onSelect={() => {
-                    setTab("");
-                    // setTab(title);
-                    setTimeout(() => setTab(title));
-                  }}
+                  onSelect={() => setTab(title)}
                   counter={
                     title === "Issues"
-                      ? abbreviateNumber(repo?.issues.page.totalOpen ?? 0)
+                      ? abbreviateNumber(repo?.issues.data?.totalOpen ?? 0)
                       : title === "Pull Requests"
-                      ? abbreviateNumber(repo?.prs.page.totalOpen ?? 0)
+                      ? abbreviateNumber(repo?.prs.data?.totalOpen ?? 0)
                       : undefined
                   }>
                   {title}
@@ -150,33 +138,8 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
           <ModalContent>
             {status === "loading" ? (
               <Spinner>Fetching Repository Contents...</Spinner>
-            ) : status === "err" ? (
-              <div>
-                <div className="Gerror">
-                  <div className={wumpus.emptyStateImage as string} />
-                  <span
-                    className={[
-                      textClasses?.["heading-lg/normal"],
-                      `${wumpus.emptyStateSubtext}`,
-                    ].join(" ")}>
-                    {error}
-                  </span>
-                </div>
-              </div>
             ) : (
-              Tab &&
-              repo &&
-              repo.tree &&
-              selectedBranch && (
-                <Tab.component
-                  url={url}
-                  branch={selectedBranch}
-                  switchBranches={(branch: string) => {
-                    setBranch(repo.branches.find((b) => b.name === branch));
-                    refetch({ issues: { state: "open" }, prs: { state: "open" }, branch });
-                  }}
-                />
-              )
+              Tab && repo && repo.tree && <Tab.component />
             )}
           </ModalContent>
           <ModalFooter>
@@ -187,7 +150,7 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
                     {
                       issues: { state: "open" },
                       prs: { state: "open" },
-                      branch: selectedBranch?.name,
+                      branch: repo?.currentBranch.name,
                     },
                     true,
                   )
@@ -205,8 +168,10 @@ const GithubModal: FC<ModalProps & { url: string; tab: string }> = ({ url, tab, 
 
 export function openGithubModal(url: string, tab: string) {
   common.modal.openModal((props) => (
-    <Provider query={{ issues: { state: "open" }, prs: { state: "open" } }} url={url}>
-      <GithubModal {...props} url={url} tab={tab} />
-    </Provider>
+    <ErrorBoundary modalProps={props}>
+      <Provider query={{ issues: { state: "open" }, prs: { state: "open" } }} url={url}>
+        <GithubModal {...props} tab={tab} />
+      </Provider>
+    </ErrorBoundary>
   ));
 }

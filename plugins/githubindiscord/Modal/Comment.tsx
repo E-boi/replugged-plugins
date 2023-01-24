@@ -1,11 +1,14 @@
 import { Avatar, Box, CaretProps, PointerBox, RelativeTime, Text, Timeline } from "@primer/react";
 import { BetterSystemStyleObject } from "@primer/react/lib/sx";
+import { parseMarkdown } from "../parser";
 
 export const TimelineComment = ({
   comment,
   caret,
   sx,
 }: {
+  // ill type later
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   comment: any;
   caret?: CaretProps["location"];
   sx?: BetterSystemStyleObject;
@@ -48,7 +51,16 @@ export const TimelineComment = ({
             borderTop={0}
             borderBottomLeftRadius={2}
             borderBottomRightRadius={2}
-            dangerouslySetInnerHTML={{ __html: comment.body }}></Box>
+            sx={{
+              userSelect: "text",
+              code: { bg: "canvas.subtle" },
+              lineHeight: "2rem",
+              img: {
+                maxWidth: "100%",
+              },
+            }}>
+            {parseMarkdown(comment.body as string)}
+          </Box>
         </Box>
       </Timeline.Body>
     </Timeline.Item>

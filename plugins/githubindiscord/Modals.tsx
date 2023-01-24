@@ -13,6 +13,6 @@ export enum ModalSize {
   DYNAMIC = "dynamic",
 }
 
-export type ModalProps<T = {}> = {
+export type ModalProps<T = object> = {
   [K in keyof T]: T[K];
 } & { transitionState: ModalTransitionState; onClose(): Promise<void> };

@@ -1,54 +1,63 @@
-import { operations } from "@octokit/openapi-types";
-import { common } from "replugged";
-import { Box, Link, Text } from "@primer/react";
-import { SxProp } from "@primer/react/lib-esm/sx";
-import { useState } from "react";
-import { ChevronDownIcon, ChevronRightIcon } from "@primer/styled-octicons";
-const { parser } = common;
+import { Avatar, Box, Button, RelativeTime, Text } from "@primer/react";
+import { useContext, useEffect, useState } from "react";
+import { Context } from "../../context";
+import { TreeWithContent, getCommit } from "../../utils";
+import Spinner from "../Spinner";
+import CommitView from "./Commit";
 
 export default ({
   commit,
-  sx,
+  onClose,
 }: {
-  commit: operations["pulls/list-files"]["responses"]["200"]["content"]["application/json"][0];
-  sx?: SxProp["sx"];
+  commit: NonNullable<TreeWithContent["latestCommit"]>;
+  onClose: () => void;
 }) => {
-  const [expanded, setExpanded] = useState(true);
+  const { url } = useContext(Context)!.data!;
+  const forceUpdate = useState({})[1];
+
+  useEffect(() => {
+    if (commit.files) return;
+    (async () => {
+      const ccommit = await getCommit(url, commit.sha);
+      commit.files = ccommit.files;
+      commit.stats = ccommit.stats;
+      forceUpdate({});
+    })();
+  }, []);
+
+  if (!commit.files) return <Spinner>Fetching Commit</Spinner>;
+
+  const message = commit.commit.message.split("\n\n");
 
   return (
-    <Box
-      borderStyle="solid"
-      borderColor="border.default"
-      borderWidth={1}
-      borderRadius={2}
-      {...(sx || {})}>
-      <Box
-        px={3}
-        py={2}
-        bg="canvas.subtle"
-        borderTopLeftRadius={2}
-        borderTopRightRadius={2}
-        display="flex"
-        alignItems="center">
-        <Link muted sx={{ display: "flex" }} onClick={() => setExpanded(!expanded)}>
-          {expanded ? <ChevronDownIcon /> : <ChevronRightIcon />}
-        </Link>
-        <Text ml={1}>{commit.filename}</Text>
-      </Box>
-      {expanded && (
-        <Box
-          borderColor="border.muted"
-          borderTopWidth={1}
-          borderStyle="solid"
-          sx={{ userSelect: "text", code: { bg: "inherit" } }}>
-          {parser.defaultRules.codeBlock.react(
-            { content: commit.patch?.trimEnd(), lang: "patch" },
-            // @ts-ignore
-            null,
-            {},
-          )}
+    <Box onMouseUp={(event) => event.button === 2 && event.detail === 2 && onClose()}>
+      <Box borderStyle="solid" borderWidth={1} borderColor="border.default" borderRadius={2} mb={3}>
+        <Box bg="canvas.subtle" p={3} borderTopLeftRadius={2} borderTopRightRadius={2}>
+          <Text as="p" m={0} display="flex" sx={{ alignItems: "center" }}>
+            {message[0]}
+            <Button sx={{ ml: 2 }} onClick={onClose}>
+              Close
+            </Button>
+          </Text>
+          {message[1] && <pre>{message[1]}</pre>}
         </Box>
-      )}
+        <Box borderStyle="solid" borderTop={1} borderColor="border.subtle" px={3} py={2}>
+          <Avatar src={commit.author!.avatar_url} />{" "}
+          <Text fontWeight="bold">{commit.author?.login}</Text> <Text>commited</Text>{" "}
+          <RelativeTime datetime={commit.commit.author?.date} />
+        </Box>
+      </Box>
+      <Box mb={3}>
+        <Text>Showing</Text>{" "}
+        <Text fontWeight="bold">
+          {commit.files.length} changed file{commit.files.length > 1 ? "s" : ""}
+        </Text>{" "}
+        <Text>with</Text> <Text fontWeight="bold">{commit.stats?.additions} additions</Text>{" "}
+        <Text>and</Text> <Text fontWeight="bold">{commit.stats?.deletions} deletions</Text>
+      </Box>
+      {commit.files.map((file) => (
+        <CommitView commit={file} sx={{ mb: 3 }} />
+      ))}
     </Box>
   );
 };

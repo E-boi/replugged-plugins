@@ -2,7 +2,7 @@ import { settings } from "replugged";
 import { Octokit } from "@octokit/rest";
 import { components, operations } from "@octokit/openapi-types";
 import { useEffect, useState } from "react";
-import { usePaginate } from "./paginate";
+import { useCommits, useIssues } from "./paginate";
 
 export type Branch = components["schemas"]["short-branch"] & {
   commit: components["schemas"]["commit"];
@@ -31,9 +31,18 @@ export type Issue = components["schemas"]["issue-search-result-item"] & {
   marked?: boolean;
 };
 
-export const pluginSettings = await settings.init("dev.eboi.githubindiscord");
+export const pluginSettings = await settings.init<{
+  key: string;
+  darkTheme: string;
+  lightTheme: string;
+  view: "standard" | "treeview";
+}>("dev.eboi.githubindiscord", {
+  darkTheme: "dark_discord",
+  lightTheme: "light_discord",
+  view: "standard",
+});
 
-const octokit = new Octokit({ auth: pluginSettings.get("key") });
+export const octokit = new Octokit({ auth: pluginSettings.get("key") });
 const cache = new Map<
   string,
   {
@@ -81,48 +90,35 @@ export function useRepo({ url, query }: { url: string; query: RepoQuery }) {
     tags: Array<components["schemas"]["tag"]>;
     tree: TreeWithContent[];
     branches: Branch[];
+    currentBranch: Branch;
+    url: string;
   }>();
-  const [status, setStatus] = useState<"loading" | "err" | "complete">("loading");
-  const [error, setError] = useState<string>();
+  const [status, setStatus] = useState<"loading" | "complete">("loading");
   const [iQuery, setQuery] = useState(query);
   const [force, setForce] = useState(false);
-  const issues = usePaginate(
-    octokit,
-    { q: `repo:${url} is:issue` },
-    {
-      force,
-      onError: (e) => {
-        setStatus("err");
-        setError(e);
-      },
-    },
-  );
-  const prs = usePaginate(
-    octokit,
-    { q: `repo:${url} is:pr` },
-    {
-      force,
-      onError: (e) => {
-        setStatus("err");
-        setError(e);
-      },
-    },
-  );
+  const issues = useIssues(url, "issue");
+  const prs = useIssues(url, "pr");
+  const commits = useCommits(url, { branch: repo?.currentBranch.name });
 
   useEffect(() => {
     setStatus("loading");
     (async () => {
-      try {
-        const r = await getAll(url, iQuery, force);
-        setRepo(r);
-        setForce(false);
-        setStatus("complete");
-      } catch (err) {
-        // @ts-expect-error stfu
-        setError(err.message as string);
-        setStatus("err");
-        console.error(err);
-      }
+      const r = await getAll(url, iQuery, force);
+      await issues.fetch(force);
+      await prs.fetch(force);
+
+      const currentBranch = iQuery.branch
+        ? r.branches.find((b) => b.name === iQuery.branch)!
+        : r.branches[0];
+      await commits.fetch(force, currentBranch.name);
+
+      setRepo({
+        ...r,
+        url,
+        currentBranch,
+      });
+      setForce(false);
+      setStatus("complete");
     })();
   }, [JSON.stringify(iQuery), url, force]);
 
@@ -132,7 +128,17 @@ export function useRepo({ url, query }: { url: string; query: RepoQuery }) {
     setQuery(q);
   };
 
-  return { data: (repo && { ...repo, issues, prs }) || null, status, error, refetch };
+  const switchBranch = (branch: string) => {
+    if (branch === repo?.currentBranch.name) return;
+    refetch({ ...query, branch });
+  };
+
+  return {
+    data: (repo && { ...repo, issues, prs, commits }) || null,
+    status,
+    refetch,
+    switchBranch,
+  };
 }
 
 export async function getBranches(
@@ -142,6 +148,7 @@ export async function getBranches(
   const branches = await octokit.repos.listBranches({
     owner: url.split("/")[0]!,
     repo: url.split("/")[1],
+    per_page: 100,
     ...query,
   });
   return await Promise.all(
@@ -255,8 +262,8 @@ export async function getTimeline(
   });
   return await Promise.all(
     timeline.data.map(async (t) => {
-      if (t.event === "commented" || t.event === "reviewed")
-        t.body = await getMarkdown(t.body ?? "*No description provided.*");
+      // if (t.event === "commented" || t.event === "reviewed")
+      //   t.body = await getMarkdown(t.body ?? "*No description provided.*");
       // @ts-expect-error now it does
       if (t.event === "committed") t.commit = await getCommit(url, t.sha!);
       return t;
@@ -332,6 +339,29 @@ function sortTree(tree: components["schemas"]["git-tree"]["tree"]) {
   sortFolder(arr);
   return arr;
 }
+
+export function sortCommits(commits: Array<NonNullable<TreeWithContent["latestCommit"]>>) {
+  const arr: Array<typeof commits> = [[commits[0]]];
+  let currentIdx = 0;
+
+  commits.sort((a, b) => {
+    const aDate = new Date(a.commit.author!.date!),
+      bDate = new Date(b.commit.author!.date!);
+
+    if (aDate.getMonth() === bDate.getMonth() && aDate.getDate() === bDate.getDate())
+      arr[currentIdx].push(a);
+    else {
+      ++currentIdx;
+      arr.push([a]);
+    }
+
+    return 1;
+  });
+
+  return arr;
+}
+
+export const classes = (...classes: unknown[]) => classes.filter(Boolean).join(" ");
 
 export function abbreviateNumber(value: number): string {
   // eslint-disable-next-line new-cap

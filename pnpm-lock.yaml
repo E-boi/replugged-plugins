@@ -4,6 +4,7 @@ specifiers:
   '@electron/asar': ^3.2.1
   '@octokit/openapi-types': ^14.0.0
   '@octokit/rest': ^19.0.5
+  '@octokit/types': ^8.1.1
   '@primer/react': ^35.16.0
   '@primer/styled-octicons': ^17.10.0
   '@types/node': ^18.11.2
@@ -20,7 +21,7 @@ specifiers:
   prettier: ^2.8.1
   react: ^18.2.0
   react-dom: ^18.2.0
-  replugged: 4.0.0-beta0.21
+  replugged: 4.0.0-beta0.22
   styled-components: ^5.3.6
   tsx: ^3.10.3
   typescript: ^4.8.4
@@ -37,6 +38,7 @@ dependencies:
 devDependencies:
   '@electron/asar': 3.2.2
   '@octokit/openapi-types': 14.0.0
+  '@octokit/types': 8.1.1
   '@types/node': 18.11.18
   '@types/react': 18.0.26
   '@typescript-eslint/eslint-plugin': 5.47.1_txmweb6yn7coi7nfrp22gpyqmy
@@ -48,7 +50,7 @@ devDependencies:
   eslint-plugin-node: 11.1.0_eslint@8.30.0
   eslint-plugin-react: 7.31.11_eslint@8.30.0
   prettier: 2.8.1
-  replugged: 4.0.0-beta0.21
+  replugged: 4.0.0-beta0.22
   tsx: 3.12.1
   typescript: 4.9.4
 
@@ -2368,8 +2370,8 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /replugged/4.0.0-beta0.21:
-    resolution: {integrity: sha512-ImyGRnovKTVGNbz4x0nug1xh0kOHnwFSNZI55Lr0X5klzeDHDgsa55HXnL4mbkNQl10fBN3wiUgfN3MOOEuDMw==}
+  /replugged/4.0.0-beta0.22:
+    resolution: {integrity: sha512-zR61aYEQmOEBcSxJEzx0sfd0EsN348uVE06kzWXNtBpQeWzlp0c4sZCz4DNZ5hvs/aavRFvUNpoaMvtM9QJrbw==}
     engines: {node: '>=14.0.0'}
     dependencies:
       '@octokit/rest': 19.0.5

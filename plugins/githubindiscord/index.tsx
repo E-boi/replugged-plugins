@@ -3,9 +3,10 @@ import { Injector, components, webpack } from "replugged";
 import { openGithubModal } from "./Modal";
 import { MarkGithubIcon } from "@primer/styled-octicons";
 import { Box } from "@primer/react";
-import { ModuleExports, ModuleExportsWithProps } from "replugged/dist/types";
+import type { ModuleExports, ModuleExportsWithProps } from "replugged/dist/types";
 const { MenuItem, MenuGroup } = components.ContextMenu;
 const { Tooltip } = components;
+export { default as Settings } from "./Settings";
 
 const injector = new Injector();
 
@@ -24,18 +25,20 @@ export function getExportsForProto<
 const ghRegex =
   /https?:\/\/(?:www.)?github.com\/([\w-]+\/[\w-]+)(?:\/((?:tree|blob)\/([\w-]+)\/([\w/.?]+)|((issues|pulls)(?:\/([0-9]+))?)))?/g;
 
-export function start() {
-  const e = webpack.getModule<{ ZP: Function }>((m) =>
+export async function start() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const module = await webpack.waitForModule<any>((m) =>
     Boolean(getExportsForProto(m.exports, ["renderTitle"])),
   );
-  if (!e) return;
-  injector.after(e.ZP?.prototype, "renderProvider", (args, res) => {
-    if (!res) return res;
-    const link = res._owner?.stateNode?.props?.embed?.url;
-    if (!link) return res;
-    const msg = checkMessage(link);
-    if (!msg) return res;
 
+  if (!module) return;
+
+  injector.after(module.ZP?.prototype, "renderProvider", (_, res) => {
+    if (!res) return res;
+    const link = res._owner?.stateNode?.props?.embed?.url as string;
+    if (!link) return res;
+    const msg = checkMessage(link)?.[0];
+    if (!msg) return res;
     return (
       <Box display="flex" className={res.props.className}>
         <span>{res.props.children.props.children}</span>
@@ -55,26 +58,40 @@ export function stop(): void {
   injector.uninjectAll();
 }
 
+const tabs = {
+  issues: "Issues",
+  pulls: "Pull Request",
+};
+
 function checkMessage(content: string) {
-  const match = [...content.matchAll(ghRegex)]?.[0];
+  const match = [...content.matchAll(ghRegex)];
   if (!match) return null;
-  const tab = match[2] === "issues" ? "Issues" : match[2] === "pulls" ? "Pull Requests" : "";
-  return {
-    url: match[1],
-    tab,
-  };
+
+  return match.map((d) => ({
+    url: d[1],
+    tab: d[2] && tabs[d[2] as keyof typeof tabs],
+  }));
 }
 
 export function menu(content: string, href?: string) {
   const msg = checkMessage(href || content);
-  if (!msg) return null;
+  if (!msg?.length) return null;
+
   return (
     <MenuGroup>
       <MenuItem
         id="githubindiscord"
         label="Open Repository"
-        action={() => openGithubModal(msg.url, msg.tab)}
-      />
+        action={() => openGithubModal(msg[0].url, msg[0].tab)}>
+        {msg.length &&
+          msg.map((m, i) => (
+            <MenuItem
+              id={`githubindiscord-${i}`}
+              label={`Open ${m.url}`}
+              action={() => openGithubModal(m.url, m.tab)}
+            />
+          ))}
+      </MenuItem>
     </MenuGroup>
   );
 }

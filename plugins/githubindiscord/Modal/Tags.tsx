@@ -1,9 +1,9 @@
 import { Box, SubNav, Text } from "@primer/react";
 import { TagIcon } from "@primer/styled-octicons";
-import { useState } from "react";
-import { TabProps } from ".";
+import { useContext, useState } from "react";
+import { Context } from "../context";
 
-export default (props: TabProps) => {
+export default () => {
   const [tab, setTab] = useState<string>("tags");
 
   return (
@@ -18,12 +18,14 @@ export default (props: TabProps) => {
           </SubNav.Link>
         </SubNav.Links>
       </SubNav>
-      {tab === "tags" && <TagsTab {...props} />}
+      {tab === "tags" && <TagsTab />}
     </div>
   );
 };
 
-function TagsTab({ tags }: TabProps) {
+function TagsTab() {
+  const { data } = useContext(Context)!;
+  const { tags } = data!;
   // const [tags, setTags] = useState<components["schemas"]["tag"][] | null>(null);
 
   // useEffect(() => {

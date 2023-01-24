@@ -1,29 +1,13 @@
-import { useEffect, useState } from "react";
 import { common, components } from "replugged";
 import { ModalProps } from "../Modals";
-import { pluginSettings } from "../utils";
-import { default as customTheme } from "../theme";
-import { SelectMenu } from "../components";
+import Settings from "../Settings";
 
 const { ModalContent, ModalHeader, ModalRoot, ModalFooter, ModalCloseButton } = components.Modal;
-const { FormItem, FormText, Input } = components;
+const { FormItem, FormText } = components;
 
 let modalKey: string;
-
+// console.log(components);
 function SettingsModal(props: ModalProps) {
-  const [key, setKey] = useState(pluginSettings.get("key", ""));
-  const [darkTheme, setDarkTheme] = useState(pluginSettings.get("darkTheme", "dark_discord"));
-  const [lightTheme, setLightTheme] = useState(pluginSettings.get("lightTheme", "light_discord"));
-
-  useEffect(() => {
-    pluginSettings.set("key", key);
-    pluginSettings.set("darkTheme", darkTheme);
-    pluginSettings.set("lightTheme", lightTheme);
-  }, [key, darkTheme, lightTheme]);
-
-  const darkThemes = Object.keys(customTheme.colorSchemes).filter((t) => t.includes("dark"));
-  const lightThemes = Object.keys(customTheme.colorSchemes).filter((t) => t.includes("light"));
-
   return (
     <ModalRoot {...props}>
       <ModalHeader>
@@ -32,26 +16,7 @@ function SettingsModal(props: ModalProps) {
         </FormItem>
       </ModalHeader>
       <ModalContent>
-        <FormText.DESCRIPTION>
-          Github Token (reload for the token to take effect)
-        </FormText.DESCRIPTION>
-        <Input value={key} onChange={setKey} />
-        <FormText.DESCRIPTION>Dark Theme</FormText.DESCRIPTION>
-        {SelectMenu && (
-          <SelectMenu
-            value={darkTheme}
-            options={darkThemes.map((t) => ({ label: t, value: t }))}
-            onChange={setDarkTheme}
-          />
-        )}
-        <FormText.DESCRIPTION>Light Theme</FormText.DESCRIPTION>
-        {SelectMenu && (
-          <SelectMenu
-            value={lightTheme}
-            options={lightThemes.map((t) => ({ label: t, value: t }))}
-            onChange={setLightTheme}
-          />
-        )}
+        <Settings />
       </ModalContent>
       <ModalFooter>
         <ModalCloseButton onClick={() => common.modal.closeModal(modalKey)}>Close</ModalCloseButton>

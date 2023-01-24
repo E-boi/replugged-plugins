@@ -3,6 +3,7 @@ import { Avatar, Label, Link, RelativeTime, Text, Timeline } from "@primer/react
 import {
   CommitIcon,
   EyeIcon,
+  FileDiffIcon,
   GitMergeIcon,
   IssueClosedIcon,
   PencilIcon,
@@ -14,13 +15,13 @@ import {
 import { Issue } from "../utils";
 import { TimelineComment } from "./Comment";
 
-type Props = {
+interface Props {
   event: operations["issues/list-events-for-timeline"]["responses"]["200"]["content"]["application/json"][0] & {
     commit?: components["schemas"]["commit"];
     issue: Issue;
     onCommitClick?: (commit: components["schemas"]["commit"]) => void;
   };
-};
+}
 
 const items = {
   labeled: Labeled,
@@ -36,6 +37,7 @@ const items = {
   reviewed: {
     commented: ReviewComment,
     approved: ReviewComment,
+    changes_requested: ChangesRequested,
   },
 };
 
@@ -168,6 +170,24 @@ function Closed({ event }: Props) {
   );
 }
 
+function ChangesRequested({ event }: Props) {
+  if (!event.body) return null;
+  return (
+    <>
+      <Timeline.Item sx={{ marginLeft: "70px" }}>
+        <Timeline.Badge sx={{ bg: "danger.emphasis", color: "fg.onEmphasis" }}>
+          <FileDiffIcon />
+        </Timeline.Badge>
+        <Timeline.Body>
+          <Avatar src={event.user!.login} /> <Text fontWeight="bold">{event.user?.login}</Text>{" "}
+          <Text>requested changes</Text> <RelativeTime datetime={event.submitted_at} />
+        </Timeline.Body>
+      </Timeline.Item>
+      <TimelineComment caret="top-left" comment={event} />
+    </>
+  );
+}
+
 function ReviewComment({ event }: Props) {
   if (!event.body) return null;
   return (
@@ -191,7 +211,7 @@ function Committed({ event }: Props) {
       <Timeline.Body>
         <Avatar src={event.commit!.author!.avatar_url} />{" "}
         <Link muted onClick={() => event.onCommitClick?.(event.commit!)}>
-          {event.message!}
+          {event.message?.split("\n\n")[0]}
         </Link>
       </Timeline.Body>
     </Timeline.Item>

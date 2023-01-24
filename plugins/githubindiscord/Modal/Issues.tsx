@@ -9,22 +9,25 @@ import {
   Timeline,
 } from "@primer/react";
 import { CheckIcon, IssueOpenedIcon } from "@primer/styled-octicons";
-import { useContext, useEffect, useState } from "react";
-import { TabProps } from ".";
+import { useContext, useState } from "react";
 import { Context } from "../context";
-import { Issue, getMarkdown, getTimeline } from "../utils";
+import { useTimeline } from "../paginate";
+import { Issue } from "../utils";
 import { TimelineComment } from "./Comment";
 import IssueCard from "./IssueCard";
 import Spinner from "./Spinner";
 import TimelineItems from "./TimelineItems";
 
-export default ({ url }: TabProps) => {
+export default () => {
   const { data } = useContext(Context)!;
   const { issues } = data!;
   const [selectedIssue, setIssue] = useState<Issue | null>(null);
 
-  const page: Issue[] = issues.page[issues.state][issues.info.currentPage - 1];
-  if (selectedIssue) return <Issue issue={selectedIssue} url={url} />;
+  const page: Issue[] =
+    issues.data![issues.data!.state][
+      issues.info[issues.data!.state]!.data!.pageInfo.currentPage - 1
+    ];
+  if (selectedIssue) return <Issue issue={selectedIssue} onClose={() => setIssue(null)} />;
 
   return (
     <Box borderColor="border.default" borderStyle="solid" borderWidth={1} borderRadius={2}>
@@ -32,16 +35,16 @@ export default ({ url }: TabProps) => {
         <Button
           leadingIcon={IssueOpenedIcon}
           variant="invisible"
-          sx={{ color: issues.state === "open" ? "fg.default" : "fg.muted" }}
+          sx={{ color: issues.data!.state === "open" ? "fg.default" : "fg.muted" }}
           onClick={() => issues.viewOpen()}>
-          {issues.page.totalOpen} Open
+          {issues.data!.totalOpen} Open
         </Button>
         <Button
           leadingIcon={CheckIcon}
           variant="invisible"
-          sx={{ color: issues.state === "closed" ? "fg.default" : "fg.muted" }}
+          sx={{ color: issues.data!.state === "closed" ? "fg.default" : "fg.muted" }}
           onClick={() => issues.viewClosed()}>
-          {issues.page.totalClosed} Closed
+          {issues.data!.totalClosed} Closed
         </Button>
       </Box>
       {!page?.length ? (
@@ -49,14 +52,15 @@ export default ({ url }: TabProps) => {
       ) : (
         page?.map((issue) => <IssueCard issue={issue} onClick={() => setIssue(issue)} />)
       )}
-      {issues.info.pages[issues.state] && (
+      {issues.info[issues.data!.state].data?.pageInfo.lastPage && (
         <Box borderColor="border.default" borderStyle="solid" borderTopWidth={1}>
           <Pagination
-            currentPage={issues.info.currentPage}
-            pageCount={issues.info.pages[issues.state]!.last}
+            currentPage={issues.info[issues.data!.state].data!.pageInfo.currentPage}
+            pageCount={issues.info[issues.data!.state].data!.pageInfo.lastPage!}
             showPages={false}
             onPageChange={(_, page) => {
-              if (page > issues.info.currentPage) issues.nextPage();
+              if (page > issues.info[issues.data!.state].data!.pageInfo.currentPage)
+                issues.nextPage();
               else issues.previousPage();
             }}
           />
@@ -66,27 +70,20 @@ export default ({ url }: TabProps) => {
   );
 };
 
-function Issue({ issue, url }: { issue: Issue; url: string }) {
-  const forceUpdate = useState({})[1];
-  useEffect(() => {
-    (async () => {
-      if (!issue.timeline) issue.timeline = await getTimeline(url, issue.number);
-      const markdown = issue.marked
-        ? issue.body
-        : await getMarkdown(issue.body ?? "*No description provided.*");
-      issue.body = markdown;
-      issue.marked = true;
-      forceUpdate({});
-    })();
-  }, []);
+function Issue({ issue, onClose }: { issue: Issue; onClose: () => void }) {
+  const { url } = useContext(Context)!.data!;
+  const timeline = useTimeline(url, issue.number);
 
-  if (!issue.timeline) return <Spinner>Fetching issue...</Spinner>;
+  if (!timeline.data.info) return <Spinner>Fetching issue...</Spinner>;
 
   return (
-    <Box>
+    <Box onMouseUp={(event) => event.button === 2 && event.detail === 2 && onClose()}>
       <Box mb={3}>
-        <Heading>
+        <Heading sx={{ display: "flex", alignItems: "center" }}>
           {issue.title} #{issue.number}
+          <Button sx={{ ml: 2 }} onClick={onClose}>
+            Close
+          </Button>
         </Heading>
         <Box
           display="flex"
@@ -108,9 +105,15 @@ function Issue({ issue, url }: { issue: Issue; url: string }) {
       </Box>
       <Timeline clipSidebar>
         <TimelineComment comment={issue} />
-        {issue.timeline?.map((t) => (
+        {timeline.data.page?.map((t) => (
           <TimelineItems event={{ ...t, issue }} />
         ))}
+        {timeline.data.info?.lastPage &&
+          timeline.data.info?.currentPage !== timeline.data.info.lastPage && (
+            <Button onClick={timeline.nextPage} sx={{ mt: 2 }}>
+              Load More
+            </Button>
+          )}
       </Timeline>
     </Box>
   );
