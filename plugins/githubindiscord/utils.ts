@@ -22,6 +22,8 @@ export type TreeWithContent = components["schemas"]["git-tree"]["tree"][0] & {
   tree?: TreeWithContent[];
   content?: string;
   latestCommit?: components["schemas"]["commit"];
+  hasReadme?: boolean;
+  readme?: components["schemas"]["content-file"];
 };
 
 export type Issue = components["schemas"]["issue-search-result-item"] & {
@@ -48,8 +50,9 @@ const cache = new Map<
   {
     repo: components["schemas"]["full-repository"];
     tags: Array<components["schemas"]["tag"]>;
-    tree: TreeWithContent[];
+    tree: TreeWithContent;
     branches: Branch[];
+    readme: components["schemas"]["content-file"];
   }
 >();
 
@@ -58,6 +61,7 @@ export async function getAll(url: string, query: RepoQuery, force?: boolean) {
     return cache.get(`${url}/${JSON.stringify(query)}`)!;
   else if (force) cache.forEach((_, k) => k.includes(url) && cache.delete(k));
   const repo = await getRepo(url);
+  const readme = await getReadme(url);
   const defaultBranch = await getBranch(url, repo.default_branch);
   const branches = (await getBranches(url, { ...query?.branches })).filter(
     (b) => b.name !== defaultBranch.name,
@@ -73,7 +77,14 @@ export async function getAll(url: string, query: RepoQuery, force?: boolean) {
     repo,
     branches: [defaultBranch, ...branches],
     tags,
-    tree,
+    tree: {
+      tree,
+      latestCommit: (selectedBranch || defaultBranch).commit,
+      readme,
+      hasReadme: Boolean(readme),
+      filename: "",
+    },
+    readme,
   };
 
   cache.set(`${url}/${JSON.stringify(query)}`, data);
@@ -88,8 +99,9 @@ export function useRepo({ url, query }: { url: string; query: RepoQuery }) {
   const [repo, setRepo] = useState<{
     repo: components["schemas"]["full-repository"];
     tags: Array<components["schemas"]["tag"]>;
-    tree: TreeWithContent[];
+    tree: TreeWithContent;
     branches: Branch[];
+    readme: components["schemas"]["content-file"];
     currentBranch: Branch;
     url: string;
   }>();
@@ -141,6 +153,18 @@ export function useRepo({ url, query }: { url: string; query: RepoQuery }) {
   };
 }
 
+export async function getReadme(url: string, dir?: string, ref?: string) {
+  const readme = dir
+    ? await octokit.repos.getReadmeInDirectory({
+        owner: url.split("/")[0]!,
+        repo: url.split("/")[1],
+        dir,
+        ref,
+      })
+    : await octokit.repos.getReadme({ owner: url.split("/")[0]!, repo: url.split("/")[1] });
+  return readme.data;
+}
+
 export async function getBranches(
   url: string,
   query?: operations["repos/list-branches"]["parameters"]["query"],
@@ -182,6 +206,16 @@ export async function getFolder(
     ...query,
   });
   return sortTree(folder.data.tree);
+}
+
+export async function getFolderInfo(
+  url: string,
+  query: operations["repos/list-commits"]["parameters"]["query"],
+) {
+  const commits = await getCommits(url, query);
+  const readme = await getReadme(url, query.path, query.sha).catch(() => {});
+
+  return { commits, readme };
 }
 
 export async function getFile(url: string, fileF: TreeWithContent) {

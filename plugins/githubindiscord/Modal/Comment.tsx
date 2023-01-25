@@ -1,6 +1,6 @@
 import { Avatar, Box, CaretProps, PointerBox, RelativeTime, Text, Timeline } from "@primer/react";
 import { BetterSystemStyleObject } from "@primer/react/lib/sx";
-import { parseMarkdown } from "../parser";
+import Markdown from "./Markdown";
 
 export const TimelineComment = ({
   comment,
@@ -42,25 +42,18 @@ export const TimelineComment = ({
               {comment.user?.login} commented <RelativeTime datetime={comment.created_at} />
             </Text>
           </PointerBox>
-          <Box
-            py={1}
-            px={3}
-            borderColor="border.default"
-            borderWidth={1}
-            borderStyle="solid"
-            borderTop={0}
-            borderBottomLeftRadius={2}
-            borderBottomRightRadius={2}
+          <Markdown
+            source={comment.body ?? "*No description provided.*"}
             sx={{
-              userSelect: "text",
-              code: { bg: "canvas.subtle" },
-              lineHeight: "2rem",
-              img: {
-                maxWidth: "100%",
-              },
-            }}>
-            {parseMarkdown(comment.body as string)}
-          </Box>
+              p: 3,
+              borderColor: "border.default",
+              borderWidth: 1,
+              borderStyle: "solid",
+              borderTop: 0,
+              borderBottomLeftRadius: 2,
+              borderBottomRightRadius: 2,
+            }}
+          />
         </Box>
       </Timeline.Body>
     </Timeline.Item>

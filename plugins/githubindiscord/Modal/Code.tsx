@@ -1,13 +1,13 @@
-import { components } from "@octokit/openapi-types";
 import { Avatar, Box, Breadcrumbs, Link, RelativeTime, Text, Truncate } from "@primer/react";
 import { TreeView } from "@primer/react/drafts";
 import { FileDirectoryFillIcon, FileIcon } from "@primer/styled-octicons";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import { common, webpack } from "replugged";
 import { SelectMenu } from "../components";
 import { Context } from "../context";
-import { TreeWithContent, getCommits, getFile, pluginSettings } from "../utils";
+import { TreeWithContent, getFile, getFolderInfo, pluginSettings } from "../utils";
 import CommitsView from "./Commits/CommitView";
+import Markdown from "./Markdown";
 
 const { parser } = common;
 const blober = webpack.getByProps("blob");
@@ -18,25 +18,16 @@ export default () => {
 
 function StandardView() {
   const { data, switchBranch } = useContext(Context)!;
-  const { tree, branches, currentBranch: branch, url } = data!;
+  const { tree, branches, currentBranch: branch, url, readme } = data!;
   const [folder, setFolder] = useState<{
-    current: { latestCommit?: components["schemas"]["commit"]; tree: TreeWithContent[] };
-    prevs: Array<{ latestCommit?: components["schemas"]["commit"]; tree: TreeWithContent[] }>;
+    current: typeof tree;
+    prevs: Array<typeof tree>;
   }>({
-    current: { tree, latestCommit: branch.commit },
+    current: tree,
     prevs: [],
   });
   const [file, setFile] = useState<TreeWithContent | null>(null);
   const [commit, setCommit] = useState<TreeWithContent["latestCommit"] | null>(null);
-
-  useEffect(
-    () =>
-      setFolder({
-        current: { tree, latestCommit: branch.commit },
-        prevs: [],
-      }),
-    [tree],
-  );
 
   const getBlob = useCallback(async (file: TreeWithContent) => {
     if (!file.content) file.content = (await getFile(url, file)).content;
@@ -46,7 +37,7 @@ function StandardView() {
     }));
     setFile(file);
   }, []);
-  let path: string[] = (file?.path || folder.current.tree[0].path)!.split("/");
+  let path: string[] = (file?.path || folder.current.tree![0].path)!.split("/");
   let ending = path.pop();
   const latestCommit = file ? file.latestCommit : folder.current.latestCommit;
 
@@ -66,7 +57,10 @@ function StandardView() {
           <Breadcrumbs>
             <Breadcrumbs.Item
               onClick={() => {
-                setFolder({ current: { tree, latestCommit: branch.commit }, prevs: [] });
+                setFolder({
+                  current: tree,
+                  prevs: [],
+                });
                 setFile(null);
               }}>
               {url.split("/")[1]}
@@ -97,7 +91,7 @@ function StandardView() {
           setFolder((prev) => {
             const current = prev.prevs.pop();
             return {
-              current: current ?? { tree, latestCommit: branch.commit },
+              current: current ?? tree,
               prevs: prev.prevs,
             };
           });
@@ -151,7 +145,7 @@ function StandardView() {
               setFolder((prev) => {
                 const current = prev.prevs.pop();
                 return {
-                  current: current ?? { tree, latestCommit: branch.commit },
+                  current: current ?? tree,
                   prevs: prev.prevs,
                 };
               });
@@ -175,7 +169,7 @@ function StandardView() {
           </Box>
         )}
         {!file &&
-          folder.current.tree.map((c) => (
+          folder.current.tree!.map((c) => (
             <Box
               borderColor="border.muted"
               borderTopWidth={1}
@@ -195,18 +189,18 @@ function StandardView() {
                 onClick={() => {
                   if (c.type === "tree") {
                     setFolder((prev) => ({
-                      current: c as typeof prev["current"],
+                      current: c,
                       prevs: [...prev.prevs, folder.current],
                     }));
                   } else void getBlob(c);
 
                   if (!c.latestCommit)
-                    void getCommits(url, { path: c.path, sha: branch.name }).then((o) => {
-                      if (o[0]) {
-                        c.latestCommit = o[0];
+                    void getFolderInfo(url, { path: c.path, sha: branch.name, per_page: 1 }).then(
+                      (o) => {
+                        c.latestCommit = o.commits[0];
                         if (c.type === "tree")
                           setFolder((prev) => ({
-                            current: c as typeof prev["current"],
+                            current: c,
                             prevs: [...prev.prevs],
                           }));
                         else
@@ -214,14 +208,30 @@ function StandardView() {
                             if (prev) return { ...prev, latestCommit: c.latestCommit };
                             return null;
                           });
-                      }
-                    });
+
+                        c.readme = o.readme as typeof readme;
+                        c.hasReadme = Boolean(o.readme);
+                      },
+                    );
                 }}>
                 {c.filename}
               </Link>
             </Box>
           ))}
       </Box>
+      {!file && folder.current.hasReadme && (
+        <Markdown
+          source={window.atob(folder.current.readme!.content)}
+          sx={{
+            p: 3,
+            mt: 3,
+            borderColor: "border.default",
+            borderWidth: 1,
+            borderStyle: "solid",
+            borderRadius: 2,
+          }}
+        />
+      )}
     </>
   );
 }
@@ -231,7 +241,7 @@ function Tree() {
   const { tree } = data!;
   return (
     <TreeView aria-label="Files">
-      {tree.map((tree) => (
+      {tree.tree!.map((tree) => (
         <TreeViewItem tree={tree} />
       ))}
     </TreeView>

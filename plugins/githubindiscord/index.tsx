@@ -83,7 +83,7 @@ export function menu(content: string, href?: string) {
         id="githubindiscord"
         label="Open Repository"
         action={() => openGithubModal(msg[0].url, msg[0].tab)}>
-        {msg.length &&
+        {msg.length > 1 &&
           msg.map((m, i) => (
             <MenuItem
               id={`githubindiscord-${i}`}

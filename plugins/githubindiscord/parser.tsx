@@ -4,7 +4,6 @@ import { common, webpack } from "replugged";
 import { Parser } from "replugged/dist/renderer/modules/webpack/common";
 import { AnyFunction } from "replugged/dist/types";
 import { textClasses } from "./components";
-import { classes } from "./utils";
 
 const defaultParser = webpack.getByProps(
   "sanitizeText",
@@ -14,7 +13,6 @@ const defaultParser = webpack.getByProps(
 );
 const defaultRules = defaultParser?.defaultRules as typeof common.parser.defaultRules;
 
-// const regex = /^( *)(?:[*+-]) [\s\S]+?(?:\n{1,}(?! )(?!\1(?:[*+-]|\d+\.) )\n*|\s*\n*$)/
 const headings = {
   h1: textClasses?.["heading-xxl/bold"],
   h2: textClasses?.["heading-xl/bold"],
@@ -28,8 +26,7 @@ const rules: Parser["defaultRules"] = {
   ...defaultRules,
   heading: {
     ...defaultRules.heading,
-    // order: 30,
-    match: (source) => /^ *(#{1,6}) (.+)(?:\n)?/.exec(source),
+    match: (source) => /^ *(#{1,6})([^\n]+?)#* *(?:\n *)+/.exec(source),
     // @ts-expect-error okay
     react(props: { content: string; level: number }, t: AnyFunction, n: { key: string }) {
       const { theme } = useTheme();
@@ -38,7 +35,7 @@ const rules: Parser["defaultRules"] = {
         <Element
           key={n.key}
           style={{ borderColor: theme!.colors.border.muted }}
-          className={classes(headings[Element as keyof typeof headings], "gid-heading")}>
+          className={headings[Element as keyof typeof headings]}>
           {t(props.content, n) as ReactNode}
         </Element>
       );
@@ -74,8 +71,7 @@ const rules: Parser["defaultRules"] = {
     },
   },
   blockQuote: {
-    ...defaultRules.blockQuote,
-    match: (source) => /^( *>[^\n]+(\n[^\n]+)*\n*)+/.exec(source),
+    ...common.parser.defaultRules.blockQuote,
     // @ts-expect-error okay
     react(props: { content: string }, t: AnyFunction, n: { key: string }) {
       const { theme } = useTheme();
@@ -128,19 +124,19 @@ const rules: Parser["defaultRules"] = {
       );
     },
   },
-  url: {
-    ...defaultRules.url,
-    match: (source) => /^(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/.exec(source),
-  },
   link: {
     ...defaultRules.link,
     // @ts-expect-error okay
-    react(props, t: AnyFunction, n: { key: string }) {
+    react(
+      props: { content: unknown[]; target: string; title?: string },
+      t: AnyFunction,
+      n: { key: string },
+    ) {
       return (
         <a
           key={n.key}
           href={(defaultParser?.sanitizeUrl as (url: string) => string)(props.target)}
-          title={props.title}
+          title={props.title ?? props.target}
           target="_blank">
           {t(props.content, n) as ReactNode}
         </a>
@@ -168,7 +164,7 @@ const rules: Parser["defaultRules"] = {
     },
   },
   italic: {
-    order: 20,
+    order: defaultRules.em.order + 0.5,
     match: (source) => /^\*((?:\\[\s\S]|[^\\])+?)\*/.exec(source),
     // @ts-expect-error okay
     parse(match: RegExpExecArray, t: AnyFunction, n: { key: string }) {
@@ -178,21 +174,38 @@ const rules: Parser["defaultRules"] = {
     },
     // @ts-expect-error okay
     react(props: { content: string[] }, t: AnyFunction, n: { key: string }) {
-      return <i>{t(props.content, n) as ReactNode}</i>;
+      return <i key={n.key}>{t(props.content, n) as ReactNode}</i>;
+    },
+  },
+  paragraph: {
+    ...defaultRules.paragraph,
+    // @ts-expect-error okay
+    react(props: { content: string[] }, t: AnyFunction, n: { key: string }) {
+      return <p key={n.key}>{t(props.content, n) as ReactNode}</p>;
+    },
+  },
+  inlineCode: {
+    ...defaultRules.inlineCode,
+    // @ts-expect-error okay
+    react(props: { content: string }, _: unknown, n: { key: string }) {
+      return (
+        <code className="inlineCode" key={n.key}>
+          {props.content}
+        </code>
+      );
     },
   },
 };
 
-delete rules.Array;
-delete rules.paragraph;
-
 const parse = (
-  defaultParser?.parserFor as (rules: typeof defaultRules) => (source: string) => unknown
+  defaultParser?.parserFor as (
+    rules: typeof defaultRules,
+  ) => (source: string, stuff?: { inline: boolean }) => unknown
 )(rules);
 const reactOutput = (
   defaultParser?.outputFor as (rules: typeof defaultRules, outputFor: "react") => AnyFunction
 )(rules, "react");
 console.log(rules);
 export function parseMarkdown(markdown: string): ReactNode {
-  return reactOutput(parse(markdown)) as ReactNode;
+  return reactOutput(parse(markdown, { inline: false })) as ReactNode;
 }

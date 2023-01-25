@@ -2,14 +2,6 @@
   background-color: var(--modal-background) !important;
 }
 
-.gid-heading {
-  padding-bottom: 0.3em;
-  border-style: solid;
-  border-bottom-width: 1px;
-  margin-top: 24px;
-  margin-bottom: 16px;
-}
-
 .githubModel {
   // color: var(--text-normal);
   width: fit-content;
@@ -202,19 +194,44 @@
         padding-top: 15px;
       }
     }
+
+    .gid-markdown {
+      word-wrap: break-word;
+      > :first-child {
+        margin-top: 0px;
+      }
+
+      > :last-child {
+        margin-bottom: 0px;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        margin-top: 24px;
+        margin-bottom: 16px;
+      }
+
+      h1,
+      h2 {
+        padding-bottom: 0.3em;
+        border-style: solid;
+        border-bottom-width: 1px;
+      }
+
+      .inlineCode {
+        padding: 0.2em 0.4em;
+        margin: 0;
+        font-size: 85%;
+        border-radius: 6px;
+      }
+    }
   }
 
   .footer-31IekZ {
     background-color: inherit;
   }
-
-  // a {
-  //   color: var(--text-link);
-
-  //   &:not(.repo-path > *):not(.Gout-folder a:hover):not(.Gin-folder a:hover):not(
-  //       .branches a:hover
-  //     ):not(.backbtn a):not(.doegSW):not(.miscLinks a:hover) {
-  //     color: var(--text-normal);
-  //   }
-  // }
 }
