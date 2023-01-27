@@ -4,6 +4,7 @@ import { openGithubModal } from "./Modal";
 import { MarkGithubIcon } from "@primer/styled-octicons";
 import { Box } from "@primer/react";
 import type { ModuleExports, ModuleExportsWithProps } from "replugged/dist/types";
+import { ReactNode } from "react";
 const { MenuItem, MenuGroup } = components.ContextMenu;
 const { Tooltip } = components;
 export { default as Settings } from "./Settings";
@@ -63,9 +64,9 @@ const tabs = {
   pulls: "Pull Request",
 };
 
-function checkMessage(content: string) {
+function checkMessage(content?: string) {
+  if (!content) return [];
   const match = [...content.matchAll(ghRegex)];
-  if (!match) return null;
 
   return match.map((d) => ({
     url: d[1],
@@ -73,25 +74,32 @@ function checkMessage(content: string) {
   }));
 }
 
-export function menu(content: string, href?: string) {
-  const msg = checkMessage(href || content);
-  if (!msg?.length) return null;
+export function menu(
+  { message, target }: { message?: { content: string }; target?: HTMLLinkElement },
+  children: ReactNode[],
+) {
+  const msg = checkMessage(message?.content || target?.href);
+  if (!msg.length) return null;
 
-  return (
+  children.push(
     <MenuGroup>
       <MenuItem
         id="githubindiscord"
         label="Open Repository"
-        action={() => openGithubModal(msg[0].url, msg[0].tab)}>
+        action={() => openGithubModal(msg[0].url, msg[0].tab)}
+        icon={() => <MarkGithubIcon />}>
         {msg.length > 1 &&
           msg.map((m, i) => (
             <MenuItem
               id={`githubindiscord-${i}`}
               label={`Open ${m.url}`}
               action={() => openGithubModal(m.url, m.tab)}
+              icon={() => <MarkGithubIcon />}
             />
           ))}
       </MenuItem>
-    </MenuGroup>
+    </MenuGroup>,
   );
+
+  return children;
 }

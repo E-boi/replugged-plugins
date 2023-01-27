@@ -5,9 +5,10 @@ export default [
     find: 'navId:"message"',
     replacements: [
       {
-        match: /function ..\((.)\){var.+channel[\s\S]+onSelect:.,children:\[.+\w}\)/g,
+        match:
+          /function \w+\((\w+)\){[\s\S]+MESSAGE_ACTIONS_MENU_LABEL,onSelect:\w+,children:(\[.+\])/g,
         replace:
-          "$&,(()=>window.replugged.plugins.getExports('dev.eboi.githubindiscord')?.menu?.($1?.message?.content,$1?.target?.href)||null)()",
+          "$&.map(()=>null).concat(window.replugged.plugins.getExports('dev.eboi.githubindiscord')?.menu?.($1,$2)||$2)",
       },
     ],
   },
