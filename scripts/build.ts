@@ -149,7 +149,13 @@ async function buildPlugin(path: string): Promise<void> {
   const pluginFolder = await readdir(join(__dirname, "..", "plugins"), { withFileTypes: true });
   if (plugin && pluginFolder.find((e) => e.isDirectory() && e.name === plugin))
     buildPlugin(join(__dirname, "..", "plugins", plugin));
-  else
+  else if (plugin) {
+    console.error(
+      `Invalid folder ${plugin}`,
+      `\nlist of all valid folders:`,
+      pluginFolder.map((p) => p.name),
+    );
+  } else
     pluginFolder.forEach((dirent) => {
       if (!dirent.isDirectory()) return;
       buildPlugin(join(__dirname, "..", "plugins", dirent.name));

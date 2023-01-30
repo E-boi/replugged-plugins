@@ -6,9 +6,8 @@ export default [
     replacements: [
       {
         match:
-          /function \w+\((\w+)\){[\s\S]+MESSAGE_ACTIONS_MENU_LABEL,onSelect:\w+,children:(\[.+\])/g,
-        replace:
-          "$&.map(()=>null).concat(window.replugged.plugins.getExports('dev.eboi.githubindiscord')?.menu?.($1,$2)||$2)",
+          /(function \w+\((\w+)\){[\s\S]+MESSAGE_ACTIONS_MENU_LABEL,onSelect:\w+,children:)(\[.+\])/g,
+        replace: `$1(window.replugged.plugins.getExports('dev.eboi.githubindiscord')?.menu?.($2,$3)||$3)`,
       },
     ],
   },

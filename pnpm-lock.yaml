@@ -7,6 +7,7 @@ specifiers:
   '@octokit/types': ^8.1.1
   '@primer/react': ^35.16.0
   '@primer/styled-octicons': ^17.10.0
+  '@types/lodash': ^4.14.191
   '@types/node': ^18.11.2
   '@types/react': ^18.0.26
   '@typescript-eslint/eslint-plugin': ^5.40.1
@@ -39,6 +40,7 @@ devDependencies:
   '@electron/asar': 3.2.2
   '@octokit/openapi-types': 14.0.0
   '@octokit/types': 8.1.1
+  '@types/lodash': 4.14.191
   '@types/node': 18.11.18
   '@types/react': 18.0.26
   '@typescript-eslint/eslint-plugin': 5.47.1_txmweb6yn7coi7nfrp22gpyqmy
@@ -666,6 +668,10 @@ packages:
 
   /@types/json-schema/7.0.11:
     resolution: {integrity: sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==}
+    dev: true
+
+  /@types/lodash/4.14.191:
+    resolution: {integrity: sha512-BdZ5BCCvho3EIXw6wUCXHe7rS53AIDPLE+JzwgT+OsJk53oBfbSmZZ7CX4VaRoN78N+TJpFi9QPlfIVNmJYWxQ==}
     dev: true
 
   /@types/minimatch/5.1.2:
