@@ -1,11 +1,10 @@
-.activities {
+.rprpc-activities {
   background-color: var(--profile-body-background-color);
   border-radius: 8px;
 }
 
-.activities > div::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
+.rprpc-activities > div::-webkit-scrollbar {
+  display: none;
 }
 
 .rprpc-lowerMargin {
@@ -16,4 +15,9 @@
 .rprpc-content {
   padding-bottom: 70px;
   padding-top: 10px;
+}
+
+.rprpc-activity {
+  position: relative;
+  padding: 16px;
 }

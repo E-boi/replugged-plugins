@@ -13,7 +13,7 @@ interface Props {
 }
 
 const classes = {
-  ...(await webpack.waitForModule(webpack.filters.byProps("labelRow"))),
+  ...webpack.getByProps("labelRow"),
   ...webpack.getByProps("marginBottom20", "marginTop20"),
 } as Record<string, string>;
 

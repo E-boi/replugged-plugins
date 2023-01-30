@@ -9,12 +9,16 @@ const useStateFromStore = webpack.getFunctionBySource(
 const ActivityStore = webpack.getByProps("getActivities");
 const user = webpack.getByProps("getCurrentUser");
 
+const classes = {
+  ...webpack.getByProps("profileColors"),
+};
+
 export default () => {
   const activities = useStateFromStore!([ActivityStore], () =>
     (ActivityStore!.getActivities as AnyFunction)(),
   ) as unknown[];
   return (
-    <div className="profileColors-3Y0XaR activities">
+    <div className={`${classes.profileColors} rprpc-activities`}>
       {Scroller && (
         <Scroller>
           {activities?.map((a) => {
@@ -22,7 +26,7 @@ export default () => {
               UserActivity && (
                 <UserActivity
                   activity={a}
-                  className="userProfileActivity-1JPDhh"
+                  className="rprpc-activity"
                   source="Profile Modal"
                   type="ProfileV2"
                   useStoreStream={false}
