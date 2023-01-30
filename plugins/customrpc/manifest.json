@@ -1,0 +1,18 @@
+{
+  "id": "dev.eboi.customrpc",
+  "name": "CustomRPC",
+  "description": "Add your own rpc within discord",
+  "author": {
+    "name": "ugly-patootie",
+    "discordID": "458805348669718559",
+    "github": "E-boi"
+  },
+  "version": "1.0.0",
+  "updater": {
+    "type": "github",
+    "id": "E-boi/replugged-plugins"
+  },
+  "license": "MIT",
+  "type": "replugged-plugin",
+  "renderer": "index.ts"
+}

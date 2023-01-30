@@ -1,0 +1,19 @@
+.activities {
+  background-color: var(--profile-body-background-color);
+  border-radius: 8px;
+}
+
+.activities > div::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+.rprpc-lowerMargin {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.rprpc-content {
+  padding-bottom: 70px;
+  padding-top: 10px;
+}
