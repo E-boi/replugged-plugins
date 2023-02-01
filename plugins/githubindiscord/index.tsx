@@ -24,7 +24,7 @@ export function getExportsForProto<
 }
 
 const ghRegex =
-  /https?:\/\/(?:www.)?github.com\/([\w-]+\/[\w-]+)(?:\/((?:tree|blob)\/([\w-]+)\/([\w/.?]+)|((issues|pulls)(?:\/([0-9]+))?)))?/g;
+  /https?:\/\/(?:www.)?github.com\/([\w-]+\/[\w.-]+)(?:\/((?:tree|blob)\/([\w-]+)\/([\w/.?]+)|((issues|pulls)(?:\/([0-9]+))?)))?/g;
 
 export async function start() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
