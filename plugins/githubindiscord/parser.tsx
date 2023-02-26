@@ -205,7 +205,6 @@ const parse = (
 const reactOutput = (
   defaultParser?.outputFor as (rules: typeof defaultRules, outputFor: "react") => AnyFunction
 )(rules, "react");
-console.log(rules);
 export function parseMarkdown(markdown: string): ReactNode {
   return reactOutput(parse(markdown, { inline: false })) as ReactNode;
 }
