@@ -3,8 +3,8 @@ import { AnyFunction } from "replugged/dist/types";
 import { Scroller, UserActivity } from ".";
 
 const useStateFromStore = webpack.getFunctionBySource(
-  "useStateFromStores",
   webpack.getBySource("useStateFromStores")!,
+  "useStateFromStores",
 );
 const ActivityStore = webpack.getByProps("getActivities");
 const user = webpack.getByProps("getCurrentUser");

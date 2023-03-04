@@ -9,8 +9,8 @@ export const SelectMenu = webpack.getFunctionBySource<
     onChange: (value: string) => void;
   }>
 >(
-  '["value","onChange"]',
   await webpack.waitForModule(webpack.filters.bySource('["value","onChange"]')),
+  '["value","onChange"]',
 );
 
 export const textClasses = webpack.getByProps("heading-sm/bold") as

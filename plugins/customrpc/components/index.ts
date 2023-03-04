@@ -9,10 +9,10 @@ import {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const UserActivity = webpack.getFunctionBySource<FC<any>>(
-  '"activity","user","useStoreStream","showActions","hideHeader"',
   await webpack.waitForModule(
     webpack.filters.bySource('"activity","user","useStoreStream","showActions","hideHeader"'),
   ),
+  '"activity","user","useStoreStream","showActions","hideHeader"',
 );
 
 const FormItemMod = webpack.getBySource(
@@ -45,8 +45,8 @@ export const SelectMenuRaw = webpack.getFunctionBySource<
     onChange: (value: string) => void;
   }>
 >(
-  '["value","onChange"]',
   await webpack.waitForModule(webpack.filters.bySource('["value","onChange"]')),
+  '["value","onChange"]',
 );
 
 export const SlideIn = getFunctionByProto<FC<{ children: ReactNode; className?: string }>>(
