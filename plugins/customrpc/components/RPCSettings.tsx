@@ -1,6 +1,6 @@
 import { ReactNode, useMemo, useState } from "react";
 import { common, components } from "replugged";
-import type { ModalProps } from "replugged/dist/renderer/modules/components/Modal";
+import type { ModalProps } from "replugged/dist/renderer/modules/common/modal";
 import { RPC } from "..";
 import Save from "./Save";
 import TextInput from "./TextInput";

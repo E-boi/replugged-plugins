@@ -1,7 +1,7 @@
 import { useTheme } from "@primer/react";
 import { ReactNode } from "react";
 import { common, webpack } from "replugged";
-import { Parser } from "replugged/dist/renderer/modules/webpack/common";
+import { Parser } from "replugged/dist/renderer/modules/common";
 import { AnyFunction } from "replugged/dist/types";
 import { textClasses } from "./components";
 
