@@ -43,7 +43,7 @@ export async function start() {
     return (
       <Box display="flex" className={res.props.className}>
         <span>{res.props.children.props.children}</span>
-        <Tooltip style={{ position: "absolute", right: "10px" }} text="Open Repo" position="top">
+        <Tooltip style={{ position: "absolute", right: "10px" }} text="Open Repository" position="top">
           <Box sx={{ cursor: "pointer" }} onClick={() => openGithubModal(msg.url, msg.tab)}>
             <MarkGithubIcon />
           </Box>
@@ -94,7 +94,7 @@ export function menu(
               id={`githubindiscord-${i}`}
               label={`Open ${m.url}`}
               action={() => openGithubModal(m.url, m.tab)}
-              icon={() => <MarkGithubIcon />}
+              icon={() => <MarkGithubIcon size={12}/>}
             />
           ))}
       </MenuItem>
