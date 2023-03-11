@@ -1,7 +1,7 @@
 import { useTheme } from "@primer/react";
 import { ReactNode } from "react";
 import { common, webpack } from "replugged";
-import { Parser } from "replugged/dist/renderer/modules/webpack/common";
+import { Parser } from "replugged/dist/renderer/modules/common";
 import { AnyFunction } from "replugged/dist/types";
 import { textClasses } from "./components";
 
@@ -205,7 +205,6 @@ const parse = (
 const reactOutput = (
   defaultParser?.outputFor as (rules: typeof defaultRules, outputFor: "react") => AnyFunction
 )(rules, "react");
-console.log(rules);
 export function parseMarkdown(markdown: string): ReactNode {
   return reactOutput(parse(markdown, { inline: false })) as ReactNode;
 }

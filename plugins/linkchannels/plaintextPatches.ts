@@ -6,7 +6,8 @@ export default [
     replacements: [
       {
         match: /!(.)..(.).renderEditButton\(\)/g,
-        replace: "$&,!$1&&window.linkChannels?.linkButton?.({channel:$2?.props?.channel})",
+        replace:
+          "$&,!$1&&window.replugged.plugins.getExports('dev.eboi.linkchannels')?.linkButton?.({channel:$2?.props?.channel})",
       },
     ],
   },

@@ -1,14 +1,20 @@
 import asar from "@electron/asar";
-import { readFileSync, readdirSync } from "fs";
+import { copyFileSync, existsSync, readFileSync, readdirSync } from "fs";
+import { mkdir } from "fs/promises";
 import { join } from "path";
 import { PluginManifest } from "replugged/dist/types/addon";
 
-readdirSync("dist", { withFileTypes: true }).forEach((direct) => {
+readdirSync("dist", { withFileTypes: true }).forEach(async (direct) => {
   if (!direct.isDirectory()) return;
   const manifest = JSON.parse(
     readFileSync(join("dist", direct.name, "manifest.json"), "utf-8"),
   ) as PluginManifest;
-  const outputName = `${manifest.id}.asar`;
+  const output = `bundle/${manifest.id}`;
 
-  asar.createPackage(join("dist", direct.name), outputName);
+  if (!existsSync("bundle")) {
+    await mkdir("bundle");
+  }
+
+  asar.createPackage(join("dist", direct.name), `${output}.asar`);
+  copyFileSync(`dist/${direct.name}/manifest.json`, `${output}.json`);
 });

@@ -116,7 +116,7 @@ async function buildPlugin(path: string): Promise<void> {
     targets.push(
       esbuild.build({
         ...common,
-        entryPoints: [join(path, manifest.renderer)],
+        entryPoints: [join(path, manifest.renderer!)],
         outfile: `dist/${manifest.id}/renderer.js`,
       }),
     );
@@ -128,7 +128,7 @@ async function buildPlugin(path: string): Promise<void> {
     targets.push(
       esbuild.build({
         ...common,
-        entryPoints: [join(path, manifest.plaintextPatches)],
+        entryPoints: [join(path, manifest.plaintextPatches!)],
         outfile: `dist/${manifest.id}/plaintextPatches.js`,
       }),
     );
