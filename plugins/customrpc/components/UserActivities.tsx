@@ -1,6 +1,6 @@
 import { webpack } from "replugged";
 import { AnyFunction, ObjectExports } from "replugged/dist/types";
-import { UserActivity } from ".";
+import { Scroller, UserActivity } from ".";
 
 const useStateFromStoreRaw = await webpack.waitForModule(
   webpack.filters.bySource("useStateFromStores"),
@@ -21,21 +21,26 @@ export default () => {
     (ActivityStore!.getActivities as AnyFunction)(),
   ) as unknown[];
 
+  if (!Scroller) return null;
+
   return (
     <div className={`${classes.profileColors} rprpc-activities`}>
-      {activities?.map(
-        (a) =>
-          UserActivity && (
-            <UserActivity
-              activity={a}
-              className="rprpc-activity"
-              source="Profile Modal"
-              type="ProfileV2"
-              useStoreStream={false}
-              user={(user?.getCurrentUser as AnyFunction)()}
-            />
-          ),
-      )}
+      {/* eslint-disable-next-line new-cap */}
+      {Scroller({
+        children: activities?.map(
+          (a) =>
+            UserActivity && (
+              <UserActivity
+                activity={a}
+                className="rprpc-activity"
+                source="Profile Modal"
+                type="ProfileV2"
+                useStoreStream={false}
+                user={(user?.getCurrentUser as AnyFunction)()}
+              />
+            ),
+        ),
+      })}
     </div>
   );
 };

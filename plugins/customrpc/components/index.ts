@@ -22,6 +22,21 @@ export const FormItemRaw =
   FormItemMod &&
   Object.values(FormItemMod).find((x) => x?.render?.toString()?.includes("titleClassName"));
 
+const ScrollerMod = webpack.getBySource(
+  '"children","className","dir","orientation","paddingFix","fade","onScroll","style"',
+);
+
+export const Scroller: undefined | FC<{ children: ReactNode }> =
+  (ScrollerMod &&
+    Object.values(ScrollerMod).find((x) =>
+      x?.render
+        ?.toString()
+        ?.includes(
+          '"children","className","dir","orientation","paddingFix","fade","onScroll","style"',
+        ),
+    )) ||
+  undefined;
+
 export const SelectMenuRaw = webpack.getFunctionBySource<
   FC<{
     className?: string;
