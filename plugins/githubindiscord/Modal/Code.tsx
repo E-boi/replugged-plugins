@@ -117,11 +117,12 @@ function StandardView() {
                   </Link>
                 </Text>
               </Truncate>
-              <RelativeTime
-                sx={{ marginLeft: "auto" }}
-                datetime={latestCommit.commit.author?.date}
-                format="auto"
-              />
+              <a className="relativeTime" href={latestCommit.html_url} target="_blank">
+                <RelativeTime
+                  datetime={latestCommit.commit.author?.date}
+                  format="auto"
+                />
+              </a>
             </>
           ) : (
             <Box
