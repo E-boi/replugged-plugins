@@ -1,6 +1,5 @@
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
-  "sass.format.debug": true,
-  "svelte.enable-ts-plugin": true
+  "sass.format.debug": true
 }
