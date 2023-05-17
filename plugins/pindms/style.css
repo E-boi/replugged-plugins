@@ -1,0 +1,51 @@
+.pindms-container {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-transform: uppercase;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+  font-family: var(--font-display);
+  font-weight: 600;
+  -webkit-box-flex: 1;
+  -ms-flex: 1 1 auto;
+  flex: 1 1 auto;
+  color: var(--channels-default);
+}
+
+.pindms-popout {
+  margin-top: 5px;
+  min-height: 150px;
+  min-width: 300px;
+  max-height: 500px;
+  background-color: var(--modal-background);
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: 10px;
+  padding-bottom: 10px;
+  -webkit-box-shadow: var(--dark-elevation-border), var(--dark-elevation-high);
+  box-shadow: var(--dark-elevation-border), var(--dark-elevation-high);
+}
+
+.pindms-popout-channel {
+  padding: 8px;
+  border-radius: 10px;
+  margin: 4px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.pindms-popout-search {
+  padding: 8px;
+  margin: 8px 4px;
+  display: flex;
+}
+
+.pindms-popout-channel:hover {
+  color: var(--interactive-hover);
+  background-color: var(--bg-overlay-hover, var(--background-modifier-hover));
+}

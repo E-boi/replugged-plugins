@@ -1,0 +1,20 @@
+{
+  "id": "dev.eboi.pindms",
+  "name": "PinDMs",
+  "description": "Pin DMs at the top of your DMs list",
+  "author": [
+    {
+      "name": "ugly-patootie",
+      "discordID": "458805348669718559",
+      "github": "E-boi"
+    }
+  ],
+  "version": "1.0.0",
+  "updater": {
+    "type": "github",
+    "id": "E-boi/replugged-plugins"
+  },
+  "license": "MIT",
+  "type": "replugged-plugin",
+  "renderer": "index.tsx"
+}
