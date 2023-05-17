@@ -21,7 +21,7 @@ const Channels = webpack.getBySource("private-channels-", { raw: true });
 const injector = new Injector();
 
 export function start() {
-  injector.after(Channels!.exports, "Z" as never, (args, res: ReactElement) => {
+  injector.after(Channels!.exports, "Z" as never, (_, res: ReactElement) => {
     const cates = pluginSettings.get("categories", []);
     const [__, forceUpdate] = useState({});
 

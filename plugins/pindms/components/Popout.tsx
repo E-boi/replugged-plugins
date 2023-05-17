@@ -1,4 +1,4 @@
-import { FC, ReactElement, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { common, components, webpack } from "replugged";
 import { Channel, DPopout, SearchBar, User } from ".";
 import pluginSettings, { Category } from "../pluginSettings";

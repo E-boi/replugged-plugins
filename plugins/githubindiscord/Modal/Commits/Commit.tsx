@@ -41,12 +41,7 @@ export default ({
           borderTopWidth={1}
           borderStyle="solid"
           sx={{ userSelect: "text", code: { bg: "inherit" } }}>
-          {parser.defaultRules.codeBlock.react(
-            { content: commit.patch?.trimEnd(), lang: "patch" },
-            // @ts-expect-error better types need butttttttttttttttttt i wont pr :)
-            null,
-            {},
-          )}
+          {parser.defaultRules.codeBlock.react({ content: commit.patch?.trimEnd() }, null, {})}
         </Box>
       )}
     </Box>

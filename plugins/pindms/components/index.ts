@@ -1,6 +1,6 @@
 import { FC, ReactElement } from "react";
 import { webpack } from "replugged";
-import { ModuleExports, ObjectExports } from "replugged/dist/types";
+import { ObjectExports } from "replugged/dist/types";
 
 export interface User {
   username: string;

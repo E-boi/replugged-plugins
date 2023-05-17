@@ -118,10 +118,7 @@ function StandardView() {
                 </Text>
               </Truncate>
               <a className="relativeTime" href={latestCommit.html_url} target="_blank">
-                <RelativeTime
-                  datetime={latestCommit.commit.author?.date}
-                  format="auto"
-                />
+                <RelativeTime datetime={latestCommit.commit.author?.date} format="auto" />
               </a>
             </>
           ) : (
@@ -163,7 +160,6 @@ function StandardView() {
             sx={{ userSelect: "text", code: { bg: "inherit" } }}>
             {parser.defaultRules.codeBlock.react(
               { content: window.atob(file.content!).trimEnd(), lang: file.fileType },
-              // @ts-expect-error okay
               null,
               {},
             )}
