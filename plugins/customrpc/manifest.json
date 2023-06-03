@@ -7,10 +7,10 @@
     "discordID": "458805348669718559",
     "github": "E-boi"
   },
-  "version": "1.0.3",
+  "version": "1.0.4",
   "updater": {
-    "type": "github",
-    "id": "E-boi/replugged-plugins"
+    "type": "store",
+    "id": "dev.eboi.customrpc"
   },
   "license": "MIT",
   "type": "replugged-plugin",
