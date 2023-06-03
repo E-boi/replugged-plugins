@@ -5,24 +5,23 @@ import { UserActivity } from ".";
 const useStateFromStoreRaw = await webpack.waitForModule(
   webpack.filters.bySource("useStateFromStores"),
 );
-const useStateFromStore = webpack.getFunctionBySource(
-  useStateFromStoreRaw as ObjectExports,
-  "useStateFromStores",
-);
-const ActivityStore = webpack.getByProps("getLocalPresence");
-const user = webpack.getByProps("getCurrentUser");
+const useStateFromStore: ((stores: unknown[], callback: () => unknown) => unknown[]) | undefined =
+  webpack.getFunctionBySource(useStateFromStoreRaw as ObjectExports, "useStateFromStores");
+const ActivityStore = webpack.getByProps<{
+  getActivities: AnyFunction;
+  getLocalPresence: AnyFunction;
+}>("getLocalPresence", "getActivities");
+const user = webpack.getByProps<{ getCurrentUser: AnyFunction }>("getCurrentUser");
 
-const classes = {
-  ...webpack.getByProps("profileColors"),
-};
+const classes = webpack.getByProps<Record<string, string>>("profileColors");
 
 export default () => {
-  const activities = useStateFromStore!([ActivityStore], () =>
-    (ActivityStore!.getActivities as AnyFunction)(),
-  ) as unknown[];
+  if (!useStateFromStore || !ActivityStore) return null;
+
+  const activities = useStateFromStore([ActivityStore], () => ActivityStore.getActivities());
 
   return (
-    <div className={`${classes.profileColors} rprpc-activities`}>
+    <div className={`${classes?.profileColors} rprpc-activities`}>
       {activities?.map(
         (a) =>
           UserActivity && (
@@ -32,7 +31,7 @@ export default () => {
               source="Profile Modal"
               type="ProfileV2"
               useStoreStream={false}
-              user={(user?.getCurrentUser as AnyFunction)()}
+              user={user?.getCurrentUser()}
             />
           ),
       )}

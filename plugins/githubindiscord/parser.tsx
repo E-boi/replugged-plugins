@@ -1,17 +1,19 @@
 import { useTheme } from "@primer/react";
 import { ReactNode } from "react";
 import { common, webpack } from "replugged";
-import { Parser } from "replugged/dist/renderer/modules/common";
 import { AnyFunction } from "replugged/dist/types";
 import { textClasses } from "./components";
+import type SimpleMarkdown from "simple-markdown";
 
-const defaultParser = webpack.getByProps(
-  "sanitizeText",
-  "markdownToReact",
-  "defaultRules",
-  "sanitizeUrl",
-);
-const defaultRules = defaultParser?.defaultRules as typeof common.parser.defaultRules;
+const defaultParser = webpack.getByProps<{
+  defaultRules: typeof common.parser.defaultRules;
+  sanitizeText: (text: string) => string;
+  markdownToReact: AnyFunction;
+  sanitizeUrl: AnyFunction;
+  parserFor: AnyFunction;
+  outputFor: AnyFunction;
+}>("sanitizeText", "markdownToReact", "defaultRules", "sanitizeUrl");
+const defaultRules = (defaultParser?.defaultRules ?? {}) as SimpleMarkdown.DefaultRules;
 
 const headings = {
   h1: textClasses?.["heading-xxl/bold"],
@@ -22,12 +24,11 @@ const headings = {
   h6: textClasses?.["heading-sm/bold"],
 };
 
-const rules: Parser["defaultRules"] = {
+const rules = {
   ...defaultRules,
   heading: {
     ...defaultRules.heading,
-    match: (source) => /^ *(#{1,6})([^\n]+?)#* *(?:\n *)+/.exec(source),
-    // @ts-expect-error okay
+    match: (source: string) => /^ *(#{1,6})([^\n]+?)#* *(?:\n *)+/.exec(source),
     react(props: { content: string; level: number }, t: AnyFunction, n: { key: string }) {
       const { theme } = useTheme();
       const Element = `h${props.level}` as keyof JSX.IntrinsicElements;
@@ -43,7 +44,7 @@ const rules: Parser["defaultRules"] = {
   },
   list: {
     ...defaultRules.list,
-    match(source, state) {
+    match(source: string, state: { prevCapture: string[] }) {
       const prev = /(?:^|\n)( *)$/.exec(state.prevCapture ? state.prevCapture[0] : "");
 
       if (prev) {
@@ -54,7 +55,6 @@ const rules: Parser["defaultRules"] = {
       }
       return null;
     },
-    // @ts-expect-error okay
     react(
       props: { ordered: boolean; start: string; items: string[] },
       t: AnyFunction,
@@ -72,7 +72,6 @@ const rules: Parser["defaultRules"] = {
   },
   blockQuote: {
     ...common.parser.defaultRules.blockQuote,
-    // @ts-expect-error okay
     react(props: { content: string }, t: AnyFunction, n: { key: string }) {
       const { theme } = useTheme();
       return (
@@ -93,11 +92,11 @@ const rules: Parser["defaultRules"] = {
   codeBlock: common.parser.defaultRules.codeBlock,
   image: {
     ...defaultRules.image,
-    match: (source) =>
+    match: (source: string) =>
       /^<img.+>|^!\[((?:\[[^\]]*\]|[^[\]]|\](?=[^[]*\]))*)\]\(\s*<?((?:\([^)]*\)|[^\s\\]|\\.)*?)>?(?:\s+['"]([\s\S]*?)['"])?\s*\)/.exec(
         source,
       ),
-    parse(match) {
+    parse(match: RegExpMatchArray) {
       return {
         alt: /alt="(.*?)"/.exec(match[0])?.[1] || match[1],
         width: /width="(.*?)"/.exec(match[0])?.[1],
@@ -106,7 +105,6 @@ const rules: Parser["defaultRules"] = {
         title: match[3],
       };
     },
-    // @ts-expect-error okay
     react(
       props: { alt: string; width?: string; height?: string; src: string; title?: string },
       _t: AnyFunction,
@@ -126,7 +124,6 @@ const rules: Parser["defaultRules"] = {
   },
   link: {
     ...defaultRules.link,
-    // @ts-expect-error okay
     react(
       props: { content: unknown[]; target: string; title?: string },
       t: AnyFunction,
@@ -145,15 +142,13 @@ const rules: Parser["defaultRules"] = {
   },
   details: {
     order: 5,
-    match: (source) => /^<details.+<summary>(.+)<\/summary>(.+)<\/details>/s.exec(source),
-    // @ts-expect-error okay
-    parse(match: string[], t: AnyFunction, n: { key: string }) {
+    match: (source: string) => /^<details.+<summary>(.+)<\/summary>(.+)<\/details>/s.exec(source),
+    parse(match: RegExpMatchArray, t: AnyFunction, n: { key: string }) {
       return {
         summary: match[1].trim(),
         content: t(match[2].trim(), n),
       };
     },
-    // @ts-expect-error okay
     react(props: { content: unknown[]; summary: string }, t: AnyFunction, n: { key: string }) {
       return (
         <details key={n.key}>
@@ -164,29 +159,25 @@ const rules: Parser["defaultRules"] = {
     },
   },
   italic: {
-    order: defaultRules.em.order + 0.5,
-    match: (source) => /^\*((?:\\[\s\S]|[^\\])+?)\*/.exec(source),
-    // @ts-expect-error okay
+    order: ((defaultRules?.em?.order as number) ?? 21) + 0.5,
+    match: (source: string) => /^\*((?:\\[\s\S]|[^\\])+?)\*/.exec(source),
     parse(match: RegExpExecArray, t: AnyFunction, n: { key: string }) {
       return {
         content: t(match[1], n),
       };
     },
-    // @ts-expect-error okay
     react(props: { content: string[] }, t: AnyFunction, n: { key: string }) {
       return <i key={n.key}>{t(props.content, n) as ReactNode}</i>;
     },
   },
   paragraph: {
     ...defaultRules.paragraph,
-    // @ts-expect-error okay
     react(props: { content: string[] }, t: AnyFunction, n: { key: string }) {
       return <p key={n.key}>{t(props.content, n) as ReactNode}</p>;
     },
   },
   inlineCode: {
     ...defaultRules.inlineCode,
-    // @ts-expect-error okay
     react(props: { content: string }, _: unknown, n: { key: string }) {
       return (
         <code className="inlineCode" key={n.key}>
@@ -201,10 +192,19 @@ const parse = (
   defaultParser?.parserFor as (
     rules: typeof defaultRules,
   ) => (source: string, stuff?: { inline: boolean }) => unknown
-)(rules);
+)(
+  // @ts-expect-error idk
+  rules,
+);
+
 const reactOutput = (
   defaultParser?.outputFor as (rules: typeof defaultRules, outputFor: "react") => AnyFunction
-)(rules, "react");
+)(
+  // @ts-expect-error idk
+  rules,
+  "react",
+);
+
 export function parseMarkdown(markdown: string): ReactNode {
   return reactOutput(parse(markdown, { inline: false })) as ReactNode;
 }
