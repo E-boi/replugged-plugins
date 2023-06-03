@@ -271,7 +271,7 @@ export function useTimeline(url: string, issue: number) {
     repo: url.split("/")[1],
     issue_number: issue,
   });
-  const [data, setData] = useState<NonNullable<typeof paginate["data"]>["pages"][0] | null>(null);
+  const [data, setData] = useState<NonNullable<(typeof paginate)["data"]>["pages"][0] | null>(null);
 
   useEffect(() => {
     void paginate.fetch(false, true);
@@ -312,7 +312,7 @@ export function useCommits(url: string, { pr, branch }: { pr?: number; branch?: 
     pull_number: pr,
     sha: pr ? undefined : branch,
   });
-  const [data, setData] = useState<Array<NonNullable<typeof paginate["data"]>["pages"]> | null>(
+  const [data, setData] = useState<Array<NonNullable<(typeof paginate)["data"]>["pages"]> | null>(
     null,
   );
 

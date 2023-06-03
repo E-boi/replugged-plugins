@@ -13,10 +13,6 @@ export const SelectMenu = webpack.getFunctionBySource<
   '["value","onChange"]',
 );
 
-export const textClasses = webpack.getByProps("heading-sm/bold") as
-  | Record<string, string>
-  | undefined;
+export const textClasses = webpack.getByProps<Record<string, string>>("heading-sm/bold");
 
-export const wumpus = {
-  ...webpack.getByProps("emptyStateImage", "emptyStateSubtext"),
-};
+export const wumpus = webpack.getByProps("emptyStateImage", "emptyStateSubtext");

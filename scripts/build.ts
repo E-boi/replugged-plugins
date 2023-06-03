@@ -5,6 +5,7 @@ import { existsSync } from "fs";
 import { cp, mkdir, readdir, rm, writeFile } from "fs/promises";
 import { PluginManifest } from "replugged/dist/types/addon";
 import { pathToFileURL } from "url";
+import { reload } from "./watcher";
 
 // const NODE_VERSION = "14";
 const CHROME_VERSION = "91";
@@ -81,6 +82,7 @@ const install: esbuild.Plugin = {
           const dest = join(CONFIG_PATH, "plugins", id);
           // if (existsSync(dest)) await rm(dest, { recursive: true });
           await cp(join("dist", id), dest, { recursive: true, force: true });
+          await reload(id);
           console.log("Installed updated version");
         } catch (err) {
           console.error(err);

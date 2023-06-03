@@ -67,12 +67,15 @@ export default () => {
   );
 };
 
-function useSettings(): [ReturnType<typeof pluginSettings["all"]>, typeof pluginSettings["set"]] {
+function useSettings(): [
+  ReturnType<(typeof pluginSettings)["all"]>,
+  (typeof pluginSettings)["set"],
+] {
   const [settings, setSettings] = useState(pluginSettings.all());
 
   const set = (
-    k: Parameters<typeof pluginSettings["set"]>[0],
-    value: Parameters<typeof pluginSettings["set"]>[1],
+    k: Parameters<(typeof pluginSettings)["set"]>[0],
+    value: Parameters<(typeof pluginSettings)["set"]>[1],
   ) => {
     pluginSettings.set(k, value);
     setSettings(pluginSettings.all());

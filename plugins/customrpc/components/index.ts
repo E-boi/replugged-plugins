@@ -63,11 +63,13 @@ export const TransitionGroup = getFunctionByProto<
   await webpack.waitForModule((m) => Boolean(getExportsForProto(m.exports, ["performAppear"]))),
 );
 
-export const Notice = webpack.getBySource("onSaveButtonColor") as FC<{
-  onReset: () => void;
-  onSave: () => void;
-  theme: "dark" | "light";
-}>;
+export const Notice = webpack.getBySource<
+  FC<{
+    onReset: () => void;
+    onSave: () => void;
+    theme: "dark" | "light";
+  }>
+>("onSaveButtonColor");
 
 export function getExportsForProto<
   P extends string = string,
