@@ -12,7 +12,9 @@ readdirSync("dist", { withFileTypes: true }).forEach(async (direct) => {
   const output = `bundle/${manifest.id}`;
 
   if (!existsSync("bundle")) {
-    await mkdir("bundle");
+    try {
+      await mkdir("bundle");
+    } catch {}
   }
 
   asar.createPackage(join("dist", direct.name), `${output}.asar`);
