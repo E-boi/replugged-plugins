@@ -5,6 +5,7 @@ import {
   ModuleExports,
   ModuleExportsWithProps,
   ObjectExports,
+  RawModule,
 } from "replugged/dist/types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,7 +52,9 @@ export const SelectMenuRaw = webpack.getFunctionBySource<
 
 export const SlideIn = getFunctionByProto<FC<{ children: ReactNode; className?: string }>>(
   "animateTo",
-  await webpack.waitForModule((m) => Boolean(getExportsForProto(m.exports, ["animateTo"]))),
+  await webpack.waitForModule((m: RawModule<{ animateTo: AnyFunction }>) =>
+    Boolean(getExportsForProto(m.exports, ["animateTo"])),
+  ),
 );
 
 export const TransitionGroup = getFunctionByProto<
@@ -60,7 +63,9 @@ export const TransitionGroup = getFunctionByProto<
   }>
 >(
   "performAppear",
-  await webpack.waitForModule((m) => Boolean(getExportsForProto(m.exports, ["performAppear"]))),
+  await webpack.waitForModule((m: RawModule<{ performAppear: AnyFunction }>) =>
+    Boolean(getExportsForProto(m.exports, ["performAppear"])),
+  ),
 );
 
 export const Notice = webpack.getBySource<

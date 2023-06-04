@@ -7,7 +7,7 @@
     "discordID": "458805348669718559",
     "github": "E-boi"
   },
-  "version": "1.0.4",
+  "version": "1.0.5",
   "updater": {
     "type": "store",
     "id": "dev.eboi.customrpc"
