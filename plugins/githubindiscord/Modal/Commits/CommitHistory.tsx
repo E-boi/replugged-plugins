@@ -17,9 +17,9 @@ import Spinner from "../Spinner";
 import CommitsView from "./CommitView";
 
 export default ({ pr }: { pr?: NonNullable<Issue["pull"]> }) => {
-  const { url } = useContext(Context)!.data!;
-  const commits = pr ? useCommits(url, { pr: pr.number }) : useContext(Context)?.data?.commits;
-  const [commit, setCommit] = useState<NonNullable<TreeWithContent["latestCommit"]> | null>(null);
+  const { commits: repoCommits, data } = useContext(Context)!;
+  const commits = pr ? useCommits(data!.repo.full_name, { pr: pr.number }) : repoCommits;
+  const [commit, setCommit] = useState<NonNullable<TreeWithContent["commit"]> | null>(null);
 
   useEffect(() => {
     void commits?.fetch();

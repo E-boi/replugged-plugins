@@ -159,7 +159,7 @@ const rules = {
     },
   },
   italic: {
-    order: ((defaultRules?.em?.order as number) ?? 21) + 0.5,
+    order: (defaultRules?.em?.order ?? 21) + 0.5,
     match: (source: string) => /^\*((?:\\[\s\S]|[^\\])+?)\*/.exec(source),
     parse(match: RegExpExecArray, t: AnyFunction, n: { key: string }) {
       return {

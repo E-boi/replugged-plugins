@@ -1,8 +1,7 @@
 import { operations } from "@octokit/openapi-types";
 import { common } from "replugged";
 import { Box, Link, Text } from "@primer/react";
-import { SxProp } from "@primer/react/lib-esm/sx";
-import { useState } from "react";
+import { ComponentProps, useState } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "@primer/styled-octicons";
 const { parser } = common;
 
@@ -11,17 +10,14 @@ export default ({
   sx,
 }: {
   commit: operations["pulls/list-files"]["responses"]["200"]["content"]["application/json"][0];
-  sx?: SxProp["sx"];
+  sx?: ComponentProps<typeof Box>;
 }) => {
   const [expanded, setExpanded] = useState(true);
 
+  console.log(commit);
+
   return (
-    <Box
-      borderStyle="solid"
-      borderColor="border.default"
-      borderWidth={1}
-      borderRadius={2}
-      {...(sx || {})}>
+    <Box borderStyle="solid" borderColor="border.default" borderWidth={1} borderRadius={2} {...sx}>
       <Box
         px={3}
         py={2}
@@ -41,7 +37,16 @@ export default ({
           borderTopWidth={1}
           borderStyle="solid"
           sx={{ userSelect: "text", code: { bg: "inherit" } }}>
-          {parser.defaultRules.codeBlock.react({ content: commit.patch?.trimEnd() }, null, {})}
+          {parser.defaultRules.codeBlock.react(
+            {
+              content: commit.patch?.trimEnd() ?? "",
+              type: "",
+              lang: "patch",
+            },
+            // @ts-expect-error uuhhh
+            null,
+            {},
+          )}
         </Box>
       )}
     </Box>

@@ -1,5 +1,6 @@
 import { ReactNode, createContext } from "react";
-import { RepoQuery, useRepo } from "./utils";
+import { RepoQuery } from "./utils";
+import useRepo from "./useRepo";
 
 export const Context = createContext<ReturnType<typeof useRepo> | null>(null);
 
@@ -12,7 +13,7 @@ export const Provider = ({
   url: string;
   query: RepoQuery;
 }) => {
-  const repo = useRepo({ url, query });
+  const repo = useRepo(url, query);
 
   return <Context.Provider value={repo}>{children}</Context.Provider>;
 };

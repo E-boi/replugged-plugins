@@ -15,4 +15,4 @@ export const SelectMenu = webpack.getFunctionBySource<
 
 export const textClasses = webpack.getByProps<Record<string, string>>("heading-sm/bold");
 
-export const wumpus = webpack.getByProps("emptyStateImage", "emptyStateSubtext");
+export const blober = webpack.getByProps<{ blob: string }>("blob");

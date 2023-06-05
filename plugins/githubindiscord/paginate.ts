@@ -2,6 +2,7 @@ import * as OctokitTypes from "@octokit/types";
 import { GetResponseDataTypeFromEndpointMethod } from "@octokit/types";
 import { useEffect, useState } from "react";
 import { Issue, getCommit, octokit, sortCommits } from "./utils";
+import { components } from "@octokit/openapi-types";
 
 const regex = {
   prev: /page=([0-9]+)>;\s*rel="prev"/g,
@@ -67,7 +68,7 @@ export function usePaginate<T extends OctokitTypes.RequestInterface>(
           ) as NonNullable<typeof data>;
         }
 
-        // get data for the first
+        // get data for the first time
         (async () => {
           const res = await octokit(params);
           const page = res.headers.link ? lastAndNextPage(res.headers.link) : undefined;
@@ -174,6 +175,7 @@ export function useIssues(repo: string, type: "issue" | "pr") {
   });
 
   const [data, setData] = useState<{
+    // annoying but ts stops shitting itself
     open: Issue[][];
     closed: Issue[][];
     all: Issue[][];
@@ -245,7 +247,6 @@ export function useIssues(repo: string, type: "issue" | "pr") {
         if (!prevData) return;
         const res = await closedPaginate.fetch();
         prevData.closed = res.pages.map((p) => p.items);
-        // prevData.currentIdx = 1;
         prevData.state = "closed";
         prevData.totalClosed = res.pages[0].total_count;
         setData({ ...prevData });
@@ -284,14 +285,16 @@ export function useTimeline(url: string, issue: number) {
         const data = await Promise.all(
           paginate.data!.pages.map(async (t) => {
             return await Promise.all(
-              t.map(async (t) => {
-                if (t.event === "committed") {
-                  const commit = cache.get(`${url}${t.sha}`) || (await getCommit(url, t.sha!));
-                  cache.set(`${url}${t.sha}`, commit);
+              t.map(async (timeline) => {
+                if (timeline.event === "committed") {
+                  const event = timeline as components["schemas"]["timeline-committed-event"];
+                  const commit =
+                    cache.get(`${url}${event.sha}`) || (await getCommit(url, event.sha));
+                  cache.set(`${url}${event.sha}`, commit);
                   //   @ts-expect-error now it does
-                  t.commit = commit;
+                  timeline.commit = commit;
                 }
-                return t;
+                return timeline;
               }),
             );
           }),

@@ -45,7 +45,7 @@ const tabs = [
 ];
 
 const GithubModal: FC<ModalProps & { tab: string }> = ({ tab, ...props }) => {
-  const { data: repo, refetch, status } = useContext(Context)!;
+  const { data: repo, issues, prs, status, refetch } = useContext(Context)!;
   const [currentTab, setTab] = useState<string>(tab || "Code");
 
   const Tab = tabs.find(({ title }) => title === currentTab);
@@ -78,7 +78,7 @@ const GithubModal: FC<ModalProps & { tab: string }> = ({ tab, ...props }) => {
 
           <div className={[textClasses?.["heading-sm/medium"], "extlink-buttons"].join(" ")}>
             <ButtonGroup sx={{ display: "flex" }}>
-              <Button leadingIcon={StarIcon} verticalAlign={"middle"} sx={{ mr: 1 }}>
+              <Button leadingIcon={StarIcon} sx={{ mr: 1 }}>
                 Stars
                 <Button.Counter>
                   {abbreviateNumber(repo?.repo.stargazers_count ?? 0) as unknown as number}
@@ -91,7 +91,7 @@ const GithubModal: FC<ModalProps & { tab: string }> = ({ tab, ...props }) => {
               </Button>
             </ButtonGroup>
             <ButtonGroup sx={{ display: "flex" }}>
-              <Button leadingIcon={RepoForkedIcon} verticalAlign={"middle"} sx={{ mr: 1 }}>
+              <Button leadingIcon={RepoForkedIcon} sx={{ mr: 1 }}>
                 Fork
                 <Button.Counter>
                   {abbreviateNumber(repo?.repo.forks_count ?? 0) as unknown as number}
@@ -116,9 +116,9 @@ const GithubModal: FC<ModalProps & { tab: string }> = ({ tab, ...props }) => {
               onSelect={() => setTab(title)}
               counter={
                 title === "Issues"
-                  ? abbreviateNumber(repo?.issues.data?.totalOpen ?? 0)
+                  ? abbreviateNumber(issues.data?.totalOpen ?? 0)
                   : title === "Pull Requests"
-                  ? abbreviateNumber(repo?.prs.data?.totalOpen ?? 0)
+                  ? abbreviateNumber(prs.data?.totalOpen ?? 0)
                   : undefined
               }>
               {title}
@@ -133,7 +133,7 @@ const GithubModal: FC<ModalProps & { tab: string }> = ({ tab, ...props }) => {
           Tab && repo && repo.tree && <Tab.component />
         )}
       </ModalContent>
-      <ModalFooter>
+      {/* <ModalFooter>
         <ButtonGroup>
           <Button
             onClick={() =>
@@ -150,7 +150,7 @@ const GithubModal: FC<ModalProps & { tab: string }> = ({ tab, ...props }) => {
           </Button>
           <Button onClick={openSettingsModal}>Open Settings</Button>
         </ButtonGroup>
-      </ModalFooter>
+      </ModalFooter> */}
     </ModalRoot>
   );
 };
@@ -159,7 +159,7 @@ export function openGithubModal(url: string, tab: string) {
   common.modal.openModal((props) => (
     <ErrorBoundary modalProps={props}>
       <ThemeProvider
-        colorMode={(webpack.getByProps("theme")?.theme as "dark" | "light") || "auto"}
+        colorMode={webpack.getByProps<{ theme: "dark" | "light" }>("theme")?.theme || "auto"}
         theme={theme}
         nightScheme={pluginSettings.get("darkTheme", "dark_discord")}
         dayScheme={pluginSettings.get("lightTheme", "light_discord")}>

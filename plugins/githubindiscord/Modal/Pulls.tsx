@@ -27,14 +27,20 @@ import CommitView from "./Commits/Commit";
 import IssueCard from "./IssueCard";
 import Spinner from "./Spinner";
 import TimelineItems from "./TimelineItems";
+import { operations } from "@octokit/openapi-types";
 
 export default () => {
-  const { data } = useContext(Context)!;
-  const { prs } = data!;
+  const { prs } = useContext(Context)!;
   const [selectedPr, setPr] = useState<Issue | null>(null);
 
+  useEffect(() => {
+    void prs.fetch();
+  }, []);
+
+  if (!prs.data) return <Spinner>Fetching Full Requests...</Spinner>;
+
   const page: Issue[] =
-    prs.data![prs.data!.state][prs.info[prs.data!.state]!.data!.pageInfo.currentPage - 1];
+    prs.data[prs.data.state][prs.info[prs.data.state]!.data!.pageInfo.currentPage - 1];
   if (selectedPr) return <PR pr={selectedPr} onClose={() => setPr(null)} />;
 
   return (
@@ -60,11 +66,11 @@ export default () => {
       ) : (
         page?.map((pr) => <IssueCard issue={pr} onClick={() => setPr(pr)} />)
       )}
-      {prs.info[prs.data!.state].data?.pageInfo.lastPage && (
+      {prs.info[prs.data.state].data?.pageInfo.lastPage && (
         <Box borderColor="border.default" borderStyle="solid" borderTopWidth={1}>
           <Pagination
-            currentPage={prs.info[prs.data!.state].data!.pageInfo.currentPage}
-            pageCount={prs.info[prs.data!.state].data!.pageInfo.lastPage!}
+            currentPage={prs.info[prs.data.state].data!.pageInfo.currentPage}
+            pageCount={prs.info[prs.data.state].data!.pageInfo.lastPage!}
             showPages={false}
             onPageChange={(_, page) => {
               if (page > prs.info[prs.data!.state].data!.pageInfo.currentPage) prs.nextPage();
@@ -88,19 +94,18 @@ const tabs = [
 ];
 
 function PR({ pr, onClose }: { pr: Issue; onClose: () => void }) {
-  const { url } = useContext(Context)!.data!;
+  const { data, updated } = useContext(Context)!;
   const [tab, setTab] = useState("Conversations");
-  const timeline = useTimeline(url, pr.number);
-  const forceUpdate = useState({})[1];
+  const timeline = useTimeline(data!.repo.full_name, pr.number);
 
   useEffect(() => {
     (async () => {
-      pr.pull ??= await getPR(url, pr.number);
-      forceUpdate({});
+      pr.pull ??= await getPR(data!.repo.full_name, pr.number);
+      updated();
     })();
   }, []);
 
-  if (!timeline.data.page) return <Spinner>Fetching Pull Request...</Spinner>;
+  if (!timeline.data.page || !pr.pull) return <Spinner>Fetching Pull Request...</Spinner>;
   const Tab = tabs.find(({ title }) => title === tab);
 
   return (
@@ -147,14 +152,20 @@ function ConversationsTab({
   pr: Issue;
   timeline: ReturnType<typeof useTimeline>;
 }) {
-  const [commit, setCommit] = useState<TreeWithContent["latestCommit"] | null>(null);
+  const [commit, setCommit] = useState<TreeWithContent["commit"] | null>(null);
 
   if (commit) return <CommitsView commit={commit} onClose={() => setCommit(null)} />;
   return (
     <Timeline clipSidebar>
       <TimelineComment comment={pr} />
       {timeline.data?.page?.map((t) => (
-        <TimelineItems event={{ ...t, issue: pr, onCommitClick: setCommit }} />
+        <TimelineItems
+          event={{
+            ...(t as operations["issues/list-events-for-timeline"]["responses"]["200"]["content"]["application/json"][0]),
+            issue: pr,
+            onCommitClick: setCommit,
+          }}
+        />
       ))}
       {timeline.data.info?.lastPage &&
         timeline.data.info?.currentPage !== timeline.data.info.lastPage && (
@@ -169,13 +180,12 @@ function CommitsTab({ pr }: { pr: Issue }) {
 }
 
 function FilesTab({ pr }: { pr: Issue }) {
-  const { url } = useContext(Context)!.data!;
-  const forceUpdate = useState({})[1];
+  const { data, updated } = useContext(Context)!;
 
   useEffect(() => {
     (async () => {
-      pr.files ??= await getPrFiles(url, pr.number);
-      forceUpdate({});
+      pr.files ??= await getPrFiles(data!.repo.full_name, pr.number);
+      updated();
     })();
   }, []);
 

@@ -17,16 +17,20 @@ import { TimelineComment } from "./Comment";
 import IssueCard from "./IssueCard";
 import Spinner from "./Spinner";
 import TimelineItems from "./TimelineItems";
+import { operations } from "@octokit/openapi-types";
 
 export default () => {
-  const { data } = useContext(Context)!;
-  const { issues } = data!;
+  const { issues } = useContext(Context)!;
   const [selectedIssue, setIssue] = useState<Issue | null>(null);
 
+  // useEffect(() => {
+  //   void issues.fetch();
+  // }, []);
+
+  if (!issues.data) return <Spinner>Fetching Issues...</Spinner>;
+
   const page: Issue[] =
-    issues.data![issues.data!.state][
-      issues.info[issues.data!.state]!.data!.pageInfo.currentPage - 1
-    ];
+    issues.data[issues.data.state][issues.info[issues.data.state]!.data!.pageInfo.currentPage - 1];
   if (selectedIssue) return <Issue issue={selectedIssue} onClose={() => setIssue(null)} />;
 
   return (
@@ -35,16 +39,16 @@ export default () => {
         <Button
           leadingIcon={IssueOpenedIcon}
           variant="invisible"
-          sx={{ color: issues.data!.state === "open" ? "fg.default" : "fg.muted" }}
+          sx={{ color: issues.data.state === "open" ? "fg.default" : "fg.muted" }}
           onClick={() => issues.viewOpen()}>
-          {issues.data!.totalOpen} Open
+          {issues.data.totalOpen} Open
         </Button>
         <Button
           leadingIcon={CheckIcon}
           variant="invisible"
-          sx={{ color: issues.data!.state === "closed" ? "fg.default" : "fg.muted" }}
+          sx={{ color: issues.data.state === "closed" ? "fg.default" : "fg.muted" }}
           onClick={() => issues.viewClosed()}>
-          {issues.data!.totalClosed} Closed
+          {issues.data.totalClosed} Closed
         </Button>
       </Box>
       {!page?.length ? (
@@ -52,11 +56,11 @@ export default () => {
       ) : (
         page?.map((issue) => <IssueCard issue={issue} onClick={() => setIssue(issue)} />)
       )}
-      {issues.info[issues.data!.state].data?.pageInfo.lastPage && (
+      {issues.info[issues.data.state].data?.pageInfo.lastPage && (
         <Box borderColor="border.default" borderStyle="solid" borderTopWidth={1}>
           <Pagination
-            currentPage={issues.info[issues.data!.state].data!.pageInfo.currentPage}
-            pageCount={issues.info[issues.data!.state].data!.pageInfo.lastPage!}
+            currentPage={issues.info[issues.data.state].data!.pageInfo.currentPage}
+            pageCount={issues.info[issues.data.state].data!.pageInfo.lastPage!}
             showPages={false}
             onPageChange={(_, page) => {
               if (page > issues.info[issues.data!.state].data!.pageInfo.currentPage)
@@ -71,8 +75,8 @@ export default () => {
 };
 
 function Issue({ issue, onClose }: { issue: Issue; onClose: () => void }) {
-  const { url } = useContext(Context)!.data!;
-  const timeline = useTimeline(url, issue.number);
+  const { data } = useContext(Context)!;
+  const timeline = useTimeline(data!.repo.full_name, issue.number);
 
   if (!timeline.data.info) return <Spinner>Fetching issue...</Spinner>;
 
@@ -106,7 +110,12 @@ function Issue({ issue, onClose }: { issue: Issue; onClose: () => void }) {
       <Timeline clipSidebar>
         <TimelineComment comment={issue} />
         {timeline.data.page?.map((t) => (
-          <TimelineItems event={{ ...t, issue }} />
+          <TimelineItems
+            event={{
+              ...(t as operations["issues/list-events-for-timeline"]["responses"]["200"]["content"]["application/json"][0]),
+              issue,
+            }}
+          />
         ))}
         {timeline.data.info?.lastPage &&
           timeline.data.info?.currentPage !== timeline.data.info.lastPage && (

@@ -1,12 +1,14 @@
 import "./style.scss";
-import { Injector, common, components, webpack } from "replugged";
+import { Injector, common, components, types, webpack } from "replugged";
 import { openGithubModal } from "./Modal";
 import { MarkGithubIcon } from "@primer/styled-octicons";
 import { Box } from "@primer/react";
 import type { ModuleExports, ModuleExportsWithProps } from "replugged/dist/types";
-import { ReactNode } from "react";
+// import { ReactNode } from "react";
 const { MenuItem, MenuGroup } = components.ContextMenu;
 const { Tooltip } = components;
+const { ContextMenuTypes } = types;
+
 export { default as Settings } from "./Settings";
 
 const injector = new Injector();
@@ -73,6 +75,35 @@ export async function start() {
     );
     return res;
   });
+
+  injector.utils.addMenuItem(
+    ContextMenuTypes.Message,
+    (data: { message?: { content: string }; itemHref?: string }, menu) => {
+      const msg = checkMessage(data.message?.content ?? data.itemHref);
+      if (!msg.length) return;
+      console.log(data, menu);
+
+      return (
+        <MenuGroup>
+          <MenuItem
+            id="githubindiscord"
+            label="Open Repository"
+            action={() => openGithubModal(msg[0].url, msg[0].tab)}
+            icon={() => <MarkGithubIcon />}>
+            {msg.length > 1 &&
+              msg.map((m, i) => (
+                <MenuItem
+                  id={`githubindiscord-${i}`}
+                  label={`Open ${m.url}`}
+                  action={() => openGithubModal(m.url, m.tab)}
+                  icon={() => <MarkGithubIcon size={12} />}
+                />
+              ))}
+          </MenuItem>
+        </MenuGroup>
+      );
+    },
+  );
 }
 
 export function stop(): void {
@@ -96,32 +127,32 @@ function checkMessage(content?: string) {
   }));
 }
 
-export function menu(
-  { message, target }: { message?: { content: string }; target?: HTMLLinkElement },
-  children: ReactNode[],
-) {
-  const msg = checkMessage(message?.content || target?.href);
-  if (!msg.length) return null;
+// export function menu(
+//   { message, target }: { message?: { content: string }; target?: HTMLLinkElement },
+//   children: ReactNode[],
+// ) {
+//   const msg = checkMessage(message?.content || target?.href);
+//   if (!msg.length) return null;
 
-  children.push(
-    <MenuGroup>
-      <MenuItem
-        id="githubindiscord"
-        label="Open Repository"
-        action={() => openGithubModal(msg[0].url, msg[0].tab)}
-        icon={() => <MarkGithubIcon />}>
-        {msg.length > 1 &&
-          msg.map((m, i) => (
-            <MenuItem
-              id={`githubindiscord-${i}`}
-              label={`Open ${m.url}`}
-              action={() => openGithubModal(m.url, m.tab)}
-              icon={() => <MarkGithubIcon size={12} />}
-            />
-          ))}
-      </MenuItem>
-    </MenuGroup>,
-  );
+//   children.push(
+//     <MenuGroup>
+//       <MenuItem
+//         id="githubindiscord"
+//         label="Open Repository"
+//         action={() => openGithubModal(msg[0].url, msg[0].tab)}
+//         icon={() => <MarkGithubIcon />}>
+//         {msg.length > 1 &&
+//           msg.map((m, i) => (
+//             <MenuItem
+//               id={`githubindiscord-${i}`}
+//               label={`Open ${m.url}`}
+//               action={() => openGithubModal(m.url, m.tab)}
+//               icon={() => <MarkGithubIcon size={12} />}
+//             />
+//           ))}
+//       </MenuItem>
+//     </MenuGroup>,
+//   );
 
-  return children;
-}
+//   return children;
+// }

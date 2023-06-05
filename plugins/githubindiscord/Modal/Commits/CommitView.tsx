@@ -1,5 +1,5 @@
 import { Avatar, Box, Button, RelativeTime, Text } from "@primer/react";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { Context } from "../../context";
 import { TreeWithContent, getCommit } from "../../utils";
 import Spinner from "../Spinner";
@@ -9,23 +9,22 @@ export default ({
   commit,
   onClose,
 }: {
-  commit: NonNullable<TreeWithContent["latestCommit"]>;
+  commit: NonNullable<TreeWithContent["commit"]>;
   onClose: () => void;
 }) => {
-  const { url } = useContext(Context)!.data!;
-  const forceUpdate = useState({})[1];
+  const { data, updated } = useContext(Context)!;
 
   useEffect(() => {
     if (commit.files) return;
     (async () => {
-      const ccommit = await getCommit(url, commit.sha);
+      const ccommit = await getCommit(data!.repo.full_name, commit.sha);
       commit.files = ccommit.files;
       commit.stats = ccommit.stats;
-      forceUpdate({});
+      updated();
     })();
   }, []);
 
-  if (!commit.files) return <Spinner>Fetching Commit</Spinner>;
+  if (!commit.files) return <Spinner>Fetching Commit...</Spinner>;
 
   const message = commit.commit.message.split("\n\n");
 
