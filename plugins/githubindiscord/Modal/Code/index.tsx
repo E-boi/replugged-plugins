@@ -63,7 +63,7 @@ export default () => {
   let ending = path?.pop();
 
   if (commit) return <CommitsView commit={commit} onClose={() => setCommit(null)} />;
-  console.log(data);
+
   return (
     <Box>
       <Box className="repository-options">

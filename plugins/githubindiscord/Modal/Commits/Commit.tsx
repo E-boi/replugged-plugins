@@ -14,8 +14,6 @@ export default ({
 }) => {
   const [expanded, setExpanded] = useState(true);
 
-  console.log(commit);
-
   return (
     <Box borderStyle="solid" borderColor="border.default" borderWidth={1} borderRadius={2} {...sx}>
       <Box

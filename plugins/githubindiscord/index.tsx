@@ -81,7 +81,6 @@ export async function start() {
     (data: { message?: { content: string }; itemHref?: string }, menu) => {
       const msg = checkMessage(data.message?.content ?? data.itemHref);
       if (!msg.length) return;
-      console.log(data, menu);
 
       return (
         <MenuGroup>
