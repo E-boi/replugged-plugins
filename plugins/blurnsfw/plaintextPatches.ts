@@ -5,7 +5,7 @@ export default [
     find: "renderAttachments=function",
     replacements: [
       {
-        match: /className:o\(\).{15}er/g,
+        match: /renderMediaPostPreviewEmbeds\(\w+\)[\s\S]+?className:\w+.+container/g,
         replace: "$&,this?.props?.channel?.nsfw&&'rp-blurNsfw'",
       },
     ],
