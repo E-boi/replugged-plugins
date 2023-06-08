@@ -7,7 +7,6 @@ import {
   getBranches,
   getCommit,
   getFolder,
-  getReadme,
   getRepo,
 } from "./utils";
 import type { components } from "@octokit/openapi-types";
