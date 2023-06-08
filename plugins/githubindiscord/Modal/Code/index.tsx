@@ -5,7 +5,6 @@ import { TreeWithContent, getFile, getFolderInfo } from "../../utils";
 import { common, components } from "replugged";
 import { FileDirectoryFillIcon } from "@primer/styled-octicons";
 import Folder, { CommitHeader } from "./Folder";
-import Markdown from "../Markdown";
 import Spinner from "../Spinner";
 import CommitsView from "../Commits/CommitView";
 
@@ -54,7 +53,7 @@ export default () => {
 
       setFile((prev) => {
         if (!prev) return null;
-        return { ...prev, commit: info.commits[0] };
+        return { ...prev, commit: info.commits[0], readme: info.readme };
       });
     })();
   }, [JSON.stringify(file)]);
@@ -172,7 +171,7 @@ export default () => {
           }}
         />
       )}
-      {!file && (folder.current?.hasReadme || (!folder.current && data?.readme)) && (
+      {/* {!file && (folder.current?.hasReadme || (!folder.current && data?.readme)) && (
         <Markdown
           source={atob(folder.current?.readme?.content ?? data!.readme!.content)}
           sx={{
@@ -184,7 +183,7 @@ export default () => {
             borderRadius: 6,
           }}
         />
-      )}
+      )} */}
     </Box>
   );
 };

@@ -48,8 +48,10 @@ export default function useRepo(url: string, query: RepoQuery) {
         recursive: "1",
         branch: currentBranch.name,
       });
-      const readme =
-        (await getReadme(url, undefined, currentBranch.name).catch(() => {})) || undefined;
+      // const readme =
+      //   (await getReadme(url, undefined, currentBranch.name).catch(() => {})) || undefined;
+
+      const readme = undefined;
 
       setRepo({
         repo,

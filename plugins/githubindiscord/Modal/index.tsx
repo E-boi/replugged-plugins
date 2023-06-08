@@ -30,12 +30,11 @@ import Pulls from "./Pulls";
 import theme from "../theme";
 import Spinner from "./Spinner";
 import { textClasses } from "../components";
-import { openSettingsModal } from "./SettingsModal";
 import { Context, Provider } from "../context";
 import ErrorBoundary from "./ErrorBoundary";
 import Commits from "./Commits";
 
-const { ModalContent, ModalHeader, ModalRoot, ModalFooter } = components.Modal;
+const { ModalContent, ModalHeader, ModalRoot } = components.Modal;
 
 const tabs = [
   { title: "Code", component: Code, icon: CodeIcon },
@@ -45,7 +44,7 @@ const tabs = [
 ];
 
 const GithubModal: FC<ModalProps & { tab: string }> = ({ tab, ...props }) => {
-  const { data: repo, issues, prs, status, refetch } = useContext(Context)!;
+  const { data: repo, issues, prs, status } = useContext(Context)!;
   const [currentTab, setTab] = useState<string>(tab || "Code");
 
   const Tab = tabs.find(({ title }) => title === currentTab);
