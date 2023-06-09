@@ -1,7 +1,10 @@
 import { webpack } from "replugged";
 import { Channel, DirectMessage, GroupDM } from ".";
 
-const { getChannel } = webpack.getByProps("getChannel", "hasChannel")!;
+export const { getChannel } = webpack.getByProps<{
+  getChannel: (id: string) => Channel;
+  hasChannel: (id: string) => boolean;
+}>("getChannel", "hasChannel")!;
 
 export default ({ id, selected }: { id: string; selected: boolean }) => {
   const channel = (getChannel as (id: string) => Channel)(id);

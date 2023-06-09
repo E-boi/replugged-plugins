@@ -4,7 +4,7 @@ import Channel from "./Channel";
 import Popout from "./Popout";
 import { CATEGORY_UPDATE } from "../constants";
 
-const classes = webpack.getByProps(
+const classes = webpack.getByProps<Record<string, string>>(
   "privateChannelsHeaderContainer",
   "privateChannelRecipientsInviteButtonIcon",
   "headerText",
@@ -23,9 +23,9 @@ export default ({ category, selected }: { category: Category; selected: string }
           pluginSettings.set("categories", pluginSettings.get("categories", []));
           common.fluxDispatcher.dispatch({ type: CATEGORY_UPDATE });
         }}>
-        <span className={classes?.headerText as string}>{category.name}</span>
+        <span className={classes?.headerText}>{category.name}</span>
         <div
-          className={classes?.privateChannelRecipientsInviteButtonIcon as string}
+          className={classes?.privateChannelRecipientsInviteButtonIcon}
           style={{ cursor: "pointer" }}>
           <Popout category={category} />
         </div>

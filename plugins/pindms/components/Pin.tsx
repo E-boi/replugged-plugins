@@ -1,7 +1,5 @@
 import { common, components } from "replugged";
 import Categories from "./contextMenus/Categories";
-import pluginSettings from "../pluginSettings";
-import { CATEGORY_UPDATE } from "../constants";
 
 export default ({ selectedId }: { selectedId: string }) => {
   return (
@@ -12,17 +10,7 @@ export default ({ selectedId }: { selectedId: string }) => {
         width={16}
         style={{ paddingRight: "8px" }}
         onClick={(e) => {
-          const cats = pluginSettings.get("categories", []);
-          const idx = cats.findIndex((c) => c.ids.includes(selectedId));
-
-          // @ts-expect-error bad typings
-          if (idx == -1) common.contextMenu.open(e, () => <Categories selectedId={selectedId} />);
-          else {
-            cats[idx].ids = cats[idx].ids.filter((id) => id != selectedId);
-
-            pluginSettings.set("categories", cats);
-            common.fluxDispatcher.dispatch({ type: CATEGORY_UPDATE });
-          }
+          common.contextMenu.open(e, () => <Categories selectedId={selectedId} />);
         }}>
         <path
           fill="currentColor"

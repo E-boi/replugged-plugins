@@ -49,3 +49,68 @@
   color: var(--interactive-hover);
   background-color: var(--bg-overlay-hover, var(--background-modifier-hover));
 }
+
+.pindms-guildlist-avatar {
+  height: 48px !important;
+  width: 48px !important;
+}
+
+.pindms-guildlist-avatar svg {
+  height: 48px;
+  width: 48px;
+}
+
+.pindms-guildlist-avatar:not(.pindms-guildlist-pin-group) foreignObject {
+  height: 48px;
+  width: 48px;
+}
+
+.pindms-guildlist-avatar rect {
+  x: 33px;
+  y: 33px;
+  height: 14px;
+  width: 14px;
+}
+
+.pindms-guildlist-avatar rect[mask="url(#svg-mask-status-online-mobile)"] {
+  y: 26px;
+  height: 21px;
+  width: 14px;
+}
+
+/* .pindms-guildlist-pin-group foreignObject {
+  height: 40px;
+  width: 40px; */
+/* } */
+
+.pindms-guildlist-avatar:hover {
+  cursor: pointer;
+}
+
+@keyframes wobble {
+  0% {
+    border-radius: 999px;
+  }
+  25% {
+    border: 100px;
+  }
+  50% {
+    border-radius: 50px;
+  }
+  100% {
+    border-radius: 16px;
+  }
+}
+
+/* .pindms-guildlist-avatar svg,
+.pindms-guildlist-avatar foreignObject {
+  height: 48px;
+  width: 48px;
+}
+
+.pindms-guildlist-avatar rect {
+  x: 33;
+  y: 33;
+  height: 14px;
+  width: 14px;
+} */

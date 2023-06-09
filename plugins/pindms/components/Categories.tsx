@@ -14,7 +14,7 @@ export default ({ selectedChannelId }: { selectedChannelId: string }): ReactElem
 
     common.fluxDispatcher.subscribe(CATEGORY_UPDATE, update);
     return () => common.fluxDispatcher.unsubscribe(CATEGORY_UPDATE, update);
-  });
+  }, []);
 
   return (
     <>

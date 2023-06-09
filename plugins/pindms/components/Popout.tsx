@@ -1,25 +1,13 @@
 import { useMemo, useState } from "react";
 import { common, components, webpack } from "replugged";
-import { Channel, DPopout, SearchBar, User } from ".";
+import { Channel, DPopout, SearchBar } from ".";
 import pluginSettings, { Category } from "../pluginSettings";
 import { CATEGORY_UPDATE } from "../constants";
+import { getChannelIcon, getChannelName } from "../utils";
 
-const ChannelStore = webpack.getByProps("getMutablePrivateChannels");
+const ChannelStore = webpack.getByStoreName("ChannelStore");
 
-const { getUser } = webpack.getByProps("getUser", "findByTag")! as {
-  getUser: (id: string) => User;
-};
-
-const { auto } = webpack.getByProps("auto", "none")!;
-
-const { getChannelIconURL }: { getChannelIconURL: (channel: Channel) => string } =
-  webpack.getByProps("getChannelIconURL")!;
-
-function getName(channel: Channel) {
-  return channel.type === 3
-    ? channel.name || channel.rawRecipients?.map((e) => e.username).join(", ")
-    : channel.rawRecipients[0].username;
-}
+const { auto } = webpack.getByProps<{ auto: string; none: string }>("auto", "none")!;
 
 const ChannelItem = ({
   icon,
@@ -47,6 +35,8 @@ const ChannelItem = ({
 };
 
 const Popout = ({ category }: { category: Category }) => {
+  if (!SearchBar) return null;
+
   const [query, setQuery] = useState("");
 
   const add = (id: string) => {
@@ -68,7 +58,7 @@ const Popout = ({ category }: { category: Category }) => {
   const channels = useMemo(
     () =>
       Object.values((ChannelStore?.getMutablePrivateChannels as () => Channel[])())
-        .filter((c) => getName(c).includes(query))
+        .filter((c) => getChannelName(c).includes(query))
         // @ts-expect-error boohoo
         .sort((a, b) => b.lastMessageId - a.lastMessageId)
         .sort((a, b) => (category.ids.includes(b.id) ? 1 : category.ids.includes(a.id) ? -1 : 0)),
@@ -80,40 +70,20 @@ const Popout = ({ category }: { category: Category }) => {
       <SearchBar
         className="pindms-popout-search"
         query={query}
-        onChange={(value) => setQuery(value)}
+        onChange={(value: string) => setQuery(value)}
         onClear={() => setQuery("")}
       />
-      {channels.map((c) => {
-        if (c.type === 1) {
-          const user = getUser(c.rawRecipients[0].id);
-          if (!user) return null;
-          // console.log(user);
-          return (
-            <ChannelItem
-              icon={user.getAvatarURL()}
-              checked={category.ids.includes(c.id)}
-              name={user.username}
-              onClick={() => {
-                if (category.ids.includes(c.id)) remove(c.id);
-                else add(c.id);
-              }}
-            />
-          );
-        }
-
-        const icon = getChannelIconURL(c);
-        return (
-          <ChannelItem
-            icon={icon}
-            checked={category.ids.includes(c.id)}
-            name={getName(c)}
-            onClick={() => {
-              if (category.ids.includes(c.id)) remove(c.id);
-              else add(c.id);
-            }}
-          />
-        );
-      })}
+      {channels.map((c) => (
+        <ChannelItem
+          icon={getChannelIcon(c) ?? ""}
+          checked={category.ids.includes(c.id)}
+          name={getChannelName(c)}
+          onClick={() => {
+            if (category.ids.includes(c.id)) remove(c.id);
+            else add(c.id);
+          }}
+        />
+      ))}
     </div>
   );
 };

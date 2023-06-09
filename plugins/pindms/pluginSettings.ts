@@ -1,8 +1,11 @@
 import { settings } from "replugged";
 
-export interface Setting {
+export interface PluginSettings {
   categories: Category[];
+  guildPins: GuildPin[];
 }
+
+export type GuildPin = string;
 
 export interface Category {
   name: string;
@@ -12,4 +15,7 @@ export interface Category {
   collapsed: boolean;
 }
 
-export default await settings.init<Setting>("dev.eboi.pindms", { categories: [] });
+export default await settings.init<PluginSettings>("dev.eboi.pindms", {
+  categories: [],
+  guildPins: [],
+});
