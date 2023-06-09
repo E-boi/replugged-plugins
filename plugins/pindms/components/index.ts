@@ -21,7 +21,7 @@ export const RawDirectMessage: ObjectExports = webpack.getBySource('["channel","
 
 export const DirectMessageKey = webpack.getFunctionKeyBySource(
   RawDirectMessage,
-  /hasUnreadMessages:\w,canUseAvatarDecorations/,
+  /hasUnreadMessages:\w,canRenderAvatarDecorations/,
 )!;
 
 export const DirectMessage = RawDirectMessage[DirectMessageKey] as React.FC<{
@@ -31,7 +31,7 @@ export const DirectMessage = RawDirectMessage[DirectMessageKey] as React.FC<{
 
 export const GroupDM = webpack.getFunctionBySource<
   React.FC<{ channel: Channel; selected: boolean }>
->(webpack.getBySource('["channel","selected"]')!, /hasUnreadMessages:\w,isFavorite/)!;
+>(RawDirectMessage, /hasUnreadMessages:\w,isFavorite/)!;
 
 export const RawPrivateChannel: ObjectExports = webpack.getBySource(/children\)\(\w+\(\w+\.id/)!;
 
