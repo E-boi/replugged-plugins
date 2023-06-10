@@ -5,7 +5,11 @@ import pluginSettings, { Category } from "../pluginSettings";
 import { CATEGORY_UPDATE } from "../constants";
 import { getChannelIcon, getChannelName } from "../utils";
 
-const ChannelStore = webpack.getByStoreName("ChannelStore");
+const ChannelStore = webpack.getByStoreName("ChannelStore") as
+  | {
+      getMutablePrivateChannels: () => Channel[];
+    }
+  | undefined;
 
 const { auto } = webpack.getByProps<{ auto: string; none: string }>("auto", "none")!;
 
@@ -57,7 +61,7 @@ const Popout = ({ category }: { category: Category }) => {
 
   const channels = useMemo(
     () =>
-      Object.values((ChannelStore?.getMutablePrivateChannels as () => Channel[])())
+      Object.values(ChannelStore?.getMutablePrivateChannels() ?? [])
         .filter((c) => getChannelName(c).includes(query))
         // @ts-expect-error boohoo
         .sort((a, b) => b.lastMessageId - a.lastMessageId)

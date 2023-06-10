@@ -5,7 +5,7 @@ export default [
     find: "resetThreadPopoutTimers=function",
     replacements: [
       {
-        match: /!(.)..(.).renderEditButton\(\)/g,
+        match: /!(\w+)..(\w+).renderEditButton\(\)/g,
         replace:
           "$&,!$1&&window.replugged.plugins.getExports('dev.eboi.linkchannels')?.linkButton?.({channel:$2?.props?.channel})",
       },

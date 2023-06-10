@@ -6,6 +6,7 @@ import { getChannel } from "./Channel";
 import { getChannelIcon, getChannelName, getUser } from "../utils";
 import { Avatar, Badge, BlobMask, Pill, User } from ".";
 import { ObjectExports } from "replugged/dist/types";
+import Categories from "./contextMenus/Categories";
 
 const classes = webpack.getByProps<{ listItem: string; listItemWrapper: string; pill: string }>(
   "listItem",
@@ -13,7 +14,9 @@ const classes = webpack.getByProps<{ listItem: string; listItemWrapper: string; 
   "pill",
 );
 
-const ReadStateStore = webpack.getByStoreName("ReadStateStore");
+const ReadStateStore = webpack.getByStoreName("ReadStateStore") as
+  | { getUnreadCount: (channelId: string) => number }
+  | undefined;
 
 const useStateFromStoreRaw = await webpack.waitForModule(
   webpack.filters.bySource("useStateFromStores"),
@@ -35,6 +38,7 @@ const StatusStore:
   | undefined = webpack.getByProps("isMobileOnline");
 
 function GuildPin({ id }: { id: string }) {
+  console.log(useStateFromStoreRaw);
   if (!useStateFromStore || !ReadStateStore) return null;
 
   const channel = getChannel(id);
@@ -85,7 +89,9 @@ function GuildPin({ id }: { id: string }) {
         ].join(" ")}>
         {Pill ? <Pill className={classes?.pill} selected={false} hovered={hovered} /> : undefined}
         <BlobMask
-          upperBadge={Badge && (unreadCount ?? 0) > 0 ? <Badge count={unreadCount} /> : undefined}>
+          upperBadge={
+            Badge && (unreadCount ?? 0) > 0 ? <Badge count={unreadCount} /> : <span></span>
+          }>
           <Avatar
             isMobile={isMobileOnline}
             isTyping={false}
@@ -95,6 +101,9 @@ function GuildPin({ id }: { id: string }) {
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             onClick={() => transitionTo?.(`/channels/@me/${id}`)}
+            onContextMenu={(e) =>
+              common.contextMenu.open(e, () => <Categories selectedId={channel.id} />)
+            }
             className={`pindms-guildlist-avatar ${
               channel.type === 1 ? null : "pindms-guildlist-pin-group"
             }`}
@@ -117,5 +126,13 @@ export default () => {
     return () => common.fluxDispatcher.unsubscribe(GUILDLIST_UPDATE, update);
   });
 
-  return guildPins.map((id) => <GuildPin id={id} />);
+  console.log(guildPins);
+
+  return (
+    <>
+      {guildPins.map((id) => (
+        <GuildPin id={id} />
+      ))}
+    </>
+  );
 };

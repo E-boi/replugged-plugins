@@ -47,9 +47,10 @@ export function getChannelName(channel: Channel) {
     : channel.rawRecipients[0].username;
 }
 
-export const { getUser } = webpack.getByProps("getUser", "findByTag")! as {
-  getUser: (id: string) => User | undefined;
-};
+export const { getUser } = webpack.getByProps<{
+  getUser: (id: string) => User;
+  findByTag: (tag: string) => User;
+}>("getUser", "findByTag")!;
 
 export function getChannelIcon(channel: Channel) {
   if (channel.type === 3) return getChannelIconURL(channel);

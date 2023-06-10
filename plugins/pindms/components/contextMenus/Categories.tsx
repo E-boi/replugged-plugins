@@ -8,13 +8,14 @@ export default ({ selectedId }: { selectedId: string }) => {
   const categories = pluginSettings.get("categories", []);
   let guildPins: string[] = pluginSettings.get("guildPins", []);
   const inCategory = categories.some((c) => c.ids.includes(selectedId));
+  const category = categories.find((c) => c.ids.includes(selectedId));
 
   return (
     <ContextMenu.ContextMenu navId="pindms-categories" onClose={() => common.contextMenu.close()}>
       {inCategory ? (
         <ContextMenu.MenuItem
           id="id-remove"
-          label="Unpin"
+          label={`Unpin from "${category?.name}"`}
           color="danger"
           action={() => {
             const idx = categories.findIndex((c) => c.ids.includes(selectedId));

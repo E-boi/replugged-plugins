@@ -2,12 +2,13 @@
   "id": "dev.eboi.linkchannels",
   "name": "Link Channels",
   "description": "Adds an Icon to channels that copys <#channelId>. (channelId is replaced)",
+  "source": "https://github.com/E-boi/replugged-plugins/tree/main/plugins/linkchannels",
   "author": {
     "name": "ugly-patootie",
     "discordID": "458805348669718559",
     "github": "E-boi"
   },
-  "version": "1.0.4",
+  "version": "1.0.5",
   "updater": {
     "type": "store",
     "id": "dev.eboi.linkchannels"

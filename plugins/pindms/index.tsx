@@ -128,6 +128,8 @@ function patchGuildsNavBar(component: JSX.Element): void {
       }
     }
 
+    // console.log(PinIndex);
+
     const UnreadDMsIndex = getIndexByKeyword("getUnreadPrivateChannelIds");
     if (UnreadDMsIndex != -1) {
       patchUnreadDMs(NavScroll.props.children[UnreadDMsIndex]);

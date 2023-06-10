@@ -52,6 +52,7 @@ interface AvatarProps {
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onClick: () => void;
+  onContextMenu: (event: React.MouseEvent) => void;
 }
 
 export const {
