@@ -25,6 +25,32 @@ export interface RPC {
   party: { members?: number; size?: number };
 }
 
+export interface DiscordRPC {
+  application_id: string;
+  name: string;
+  type: number;
+  details?: string;
+  state?: string;
+  timestamps?: {
+    start?: number;
+    end?: string;
+  };
+  assets?: {
+    large_image?: string;
+    large_text?: string;
+    small_image?: string;
+    small_text?: string;
+  };
+  party?: {
+    size: [number, number];
+    id: string;
+  };
+  buttons?: string[];
+  metadata?: {
+    button_urls: string[];
+  };
+}
+
 export const defaultRPC: Readonly<RPC> = {
   clientId: "787811010303885312",
   name: "Browsing Discord",
@@ -78,38 +104,42 @@ function extractUrl(url: string) {
 }
 
 function formatRPC(rpc: RPC) {
-  const formatted = {
+  const discordrpc: DiscordRPC = {
     application_id: rpc.clientId,
     name: rpc.name,
-    details: rpc.details,
-    state: rpc.type !== 1 ? rpc.state : null,
     type: rpc.type,
-    timestamps: rpc.showTime && {
-      start: Date.now(),
-    },
     assets: {
       large_image: (rpc.largeImage && `mp:${extractUrl(rpc.largeImage)}`) || undefined,
       large_text: (rpc.largeText && rpc.largeText) || undefined,
       small_image: (rpc.smallImage && `mp:${extractUrl(rpc.smallImage)}`) || undefined,
       small_text: (rpc.smallText && rpc.smallText) || undefined,
     },
-    party: rpc.party?.members &&
-      rpc.party.size && {
-        size: [rpc.party.members, rpc.party.size],
-        id: "replug",
-      },
-    buttons: [] as string[],
-    metadata: {
-      button_urls: [] as string[],
-    },
   };
 
   rpc.buttons.forEach((button) => {
+    if (!discordrpc.buttons && button.label && button.url) {
+      discordrpc.buttons = [];
+      discordrpc.metadata = {
+        button_urls: [],
+      };
+    }
     if (button.label && button.url) {
-      formatted.buttons.push(button.label);
-      formatted.metadata.button_urls.push(button.url);
+      discordrpc.buttons!.push(button.label);
+      discordrpc.metadata!.button_urls.push(button.url);
     }
   });
 
-  return formatted;
+  if (rpc.details) discordrpc.details = rpc.details;
+  if (rpc.state) discordrpc.state = rpc.state;
+  if (rpc.showTime)
+    discordrpc.timestamps = {
+      start: Date.now(),
+    };
+  if (rpc.party.members && rpc.party.size && rpc.state)
+    discordrpc.party = {
+      size: [rpc.party.members, rpc.party.size],
+      id: "rplug",
+    };
+
+  return discordrpc;
 }
