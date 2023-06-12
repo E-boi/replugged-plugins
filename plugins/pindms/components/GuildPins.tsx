@@ -38,7 +38,6 @@ const StatusStore:
   | undefined = webpack.getByProps("isMobileOnline");
 
 function GuildPin({ id }: { id: string }) {
-  console.log(useStateFromStoreRaw);
   if (!useStateFromStore || !ReadStateStore) return null;
 
   const channel = getChannel(id);
@@ -125,8 +124,6 @@ export default () => {
     common.fluxDispatcher.subscribe(GUILDLIST_UPDATE, update);
     return () => common.fluxDispatcher.unsubscribe(GUILDLIST_UPDATE, update);
   });
-
-  console.log(guildPins);
 
   return (
     <>
