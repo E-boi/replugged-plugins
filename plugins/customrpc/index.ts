@@ -76,12 +76,17 @@ export const pluginSettings = await settings.init<{
 }>("dev.eboi.customrpc");
 
 export function start() {
-  if (!pluginSettings.has("selected")) {
-    pluginSettings.set("selected", 0);
-    pluginSettings.set("rpcs", [defaultRPC]);
-  }
-  const rpc = pluginSettings.get("rpcs")![pluginSettings.get("selected")!];
-  setTimeout(() => rpc && setRPC(rpc), 1000);
+  const connectionOpen = () => {
+    if (!pluginSettings.has("selected")) {
+      pluginSettings.set("selected", 0);
+      pluginSettings.set("rpcs", [defaultRPC]);
+    }
+    const rpc = pluginSettings.get("rpcs")![pluginSettings.get("selected")!];
+    setTimeout(() => rpc && setRPC(rpc), 1000);
+    fluxDispatcher.unsubscribe("CONNECTION_OPEN", connectionOpen);
+  };
+
+  fluxDispatcher.subscribe("CONNECTION_OPEN", connectionOpen);
 }
 
 export function stop() {
