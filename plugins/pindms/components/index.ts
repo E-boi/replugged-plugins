@@ -21,7 +21,7 @@ export const RawDirectMessage: ObjectExports = webpack.getBySource('["channel","
 
 export const DirectMessageKey = webpack.getFunctionKeyBySource(
   RawDirectMessage,
-  /hasUnreadMessages:\w,canRenderAvatarDecorations/,
+  /hasUnreadMessages:\w,canUseAvatarDecorations/,
 )!;
 
 export const DirectMessage = RawDirectMessage[DirectMessageKey] as React.FC<{
