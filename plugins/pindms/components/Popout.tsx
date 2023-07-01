@@ -70,7 +70,7 @@ const Popout = ({ category }: { category: Category }) => {
   );
 
   return (
-    <div className={["pindms-popout", auto].join(" ")}>
+    <div className={["pindms-popout", auto].join(" ")} onClick={(e) => e.stopPropagation()}>
       <SearchBar
         className="pindms-popout-search"
         query={query}
