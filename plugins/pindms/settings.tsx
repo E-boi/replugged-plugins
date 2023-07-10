@@ -65,7 +65,6 @@ export default () => {
             id: common.lodash.uniqueId("cat-"),
             ids: [],
             name: "",
-            position: categories.length + 1,
             collapsed: false,
           });
           setCategories([...categories]);

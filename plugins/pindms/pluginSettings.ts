@@ -9,7 +9,6 @@ export type GuildPin = string;
 
 export interface Category {
   name: string;
-  position: number;
   ids: string[];
   id: string;
   collapsed: boolean;
