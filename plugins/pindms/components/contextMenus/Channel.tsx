@@ -11,7 +11,7 @@ export default ({ selectedId }: { selectedId: string }) => {
   const category = categories.find((c) => c.ids.includes(selectedId));
 
   return (
-    <ContextMenu.ContextMenu navId="pindms-categories" onClose={() => common.contextMenu.close()}>
+    <ContextMenu.ContextMenu navId="pindms-channel" onClose={() => common.contextMenu.close()}>
       {inCategory ? (
         <ContextMenu.MenuItem
           id="id-remove"

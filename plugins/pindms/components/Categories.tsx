@@ -21,6 +21,7 @@ export default ({ selectedChannelId }: { selectedChannelId: string }): ReactElem
       {categories
         // empty categories or unnamed categories no show
         .filter((c) => c.name && c.ids.length)
+        .sort((a, b) => a.position - b.position)
         .map((c) => (
           <Category category={c} selected={selectedChannelId} />
         ))}

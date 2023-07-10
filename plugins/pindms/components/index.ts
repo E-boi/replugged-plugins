@@ -17,30 +17,33 @@ export interface Channel {
   recipients: string[];
 }
 
-export const RawDirectMessage: ObjectExports = webpack.getBySource('["channel","selected"]')!;
+export const RawDirectMessage = webpack.getBySource<ObjectExports>('["channel","selected"]');
 
-export const DirectMessageKey = webpack.getFunctionKeyBySource(
-  RawDirectMessage,
-  /hasUnreadMessages:\w,canUseAvatarDecorations/,
-)!;
+export const DirectMessageKey =
+  RawDirectMessage &&
+  webpack.getFunctionKeyBySource(RawDirectMessage, /hasUnreadMessages:\w,canUseAvatarDecorations/)!;
 
-export const DirectMessage = RawDirectMessage[DirectMessageKey] as React.FC<{
-  channel: Channel;
-  selected: boolean;
-}>;
+export const DirectMessage = (RawDirectMessage &&
+  DirectMessageKey &&
+  RawDirectMessage[DirectMessageKey]) as
+  | React.FC<{
+      channel: Channel;
+      selected: boolean;
+    }>
+  | undefined;
 
-export const GroupDM = webpack.getFunctionBySource<
-  React.FC<{ channel: Channel; selected: boolean }>
->(RawDirectMessage, /hasUnreadMessages:\w,isFavorite/)!;
+export const GroupDM =
+  RawDirectMessage &&
+  webpack.getFunctionBySource<React.FC<{ channel: Channel; selected: boolean }>>(
+    RawDirectMessage,
+    /hasUnreadMessages:\w,isFavorite/,
+  )!;
 
-export const RawPrivateChannel: ObjectExports = webpack.getBySource(/children\)\(\w+\(\w+\.id/)!;
+export const RawPrivateChannel = webpack.getBySource<ObjectExports>(/children\)\(\w+\(\w+\.id/);
 
-export const PrivateChannelKey = webpack.getFunctionKeyBySource(
-  RawPrivateChannel,
-  /children\)\(\w+\(\w+\.id/,
-)!;
-
-export const PrivateChannel = RawPrivateChannel[PrivateChannelKey];
+export const PrivateChannelKey =
+  RawPrivateChannel &&
+  webpack.getFunctionKeyBySource(RawPrivateChannel, /children\)\(\w+\(\w+\.id/);
 
 interface AvatarProps {
   src: string;
@@ -67,7 +70,6 @@ export const {
     renderPopout: () => ReactElement;
   }>;
   Avatar: FC<AvatarProps>;
-  // AnimatedAvatar: FC<AvatarProps>;
   BlobMask: FC<{ children: ReactElement; lowerBadge?: ReactElement; upperBadge?: ReactElement }>;
 } = webpack.getByProps("Popout")!;
 
@@ -93,6 +95,6 @@ export const { getChannelIconURL }: { getChannelIconURL: (channel: Channel) => s
   webpack.getByProps("getChannelIconURL")!;
 
 export const Pill =
-  webpack.getBySource<FC<{ className?: string; selected?: boolean; hovered?: boolean }>>(
-    '"pill":"empty"',
-  );
+  webpack.getBySource<
+    FC<{ className?: string; selected?: boolean; hovered?: boolean; unread?: boolean }>
+  >('"pill":"empty"');

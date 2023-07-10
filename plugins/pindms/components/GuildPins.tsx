@@ -6,7 +6,7 @@ import { getChannel } from "./Channel";
 import { getChannelIcon, getChannelName, getUser } from "../utils";
 import { Avatar, Badge, BlobMask, Pill, User } from ".";
 import { ObjectExports } from "replugged/dist/types";
-import Categories from "./contextMenus/Categories";
+import Categories from "./contextMenus/Channel";
 
 const classes = webpack.getByProps<{ listItem: string; listItemWrapper: string; pill: string }>(
   "listItem",
@@ -86,7 +86,14 @@ function GuildPin({ id }: { id: string }) {
           "pindms-guildlist-pin",
           channel.type === 1 ? null : "pindms-guildlist-pin-group",
         ].join(" ")}>
-        {Pill ? <Pill className={classes?.pill} selected={false} hovered={hovered} /> : undefined}
+        {Pill ? (
+          <Pill
+            className={classes?.pill}
+            selected={false}
+            hovered={hovered}
+            unread={Boolean(unreadCount)}
+          />
+        ) : undefined}
         <BlobMask
           upperBadge={
             Badge && (unreadCount ?? 0) > 0 ? <Badge count={unreadCount} /> : <span></span>

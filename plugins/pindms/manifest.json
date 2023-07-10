@@ -1,7 +1,7 @@
 {
   "id": "dev.eboi.pindms",
   "name": "PinDMs",
-  "description": "Pin DMs at the top of your DMs list",
+  "description": "Pin DMs at the top of your DM list and Server List.",
   "source": "https://github.com/E-boi/replugged-plugins/tree/main/plugins/pindms",
   "author": [
     {

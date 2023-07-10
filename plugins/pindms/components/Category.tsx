@@ -3,6 +3,7 @@ import pluginSettings, { Category } from "../pluginSettings";
 import Channel from "./Channel";
 import Popout from "./Popout";
 import { CATEGORY_UPDATE } from "../constants";
+import CategoryContextMenu from "./contextMenus/Category";
 
 const classes = webpack.getByProps<Record<string, string>>(
   "privateChannelsHeaderContainer",
@@ -18,6 +19,9 @@ export default ({ category, selected }: { category: Category; selected: string }
     <div>
       <h2
         className={[classes?.privateChannelsHeaderContainer, "pindms-container"].join(" ")}
+        onContextMenu={(e) =>
+          common.contextMenu.open(e, () => <CategoryContextMenu id={category.id} />)
+        }
         onClick={() => {
           category.collapsed = !category.collapsed;
           pluginSettings.set("categories", pluginSettings.get("categories", []));

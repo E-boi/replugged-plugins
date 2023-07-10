@@ -62,10 +62,10 @@ export default () => {
       <components.Button
         onClick={() => {
           categories.push({
-            id: window._.uniqueId("cat-"),
+            id: common.lodash.uniqueId("cat-"),
             ids: [],
             name: "",
-            position: categories.length,
+            position: categories.length + 1,
             collapsed: false,
           });
           setCategories([...categories]);

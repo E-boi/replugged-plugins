@@ -1,5 +1,5 @@
 import { common, components } from "replugged";
-import Categories from "./contextMenus/Categories";
+import Categories from "./contextMenus/Channel";
 
 export default ({ selectedId }: { selectedId: string }) => {
   return (

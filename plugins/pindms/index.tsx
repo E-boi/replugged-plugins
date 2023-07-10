@@ -2,7 +2,6 @@ import { ReactElement, useEffect, useState } from "react";
 import { Injector, common, util, webpack } from "replugged";
 import { PrivateChannelKey, RawPrivateChannel } from "./components";
 import pluginSettings from "./pluginSettings";
-import _ from "lodash";
 import Pin from "./components/Pin";
 import Categories from "./components/Categories";
 import { CATEGORY_UPDATE, GUILDLIST_UPDATE } from "./constants";
@@ -13,16 +12,9 @@ import GuildPins from "./components/GuildPins";
 
 export { default as Settings } from "./settings";
 
-declare global {
-  interface Window {
-    _: typeof _;
-  }
-}
-
-const Channels = webpack.getBySource("private-channels-", { raw: true });
-const ChannelsKey =
-  Channels &&
-  webpack.getFunctionKeyBySource(Channels.exports as ObjectExports, "private-channels-");
+const Channels: ObjectExports | undefined = webpack.getBySource("private-channels-", { raw: true });
+const ChannelsKey: string | undefined =
+  Channels && webpack.getFunctionKeyBySource(Channels.exports, "private-channels-");
 
 const guildClasses = await webpack.waitForProps<{ guilds: string; sidebar: string }>(
   "guilds",
@@ -33,42 +25,50 @@ export const injector = new Injector();
 
 export function start() {
   if (Channels && ChannelsKey)
-    injector.after(Channels.exports, ChannelsKey as never, (_, res: ReactElement) => {
-      const [__, forceUpdate] = useState({});
-      const cates = pluginSettings.get("categories", []);
+    injector.after(
+      Channels.exports as Record<never, AnyFunction>,
+      ChannelsKey as never,
+      (_, res: ReactElement) => {
+        const [__, forceUpdate] = useState({});
+        const cates = pluginSettings.get("categories", []);
 
-      useEffect(() => {
-        const update = () => forceUpdate({});
+        useEffect(() => {
+          const update = () => forceUpdate({});
 
-        common.fluxDispatcher.subscribe(CATEGORY_UPDATE, update);
-        return () => common.fluxDispatcher.unsubscribe(CATEGORY_UPDATE, update);
-      }, []);
+          common.fluxDispatcher.subscribe(CATEGORY_UPDATE, update);
+          return () => common.fluxDispatcher.unsubscribe(CATEGORY_UPDATE, update);
+        }, []);
 
-      const ids = cates.map((c) => c.ids).flat();
+        const ids = cates.map((c) => c.ids).flat();
 
-      res.props.children.props.privateChannelIds =
-        res.props.children.props.privateChannelIds.filter((p: string) => !ids.includes(p));
+        res.props.children.props.privateChannelIds =
+          res.props.children.props.privateChannelIds.filter((p: string) => !ids.includes(p));
 
-      if (
-        !res.props?.children?.props?.children?.some(
-          (c: ReactElement) => c?.key === "pindms-categories",
+        if (
+          !res.props?.children?.props?.children?.some(
+            (c: ReactElement) => c?.key === "pindms-categories",
+          )
         )
-      )
-        res.props.children.props.children.push(
-          <Categories
-            key="pindms-categories"
-            selectedChannelId={res.props.children.props.selectedChannelId}
-          />,
-        );
+          res.props.children.props.children.push(
+            <Categories
+              key="pindms-categories"
+              selectedChannelId={res.props.children.props.selectedChannelId}
+            />,
+          );
 
-      return res;
-    });
+        return res;
+      },
+    );
 
-  // @ts-expect-error yes
-  injector.after(RawPrivateChannel, PrivateChannelKey, (args, res: ReactElement) => {
-    res.props?.children?.props?.children?.push?.(<Pin selectedId={args[0].id} />);
-    return res;
-  });
+  if (RawPrivateChannel && PrivateChannelKey)
+    injector.after(
+      RawPrivateChannel as Record<string, AnyFunction>,
+      PrivateChannelKey,
+      (args, res: ReactElement) => {
+        res.props?.children?.props?.children?.push?.(<Pin selectedId={args[0].id} />);
+        return res;
+      },
+    );
 
   void patchGuildNav();
 }

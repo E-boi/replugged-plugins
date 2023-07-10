@@ -8,7 +8,7 @@ export const { getChannel } = webpack.getByProps<{
 
 export default ({ id, selected }: { id: string; selected: boolean }) => {
   const channel = (getChannel as (id: string) => Channel)(id);
-  if (!channel) return null;
+  if (!channel || !GroupDM || !DirectMessage) return null;
 
   if (channel.type === 3) return <GroupDM channel={channel} selected={selected} />;
   else return <DirectMessage channel={channel} selected={selected} />;
