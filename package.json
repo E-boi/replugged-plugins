@@ -40,6 +40,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-react": "^7.32.2",
     "prettier": "^2.8.8",
+    "react-dnd": "^16.0.1",
     "replugged": "^4.5.0",
     "tsx": "^3.12.7",
     "typescript": "^4.9.5",

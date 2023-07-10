@@ -69,10 +69,10 @@ function GuildPin({ id }: { id: string }) {
       }
     };
 
-    // @ts-expect-error tf are these types
+    // @ts-expect-error types
     common.fluxDispatcher.subscribe("PRESENCE_UPDATES", statusUpdate);
 
-    // @ts-expect-error tf are these types
+    // @ts-expect-error types
     return () => common.fluxDispatcher.unsubscribe("PRESENCE_UPDATES", statusUpdate);
   }, []);
 
