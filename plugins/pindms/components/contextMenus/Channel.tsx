@@ -4,14 +4,14 @@ import { CATEGORY_UPDATE, GUILDLIST_UPDATE } from "../../constants";
 
 const { ContextMenu } = components;
 
-export default ({ selectedId }: { selectedId: string }) => {
+export default ({ selectedId, inMenu }: { selectedId: string; inMenu?: boolean }) => {
   const categories = pluginSettings.get("categories", []);
   let guildPins: string[] = pluginSettings.get("guildPins", []);
   const inCategory = categories.some((c) => c.ids.includes(selectedId));
   const category = categories.find((c) => c.ids.includes(selectedId));
 
-  return (
-    <ContextMenu.ContextMenu navId="pindms-channel" onClose={() => common.contextMenu.close()}>
+  const contextMenu = (
+    <>
       {inCategory ? (
         <ContextMenu.MenuItem
           id="id-remove"
@@ -66,6 +66,19 @@ export default ({ selectedId }: { selectedId: string }) => {
           }}
         />
       )}
+    </>
+  );
+
+  if (inMenu)
+    return (
+      <ContextMenu.MenuItem id="pindms-menu" label="PinDMs">
+        {contextMenu}
+      </ContextMenu.MenuItem>
+    );
+
+  return (
+    <ContextMenu.ContextMenu navId="pindms-channel" onClose={() => common.contextMenu.close()}>
+      {contextMenu}
     </ContextMenu.ContextMenu>
   );
 };

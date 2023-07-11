@@ -59,15 +59,21 @@ const Popout = ({ category }: { category: Category }) => {
     common.fluxDispatcher.dispatch({ type: CATEGORY_UPDATE });
   };
 
-  const channels = useMemo(
-    () =>
+  const channels = useMemo(() => {
+    const categories = pluginSettings.get("categories", []);
+    return (
       Object.values(ChannelStore?.getMutablePrivateChannels() ?? [])
         .filter((c) => getChannelName(c).includes(query))
         // @ts-expect-error boohoo
         .sort((a, b) => b.lastMessageId - a.lastMessageId)
-        .sort((a, b) => (category.ids.includes(b.id) ? 1 : category.ids.includes(a.id) ? -1 : 0)),
-    [query, JSON.stringify(category.ids)],
-  );
+        .filter((channel) =>
+          category.ids.includes(channel.id)
+            ? true
+            : !categories.some((cat) => cat.ids.includes(channel.id)),
+        )
+        .sort((a, b) => (category.ids.includes(b.id) ? 1 : category.ids.includes(a.id) ? -1 : 0))
+    );
+  }, [query, JSON.stringify(category.ids)]);
 
   return (
     <div className={["pindms-popout", auto].join(" ")} onClick={(e) => e.stopPropagation()}>

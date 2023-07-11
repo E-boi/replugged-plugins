@@ -2,11 +2,12 @@ import { common, components, webpack } from "replugged";
 import pluginSettings from "../pluginSettings";
 import { useEffect, useState } from "react";
 import { GUILDLIST_UPDATE } from "../constants";
-import { getChannel } from "./Channel";
 import { getChannelIcon, getChannelName, getUser } from "../utils";
-import { Avatar, Badge, BlobMask, Pill, User } from ".";
+import { Avatar, Badge, BlobMask, Pill } from ".";
 import { ObjectExports } from "replugged/dist/types";
 import Categories from "./contextMenus/Channel";
+import { Store } from "replugged/dist/renderer/modules/common/flux";
+import { ChannelStore, ReadStateStore, StatusStore, TypingStore } from "../stores";
 
 const classes = webpack.getByProps<{ listItem: string; listItemWrapper: string; pill: string }>(
   "listItem",
@@ -14,15 +15,11 @@ const classes = webpack.getByProps<{ listItem: string; listItemWrapper: string; 
   "pill",
 );
 
-const ReadStateStore = webpack.getByStoreName("ReadStateStore") as
-  | { getUnreadCount: (channelId: string) => number }
-  | undefined;
-
 const useStateFromStoreRaw = await webpack.waitForModule(
   webpack.filters.bySource("useStateFromStores"),
 );
 
-const useStateFromStore: ((stores: unknown[], callback: () => unknown) => number) | undefined =
+const useStateFromStore: (<T>(stores: Store[], callback: () => unknown) => T) | undefined =
   webpack.getFunctionBySource(useStateFromStoreRaw as ObjectExports, "useStateFromStores");
 
 const transtionRaw = webpack.getBySource('"transitionTo - Transitioning to "');
@@ -33,50 +30,26 @@ const transitionTo = (transtionRaw &&
     '"transitionTo - Transitioning to "',
   )!) as ((to: string) => void) | undefined;
 
-const StatusStore:
-  | { isMobileOnline: (id: string) => boolean; getStatus: (id: string) => string }
-  | undefined = webpack.getByProps("isMobileOnline");
-
 function GuildPin({ id }: { id: string }) {
-  if (!useStateFromStore || !ReadStateStore) return null;
+  if (!useStateFromStore || !ChannelStore || !ReadStateStore || !StatusStore || !TypingStore)
+    return null;
 
-  const channel = getChannel(id);
-
-  if (!channel) return null;
-
-  const [hovered, setHovered] = useState(StatusStore?.isMobileOnline(id));
-  const [isMobileOnline, setMobileOnline] = useState(false);
-  const [status, setStatus] = useState("offline");
-  const unreadCount = useStateFromStore([ReadStateStore], () =>
-    ReadStateStore.getUnreadCount(channel.id),
-  );
-
+  const channel = ChannelStore.getChannel(id);
   const user = channel && getUser(channel.recipients[0]);
 
-  useEffect(() => {
-    if (user && StatusStore) {
-      setMobileOnline(StatusStore.isMobileOnline(user.id));
-      setStatus(StatusStore.getStatus(user.id));
-    }
-  }, [JSON.stringify(user)]);
+  if (!channel || !user) return null;
 
-  useEffect(() => {
-    const statusUpdate = (data?: { updates: Array<{ user: User }> }) => {
-      const update = data?.updates.find((u) => u.user.id === user?.id);
-      if (update && StatusStore) {
-        setStatus(StatusStore.getStatus(update.user.id));
-        setMobileOnline(StatusStore.isMobileOnline(update.user.id));
-      }
-    };
-
-    // @ts-expect-error types
-    common.fluxDispatcher.subscribe("PRESENCE_UPDATES", statusUpdate);
-
-    // @ts-expect-error types
-    return () => common.fluxDispatcher.unsubscribe("PRESENCE_UPDATES", statusUpdate);
-  }, []);
-
-  if (!channel) return null;
+  const [hovered, setHovered] = useState(false);
+  const isMobileOnline = useStateFromStore<boolean>([StatusStore], () =>
+    StatusStore!.isMobileOnline(user.id),
+  );
+  const status = useStateFromStore<string>([StatusStore], () => StatusStore!.getStatus(user.id));
+  const unreadCount = useStateFromStore<number>([ReadStateStore], () =>
+    ReadStateStore!.getUnreadCount(channel.id),
+  );
+  const isTyping = useStateFromStore<boolean>([TypingStore], () =>
+    TypingStore!.isTyping(channel.id, user.id),
+  );
 
   return (
     <components.Tooltip shouldShow={hovered} text={getChannelName(channel)} position="right">
@@ -100,7 +73,7 @@ function GuildPin({ id }: { id: string }) {
           }>
           <Avatar
             isMobile={isMobileOnline}
-            isTyping={false}
+            isTyping={isTyping}
             size="SIZE_40"
             src={getChannelIcon(channel)!}
             status={channel.type === 1 ? status : undefined}

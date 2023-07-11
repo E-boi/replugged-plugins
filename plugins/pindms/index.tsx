@@ -1,14 +1,14 @@
 import { ReactElement, useEffect, useState } from "react";
-import { Injector, common, util, webpack } from "replugged";
-import { PrivateChannelKey, RawPrivateChannel } from "./components";
+import { Injector, common, types, util, webpack } from "replugged";
 import pluginSettings from "./pluginSettings";
-import Pin from "./components/Pin";
 import Categories from "./components/Categories";
 import { CATEGORY_UPDATE, GUILDLIST_UPDATE } from "./constants";
 import "./style.css";
-import { AnyFunction, ObjectExports } from "replugged/dist/types";
+import type { AnyFunction, ObjectExports } from "replugged/dist/types";
 import { findInReactTree, forceUpdate } from "./utils";
 import GuildPins from "./components/GuildPins";
+import { ChannelStore } from "./stores";
+import Channel from "./components/contextMenus/Channel";
 
 export { default as Settings } from "./settings";
 
@@ -60,15 +60,18 @@ export function start() {
       },
     );
 
-  if (RawPrivateChannel && PrivateChannelKey)
-    injector.after(
-      RawPrivateChannel as Record<string, AnyFunction>,
-      PrivateChannelKey,
-      (args, res: ReactElement) => {
-        res.props?.children?.props?.children?.push?.(<Pin selectedId={args[0].id} />);
-        return res;
-      },
-    );
+  injector.utils.addMenuItem(
+    types.ContextMenuTypes.UserContext,
+    (data: { user: { id: string } }, _) => {
+      if (!ChannelStore) return;
+      const channel = ChannelStore.getChannel(ChannelStore.getDMFromUserId(data.user.id));
+
+      if (!channel) return;
+
+      // eslint-disable-next-line new-cap
+      return Channel({ selectedId: channel.id, inMenu: true });
+    },
+  );
 
   void patchGuildNav();
 }
