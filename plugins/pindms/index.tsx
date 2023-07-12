@@ -9,6 +9,7 @@ import { findInReactTree, forceUpdate } from "./utils";
 import GuildPins from "./components/GuildPins";
 import { ChannelStore } from "./stores";
 import Channel from "./components/contextMenus/Channel";
+import { Channel as ChannelType } from "./components";
 
 export { default as Settings } from "./settings";
 
@@ -70,6 +71,14 @@ export function start() {
 
       // eslint-disable-next-line new-cap
       return Channel({ selectedId: channel.id, inMenu: true });
+    },
+  );
+
+  injector.utils.addMenuItem(
+    types.ContextMenuTypes.GdmContext,
+    (data: { channel: ChannelType }, _) => {
+      // eslint-disable-next-line new-cap
+      return Channel({ selectedId: data.channel.id, inMenu: true });
     },
   );
 

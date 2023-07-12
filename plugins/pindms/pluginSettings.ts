@@ -3,6 +3,7 @@ import { settings } from "replugged";
 export interface PluginSettings {
   categories: Category[];
   guildPins: GuildPin[];
+  showStatus: boolean;
 }
 
 export type GuildPin = string;
@@ -17,4 +18,5 @@ export interface Category {
 export default await settings.init<PluginSettings>("dev.eboi.pindms", {
   categories: [],
   guildPins: [],
+  showStatus: true,
 });

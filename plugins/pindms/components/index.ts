@@ -1,9 +1,17 @@
 import { FC, ReactElement } from "react";
+import type {
+  ConnectDragPreview,
+  ConnectDragSource,
+  DragSourceHookSpec,
+  DropTargetHookSpec,
+  FactoryOrInstance,
+} from "react-dnd";
 import { webpack } from "replugged";
 import { AnyFunction, ObjectExports } from "replugged/dist/types";
 
 export interface User {
   username: string;
+  globalName: string;
   id: string;
   getAvatarURL(): string;
 }
@@ -98,3 +106,24 @@ export const Pill =
   webpack.getBySource<
     FC<{ className?: string; selected?: boolean; hovered?: boolean; unread?: boolean }>
   >('"pill":"empty"');
+
+const useDragRaw = webpack.getBySource(
+  "useDrag::spec.begin was deprecated in v14. Replace spec.begin() with spec.item(). (see more here - https://react-dnd.github.io/react-dnd/docs/api/use-drag)",
+);
+export const useDrag = webpack.getFunctionBySource<
+  <DragObject = unknown, DropResult = unknown, CollectedProps = unknown>(
+    specArg: FactoryOrInstance<DragSourceHookSpec<DragObject, DropResult, CollectedProps>>,
+    deps?: unknown[],
+  ) => [CollectedProps, ConnectDragSource, ConnectDragPreview]
+>(
+  useDragRaw,
+  "useDrag::spec.begin was deprecated in v14. Replace spec.begin() with spec.item(). (see more here - https://react-dnd.github.io/react-dnd/docs/api/use-drag)",
+);
+
+const useDropRaw = webpack.getBySource("accept must be defined");
+export const useDrop = webpack.getFunctionBySource<
+  <DragObject = unknown, DropResult = unknown, CollectedProps = unknown>(
+    specArg: FactoryOrInstance<DropTargetHookSpec<DragObject, DropResult, CollectedProps>>,
+    deps?: unknown[],
+  ) => [CollectedProps, ConnectDragSource, ConnectDragPreview]
+>(useDropRaw, "disconnectDropTarget");

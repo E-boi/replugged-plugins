@@ -11,9 +11,13 @@ export const TypingStore = webpack.getByStoreName<
 >("TypingStore");
 
 export const ReadStateStore = webpack.getByStoreName<
-  Store & { getUnreadCount: (channelId: string) => number }
+  Store & { getUnreadCount: (channelId: string) => number; lastMessageId: (id: string) => number }
 >("ReadStateStore");
 
 export const ChannelStore = webpack.getByStoreName<
   Store & { getChannel: (id: string) => Channel; getDMFromUserId: (userId: string) => string }
 >("ChannelStore");
+
+export const GuildChannelStore = webpack.getByStoreName<
+  Store & { getChannels: (guildId: string) => { SELECTABLE: Array<{ channel: Channel }> } }
+>("GuildChannelStore");

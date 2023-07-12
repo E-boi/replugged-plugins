@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { common, components } from "replugged";
+import { common, components, util } from "replugged";
 import pluginSettings, { Category } from "./pluginSettings";
-import { CATEGORY_UPDATE } from "./constants";
+import { CATEGORY_UPDATE, GUILDLIST_UPDATE } from "./constants";
+
+const { useSetting } = util;
 
 const CategorySetting = ({
   category,
@@ -31,14 +33,23 @@ const CategorySetting = ({
 
 export default () => {
   const [categories, setCategories] = useState<Category[]>(pluginSettings.get("categories", []));
+  const [showStatus, setShowStatus] = useState(pluginSettings.get("showStatus", true));
 
   useEffect(() => {
     pluginSettings.set("categories", categories);
     common.fluxDispatcher.dispatch({ type: CATEGORY_UPDATE });
   }, [JSON.stringify(categories)]);
 
+  useEffect(() => {
+    pluginSettings.set("showStatus", showStatus);
+    common.fluxDispatcher.dispatch({ type: GUILDLIST_UPDATE });
+  }, [showStatus]);
+
   return (
     <div>
+      <components.SwitchItem value={showStatus} onChange={(value) => setShowStatus(value)}>
+        Show status on server list pins
+      </components.SwitchItem>
       {categories.map((cat) => (
         <CategorySetting
           category={cat}

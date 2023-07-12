@@ -60,7 +60,7 @@
   width: 48px;
 }
 
-.pindms-guildlist-avatar:not(.pindms-guildlist-pin-group) foreignObject {
+.pindms-guildlist-avatar-status:not(.pindms-guildlist-pin-group) foreignObject {
   height: 48px;
   width: 48px;
 }

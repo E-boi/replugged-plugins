@@ -8,11 +8,18 @@ export default ({ selectedChannelId }: { selectedChannelId: string }): ReactElem
   const [categories, setCategories] = useState(pluginSettings.get("categories", []));
 
   useEffect(() => {
-    const update = () => {
-      setCategories([...pluginSettings.get("categories", [])]);
+    const update = (data: { refresh?: boolean }) => {
+      if (data.refresh) {
+        setCategories([]);
+        setTimeout(() => setCategories([...pluginSettings.get("categories", [])]));
+      } else {
+        setCategories([...pluginSettings.get("categories", [])]);
+      }
     };
 
+    // @ts-expect-error types
     common.fluxDispatcher.subscribe(CATEGORY_UPDATE, update);
+    // @ts-expect-error types
     return () => common.fluxDispatcher.unsubscribe(CATEGORY_UPDATE, update);
   }, []);
 

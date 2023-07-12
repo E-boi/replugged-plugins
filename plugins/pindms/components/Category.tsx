@@ -4,13 +4,8 @@ import Channel from "./Channel";
 import Popout from "./Popout";
 import { CATEGORY_UPDATE } from "../constants";
 import CategoryContextMenu from "./contextMenus/Category";
-import type {
-  ConnectDragPreview,
-  ConnectDragSource,
-  DragSourceHookSpec,
-  DropTargetHookSpec,
-  FactoryOrInstance,
-} from "react-dnd";
+import { useDrag, useDrop } from ".";
+import { ReadStateStore } from "../stores";
 
 const classes = webpack.getByProps<Record<string, string>>(
   "privateChannelsHeaderContainer",
@@ -18,34 +13,12 @@ const classes = webpack.getByProps<Record<string, string>>(
   "headerText",
 );
 
-const { lastMessageId }: { lastMessageId: (id: string) => number } =
-  webpack.getByProps("lastMessageId")!;
-
-type UseDrag<DragObject = unknown, DropResult = unknown, CollectedProps = unknown> = (
-  specArg: FactoryOrInstance<DragSourceHookSpec<DragObject, DropResult, CollectedProps>>,
-  deps?: unknown[],
-) => [CollectedProps, ConnectDragSource, ConnectDragPreview];
-
-const useDragRaw = webpack.getBySource(
-  "useDrag::spec.begin was deprecated in v14. Replace spec.begin() with spec.item(). (see more here - https://react-dnd.github.io/react-dnd/docs/api/use-drag)",
-);
-const useDrag: UseDrag<Category> = webpack.getFunctionBySource(
-  useDragRaw,
-  "useDrag::spec.begin was deprecated in v14. Replace spec.begin() with spec.item(). (see more here - https://react-dnd.github.io/react-dnd/docs/api/use-drag)",
-)!;
-
-type UseDrop<DragObject = unknown, DropResult = unknown, CollectedProps = unknown> = (
-  specArg: FactoryOrInstance<DropTargetHookSpec<DragObject, DropResult, CollectedProps>>,
-  deps?: unknown[],
-) => [CollectedProps, ConnectDragSource, ConnectDragPreview];
-
-const useDropRaw = webpack.getBySource("accept must be defined");
-const useDrop: UseDrop<Category> = webpack.getFunctionBySource(useDropRaw, "disconnectDropTarget")!;
-
 console.log(useDrop);
 console.log(useDrag);
 
 export default ({ category, selected }: { category: Category; selected: string }) => {
+  if (!ReadStateStore || !useDrop || !useDrag) return null;
+
   const [, drop] = useDrop(() => ({
     accept: "BOX",
     drop: (item: Category, _) => {
@@ -62,18 +35,13 @@ export default ({ category, selected }: { category: Category; selected: string }
 
       pluginSettings.set("categories", categories);
 
-      common.fluxDispatcher.dispatch({ type: CATEGORY_UPDATE });
-
-      console.log(draggedIndex, droppedIndex, item.name, category.name);
+      common.fluxDispatcher.dispatch({ type: CATEGORY_UPDATE, refresh: true });
     },
   }));
 
   const [, drag] = useDrag(() => ({
     type: "BOX",
     item: category,
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
   }));
 
   return (
@@ -103,7 +71,7 @@ export default ({ category, selected }: { category: Category; selected: string }
             .filter((i) => selected === i)
             .map((id) => <Channel id={id} selected={true} />)
         : category.ids
-            .sort((a, b) => lastMessageId(b) - lastMessageId(a))
+            .sort((a, b) => ReadStateStore!.lastMessageId(b) - ReadStateStore!.lastMessageId(a))
             .map((id) => <Channel id={id} selected={id === selected} />)}
     </div>
   );
