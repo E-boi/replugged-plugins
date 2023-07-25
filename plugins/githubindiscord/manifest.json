@@ -3,6 +3,11 @@
   "name": "Github in Discord",
   "description": "Look at github repos within discord",
   "source": "https://github.com/E-boi/replugged-plugins/tree/main/plugins/githubindiscord",
+  "image": [
+    "https://cdn.discordapp.com/attachments/770304534203334678/1133530349641682974/image.png",
+    "https://cdn.discordapp.com/attachments/770304534203334678/1133530691351621732/image.png",
+    "https://cdn.discordapp.com/attachments/770304534203334678/1133530914769608704/image.png"
+  ],
   "author": [
     {
       "name": "ugly-patootie",
@@ -15,7 +20,7 @@
       "github": "Loremly"
     }
   ],
-  "version": "1.1.11",
+  "version": "1.1.12",
   "updater": {
     "type": "store",
     "id": "dev.eboi.githubindiscord"
