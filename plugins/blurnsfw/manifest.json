@@ -8,13 +8,12 @@
     "discordID": "458805348669718559",
     "github": "E-boi"
   },
-  "version": "1.0.3",
+  "version": "1.0.4",
   "updater": {
     "type": "store",
     "id": "dev.eboi.blurnsfw"
   },
   "license": "MIT",
   "type": "replugged-plugin",
-  "renderer": "index.ts",
-  "plaintextPatches": "plaintextPatches.ts"
+  "renderer": "index.ts"
 }
