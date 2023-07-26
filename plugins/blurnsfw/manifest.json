@@ -3,17 +3,22 @@
   "name": "Blur NSFW",
   "description": "Blur Images/Videos in NSFW channels until hovered",
   "source": "https://github.com/E-boi/replugged-plugins/tree/main/plugins/blurnsfw",
+  "image": [
+    "https://cdn.discordapp.com/attachments/770304534203334678/1133906031404138506/image.png",
+    "https://cdn.discordapp.com/attachments/770304534203334678/1133906427015078009/image.png"
+  ],
   "author": {
     "name": "ugly-patootie",
     "discordID": "458805348669718559",
     "github": "E-boi"
   },
-  "version": "1.0.4",
+  "version": "1.0.5",
   "updater": {
     "type": "store",
     "id": "dev.eboi.blurnsfw"
   },
   "license": "MIT",
   "type": "replugged-plugin",
-  "renderer": "index.ts"
+  "renderer": "index.ts",
+  "plaintextPatches": "plaintextPatches.ts"
 }

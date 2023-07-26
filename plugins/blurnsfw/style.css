@@ -3,16 +3,16 @@
   --blur-timing: 1s;
 }
 
-[aria-label="nsfw (channel)"] [class*="embedWrapper-"] [class*="originalLink-"] {
+.rp-blurNsfw [class*="originalLink-"] {
   z-index: 0;
 }
-[aria-label="nsfw (channel)"] [class*="embedWrapper-"] img,
-[aria-label="nsfw (channel)"] [class*="embedWrapper-"] video {
+.rp-blurNsfw img,
+.rp-blurNsfw video {
   transition: var(--blur-timing) !important;
   filter: var(--blur-effect) !important;
 }
-[aria-label="nsfw (channel)"] [class*="embedWrapper-"] img:hover,
-[aria-label="nsfw (channel)"] [class*="embedWrapper-"] video:hover {
+.rp-blurNsfw img:hover,
+.rp-blurNsfw video:hover {
   transition: var(--blur-timing) !important;
   filter: none !important;
 }
