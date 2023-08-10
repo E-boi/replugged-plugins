@@ -152,7 +152,7 @@ async function buildPlugin(folderPath: string): Promise<void> {
 }
 
 (async () => {
-  const plugin = await choosePlugin();
+  const plugin = await choosePlugin(true);
   const directory = getRootDir();
 
   if (!plugin) {
@@ -165,6 +165,7 @@ async function buildPlugin(folderPath: string): Promise<void> {
         console.log(chalk.red(`skipping "${dirent.name}" because it's not a directory`));
       }
     });
+    return;
   }
 
   buildPlugin(path.resolve(directory, "plugins", plugin!));
