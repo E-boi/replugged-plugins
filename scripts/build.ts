@@ -1,11 +1,13 @@
 import esbuild from "esbuild";
 import { sassPlugin } from "esbuild-sass-plugin";
-import { join } from "path";
-import { existsSync } from "fs";
-import { cp, mkdir, readdir, rm, writeFile } from "fs/promises";
+import path from "path";
+import { existsSync, readdirSync } from "fs";
+import { cp, mkdir, writeFile } from "fs/promises";
 import { PluginManifest } from "replugged/dist/types/addon";
 import { pathToFileURL } from "url";
 import { reload } from "./watcher";
+import { choosePlugin, getPluginManifest, getRootDir } from "./utils";
+import chalk from "chalk";
 
 // const NODE_VERSION = "14";
 const CHROME_VERSION = "91";
@@ -60,14 +62,19 @@ const REPLUGGED_FOLDER_NAME = "replugged";
 export const CONFIG_PATH = (() => {
   switch (process.platform) {
     case "win32":
-      return join(process.env.APPDATA || "", REPLUGGED_FOLDER_NAME);
+      return path.join(process.env.APPDATA || "", REPLUGGED_FOLDER_NAME);
     case "darwin":
-      return join(process.env.HOME || "", "Library", "Application Support", REPLUGGED_FOLDER_NAME);
+      return path.join(
+        process.env.HOME || "",
+        "Library",
+        "Application Support",
+        REPLUGGED_FOLDER_NAME,
+      );
     default:
       if (process.env.XDG_CONFIG_HOME) {
-        return join(process.env.XDG_CONFIG_HOME, REPLUGGED_FOLDER_NAME);
+        return path.join(process.env.XDG_CONFIG_HOME, REPLUGGED_FOLDER_NAME);
       }
-      return join(process.env.HOME || "", ".config", REPLUGGED_FOLDER_NAME);
+      return path.join(process.env.HOME || "", ".config", REPLUGGED_FOLDER_NAME);
   }
 })();
 
@@ -79,9 +86,9 @@ const install: esbuild.Plugin = {
       if (!id) return;
       if (!process.argv.includes("--no-install")) {
         try {
-          const dest = join(CONFIG_PATH, "plugins", id);
+          const dest = path.join(CONFIG_PATH, "plugins", id);
           // if (existsSync(dest)) await rm(dest, { recursive: true });
-          await cp(join("dist", id), dest, { recursive: true, force: true });
+          await cp(path.join("dist", id), dest, { recursive: true, force: true });
           await reload(id);
           console.log("Installed updated version");
         } catch (err) {
@@ -95,7 +102,7 @@ const install: esbuild.Plugin = {
 const watch = process.argv.includes("--watch");
 
 const common: esbuild.BuildOptions = {
-  absWorkingDir: join(__dirname, ".."),
+  absWorkingDir: path.join(__dirname, ".."),
   bundle: true,
   minify: !watch,
   sourcemap: watch,
@@ -107,10 +114,9 @@ const common: esbuild.BuildOptions = {
   target: `chrome${CHROME_VERSION}`,
 };
 
-async function buildPlugin(path: string): Promise<void> {
-  // dunno why using join on import() errors
-  const manifestPath = pathToFileURL(join(path, "manifest.json")).toString();
-  const manifest: PluginManifest = { ...(await import(manifestPath)) };
+async function buildPlugin(folderPath: string): Promise<void> {
+  const manifestPath = path.resolve(getRootDir(), folderPath, "manifest.json");
+  const manifest: PluginManifest = getPluginManifest(manifestPath);
 
   const targets = [];
 
@@ -118,7 +124,7 @@ async function buildPlugin(path: string): Promise<void> {
     targets.push(
       esbuild.build({
         ...common,
-        entryPoints: [join(path, manifest.renderer!)],
+        entryPoints: [path.join(folderPath, manifest.renderer!)],
         outfile: `dist/${manifest.id}/renderer.js`,
       }),
     );
@@ -130,7 +136,7 @@ async function buildPlugin(path: string): Promise<void> {
     targets.push(
       esbuild.build({
         ...common,
-        entryPoints: [join(path, manifest.plaintextPatches!)],
+        entryPoints: [path.join(folderPath, manifest.plaintextPatches!)],
         outfile: `dist/${manifest.id}/plaintextPatches.js`,
       }),
     );
@@ -138,28 +144,28 @@ async function buildPlugin(path: string): Promise<void> {
     manifest.plaintextPatches = "plaintextPatches.js";
   }
 
-  if (!existsSync(join("dist", manifest.id)))
+  if (!existsSync(path.join("dist", manifest.id)))
     await mkdir(`dist/${manifest.id}`, { recursive: true });
-  await writeFile(join("dist", manifest.id, "manifest.json"), JSON.stringify(manifest));
+  await writeFile(path.join("dist", manifest.id, "manifest.json"), JSON.stringify(manifest));
 
   Promise.all(targets);
 }
 
 (async () => {
-  if (existsSync("dist")) await rm("dist", { recursive: true });
-  const plugin = process.argv.find((e) => e.includes("plugin="))?.split("=")?.[1];
-  const pluginFolder = await readdir(join(__dirname, "..", "plugins"), { withFileTypes: true });
-  if (plugin && pluginFolder.find((e) => e.isDirectory() && e.name === plugin))
-    buildPlugin(join(__dirname, "..", "plugins", plugin));
-  else if (plugin) {
-    console.error(
-      `Invalid folder ${plugin}`,
-      `\nlist of all valid folders:`,
-      pluginFolder.map((p) => p.name),
-    );
-  } else
-    pluginFolder.forEach((dirent) => {
-      if (!dirent.isDirectory()) return;
-      buildPlugin(join(__dirname, "..", "plugins", dirent.name));
+  const plugin = await choosePlugin();
+  const directory = getRootDir();
+
+  if (!plugin) {
+    const pluginDir = readdirSync(path.resolve(directory, "plugins"), { withFileTypes: true });
+
+    pluginDir.forEach((dirent) => {
+      if (dirent.isDirectory()) {
+        buildPlugin(path.resolve(directory, "plugins", dirent.name));
+      } else {
+        console.log(chalk.red(`skipping "${dirent.name}" because it's not a directory`));
+      }
     });
+  }
+
+  buildPlugin(path.resolve(directory, "plugins", plugin!));
 })();
