@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - NodeJS
-- pnpm: `npm i -g pnpm`
+- pnpm: `corepack enable`
 - [Replugged](https://github.com/replugged-org/replugged#installation)
 
 ## Development
