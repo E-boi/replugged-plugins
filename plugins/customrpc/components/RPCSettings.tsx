@@ -12,7 +12,16 @@ const {
   Category,
   ErrorBoundary,
   SwitchItem,
+  RadioItem
 } = components;
+
+const ActivityTypes = {
+  Game: 0,
+  Streaming: 1,
+  Listening: 2,
+  Watching: 3,
+  Competing: 5
+} as const;
 
 const AutoWrap = ({
   children,
@@ -25,7 +34,7 @@ const AutoWrap = ({
   shrink?: number;
   wrap?: boolean;
 }) => {
-  if (!Array.isArray(children)) children = [children];
+  if(!Array.isArray(children)) children = [children];
   return (
     <>
       {(children as ReactNode[]).map((child) => (
@@ -41,7 +50,7 @@ function RPCSettings({
   rpc,
   onSave,
   ...props
-}: ModalProps & { rpc: RPC; onSave: (rpc: RPC) => void }) {
+}: ModalProps & { rpc: RPC; onSave: (rpc: RPC) => void; }) {
   const [orgRPC, setOrgRPC] = useState(window._.cloneDeep(rpc));
   const [tempRPC, setRPC] = useState(window._.cloneDeep(rpc));
 
@@ -100,6 +109,41 @@ function RPCSettings({
           onChange={() => updateRPC({ showTime: !tempRPC.showTime })}>
           Show Time
         </SwitchItem>
+
+        <Category title='Activity Type'>
+          <Flex wrap={Flex.Wrap.WRAP}>
+            <AutoWrap wrap grow={1} shrink={1}>
+              <RadioItem
+                note='What type of activity to display.'
+                options={Object.keys(ActivityTypes).map((key) => {
+                  return {
+                    name: key,
+                    // Type casting hell.
+                    value: String(ActivityTypes[key as unknown as keyof typeof ActivityTypes])
+                  };
+                })}
+                value={String(tempRPC.type)}
+                onChange={(v) => updateRPC({ type: Number(v.value) })}
+              >
+                Activity Type
+              </RadioItem>
+            </AutoWrap>
+          </Flex>
+
+          <Flex wrap={Flex.Wrap.WRAP}>
+            <AutoWrap wrap grow={1} shrink={1}>
+              <TextInput
+                note='A Twitch or Youtube link'
+                placeholder='https://twitch.tv/...'
+                value={tempRPC.url}
+                onChange={(v) => updateRPC({ url: v })}
+                disabled={tempRPC.type !== 1 /** if type != 'streaming' dont allow them to type */}
+              >
+                Stream URL
+              </TextInput>
+            </AutoWrap>
+          </Flex>
+        </Category>
 
         <Category title="Assets">
           <Flex wrap={Flex.Wrap.WRAP}>
