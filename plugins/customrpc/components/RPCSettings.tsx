@@ -34,7 +34,7 @@ const AutoWrap = ({
   shrink?: number;
   wrap?: boolean;
 }) => {
-  if(!Array.isArray(children)) children = [children];
+  if (!Array.isArray(children)) children = [children];
   return (
     <>
       {(children as ReactNode[]).map((child) => (
@@ -50,7 +50,7 @@ function RPCSettings({
   rpc,
   onSave,
   ...props
-}: ModalProps & { rpc: RPC; onSave: (rpc: RPC) => void; }) {
+}: ModalProps & { rpc: RPC; onSave: (rpc: RPC) => void }) {
   const [orgRPC, setOrgRPC] = useState(window._.cloneDeep(rpc));
   const [tempRPC, setRPC] = useState(window._.cloneDeep(rpc));
 
@@ -110,11 +110,11 @@ function RPCSettings({
           Show Time
         </SwitchItem>
 
-        <Category title='Activity Type'>
+        <Category title="Activity Type">
           <Flex wrap={Flex.Wrap.WRAP}>
             <AutoWrap wrap grow={1} shrink={1}>
               <RadioItem
-                note='What type of activity to display.'
+                note="What type of activity to display."
                 options={Object.keys(ActivityTypes).map((key) => {
                   return {
                     name: key,
@@ -133,8 +133,8 @@ function RPCSettings({
           <Flex wrap={Flex.Wrap.WRAP}>
             <AutoWrap wrap grow={1} shrink={1}>
               <TextInput
-                note='A Twitch or Youtube link'
-                placeholder='https://twitch.tv/...'
+                note="A Twitch or Youtube link"
+                placeholder="https://twitch.tv/..."
                 value={tempRPC.url}
                 onChange={(v) => updateRPC({ url: v })}
                 disabled={tempRPC.type !== 1 /** if type != 'streaming' dont allow them to type */}
