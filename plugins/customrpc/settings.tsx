@@ -43,7 +43,7 @@ export default () => {
           disabled={selected === -1}
           onClick={() =>
             openRPCModal(settings.rpcs[selected], (rpc) => {
-              if(settings.selected === selected) setRPC(rpc);
+              if (settings.selected === selected) setRPC(rpc);
               settings.rpcs[selected] = rpc;
               setSettings("rpcs", settings.rpcs);
             })
@@ -57,7 +57,7 @@ export default () => {
             settings.rpcs.splice(selected, 1);
             setSettings("rpcs", settings.rpcs);
             setSelected(-1);
-            if(settings.selected === selected) setSettings("selected", -1);
+            if (settings.selected === selected) setSettings("selected", -1);
           }}>
           Delete
         </Button>
@@ -79,7 +79,7 @@ function useSettings(): [
   ) => {
     pluginSettings.set(k, value);
     setSettings(pluginSettings.all());
-    if(k === "selected") setRPC(value === -1 ? undefined : settings.rpcs[value as number]);
+    if (k === "selected") setRPC(value === -1 ? undefined : settings.rpcs[value as number]);
   };
 
   return [settings, set];
