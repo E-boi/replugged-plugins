@@ -14,7 +14,7 @@ export interface RPC {
   clientId: string;
   name: string;
   showTime: boolean;
-  buttons: Array<{ url: string; label: string }>;
+  buttons: Array<{ url: string; label: string; }>;
   type: number;
   details?: string;
   state?: string;
@@ -22,7 +22,8 @@ export interface RPC {
   largeText?: string;
   smallImage?: string;
   smallText?: string;
-  party: { members?: number; size?: number };
+  url?: string;
+  party: { members?: number; size?: number; };
 }
 
 export interface DiscordRPC {
@@ -31,6 +32,7 @@ export interface DiscordRPC {
   type: number;
   details?: string;
   state?: string;
+  url?: string;
   timestamps?: {
     start?: number;
     end?: string;
@@ -77,7 +79,7 @@ export const pluginSettings = await settings.init<{
 
 export function start() {
   const connectionOpen = () => {
-    if (!pluginSettings.has("selected")) {
+    if(!pluginSettings.has("selected")) {
       pluginSettings.set("selected", 0);
       pluginSettings.set("rpcs", [defaultRPC]);
     }
@@ -114,33 +116,33 @@ function formatRPC(rpc: RPC) {
     name: rpc.name,
     type: rpc.type,
     assets: {
-      large_image: (rpc.largeImage && `mp:${extractUrl(rpc.largeImage)}`) || undefined,
+      large_image: (rpc.largeImage && `mp:${ extractUrl(rpc.largeImage) }`) || undefined,
       large_text: (rpc.largeText && rpc.largeText) || undefined,
-      small_image: (rpc.smallImage && `mp:${extractUrl(rpc.smallImage)}`) || undefined,
+      small_image: (rpc.smallImage && `mp:${ extractUrl(rpc.smallImage) }`) || undefined,
       small_text: (rpc.smallText && rpc.smallText) || undefined,
     },
   };
 
   rpc.buttons.forEach((button) => {
-    if (!discordrpc.buttons && button.label && button.url) {
+    if(!discordrpc.buttons && button.label && button.url) {
       discordrpc.buttons = [];
       discordrpc.metadata = {
         button_urls: [],
       };
     }
-    if (button.label && button.url) {
+    if(button.label && button.url) {
       discordrpc.buttons!.push(button.label);
       discordrpc.metadata!.button_urls.push(button.url);
     }
   });
 
-  if (rpc.details) discordrpc.details = rpc.details;
-  if (rpc.state) discordrpc.state = rpc.state;
-  if (rpc.showTime)
+  if(rpc.details) discordrpc.details = rpc.details;
+  if(rpc.state) discordrpc.state = rpc.state;
+  if(rpc.showTime)
     discordrpc.timestamps = {
       start: Date.now(),
     };
-  if (rpc.party.members && rpc.party.size && rpc.state)
+  if(rpc.party.members && rpc.party.size && rpc.state)
     discordrpc.party = {
       size: [rpc.party.members, rpc.party.size],
       id: "rplug",
