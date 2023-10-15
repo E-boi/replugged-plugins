@@ -115,6 +115,7 @@ function formatRPC(rpc: RPC) {
     application_id: rpc.clientId,
     name: rpc.name,
     type: rpc.type,
+    url: (rpc.url && rpc.url) || undefined,
     assets: {
       large_image: (rpc.largeImage && `mp:${extractUrl(rpc.largeImage)}`) || undefined,
       large_text: (rpc.largeText && rpc.largeText) || undefined,
