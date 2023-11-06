@@ -6,6 +6,8 @@ import { Text } from "@primer/react";
 
 const { ModalContent, ModalRoot } = components.Modal;
 
+// console.log(ModalContent, ModalRoot);
+
 export default class ErrorBoundary extends PureComponent<
   { children: ReactNode; modalProps: ModalProps },
   { hasErr: boolean; err?: string }
@@ -38,9 +40,9 @@ export default class ErrorBoundary extends PureComponent<
 }
 
 const wumpus = [
-  webpack.getBySource<string>("b5eb2f7d6b3f8cc9b60be4a5dcf28015"),
-  webpack.getBySource<string>("8c998f8fb62016fcfb4901e424ff378b"),
-  webpack.getBySource<string>("b36c705f790dad253981f1893085015a"),
+  webpack.getBySource<string>("01864c39871ce619d855"),
+  webpack.getBySource<string>("532f1d4582d881960783"),
+  // webpack.getBySource<string>("b36c705f790dad253981f1893085015a"),
 ];
 
 function RandomWumpus({ tries }: { tries: number }) {

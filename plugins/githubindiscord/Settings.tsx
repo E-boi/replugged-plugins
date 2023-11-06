@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { components } from "replugged";
 import { pluginSettings } from "./utils";
 import { default as customTheme } from "./theme";
-import { SelectMenu } from "./components";
-
-const { FormText, TextInput } = components;
+import { SelectItem, FormText, TextInput } from "replugged/components";
 
 export default () => {
   const [key, setKey] = useState(pluginSettings.get("key", ""));
@@ -27,21 +25,17 @@ export default () => {
       </FormText.DESCRIPTION>
       <TextInput value={key} onChange={setKey} />
       <FormText.DESCRIPTION>Dark Theme</FormText.DESCRIPTION>
-      {SelectMenu && (
-        <SelectMenu
-          value={darkTheme}
-          options={darkThemes.map((t) => ({ label: t, value: t }))}
-          onChange={setDarkTheme}
-        />
-      )}
+      <SelectItem
+        value={darkTheme}
+        options={darkThemes.map((t) => ({ label: t, value: t }))}
+        onChange={setDarkTheme}
+      />
       <FormText.DESCRIPTION>Light Theme</FormText.DESCRIPTION>
-      {SelectMenu && (
-        <SelectMenu
-          value={lightTheme}
-          options={lightThemes.map((t) => ({ label: t, value: t }))}
-          onChange={setLightTheme}
-        />
-      )}
+      <SelectItem
+        value={lightTheme}
+        options={lightThemes.map((t) => ({ label: t, value: t }))}
+        onChange={setLightTheme}
+      />
     </div>
   );
 };

@@ -7,8 +7,9 @@ import {
   Label,
   Text,
   ThemeProvider,
+  UnderlineNav2,
 } from "@primer/react";
-import { UnderlineNav } from "@primer/react/drafts";
+// import { UnderlineNav } from "@primer/react/drafts";
 import {
   CodeIcon,
   CommitIcon,
@@ -20,7 +21,7 @@ import {
   RepoIcon,
   StarIcon,
 } from "@primer/styled-octicons";
-import { FC, useContext, useState } from "react";
+import { FC, useContext, useEffect, useState } from "react";
 import { common, components, webpack } from "replugged";
 import { ModalProps } from "../Modals";
 import { abbreviateNumber, pluginSettings } from "../utils";
@@ -33,6 +34,7 @@ import { textClasses } from "../components";
 import { Context, Provider } from "../context";
 import ErrorBoundary from "./ErrorBoundary";
 import Commits from "./Commits";
+import { GithubLink } from "..";
 
 const { ModalContent, ModalHeader, ModalRoot } = components.Modal;
 
@@ -43,9 +45,13 @@ const tabs = [
   { title: "Pull Requests", component: Pulls, icon: GitPullRequestIcon },
 ];
 
-const GithubModal: FC<ModalProps & { tab: string }> = ({ tab, ...props }) => {
-  const { data: repo, issues, prs, status } = useContext(Context)!;
-  const [currentTab, setTab] = useState<string>(tab || "Code");
+const GithubModal: FC<ModalProps> = (props) => {
+  const { data: repo, issues, prs, status, link } = useContext(Context)!;
+  const [currentTab, setTab] = useState<string>(link.tab || "Code");
+
+  // useEffect(() => {
+  //   if (link.branch) setTab(link.tab);
+  // }, []);
 
   const Tab = tabs.find(({ title }) => title === currentTab);
   return (
@@ -107,11 +113,12 @@ const GithubModal: FC<ModalProps & { tab: string }> = ({ tab, ...props }) => {
             </ButtonGroup>
           </div>
         </Box>
-        <UnderlineNav aria-label="Repository">
+        <UnderlineNav2 aria-label="Repository">
           {tabs.map(({ title, icon }) => (
-            <UnderlineNav.Item
+            <UnderlineNav2.Item
               icon={icon}
-              aria-current={title === currentTab}
+              aria-selected={currentTab === title}
+              aria-current={currentTab === title}
               onSelect={() => setTab(title)}
               counter={
                 title === "Issues"
@@ -121,11 +128,11 @@ const GithubModal: FC<ModalProps & { tab: string }> = ({ tab, ...props }) => {
                   : undefined
               }>
               {title}
-            </UnderlineNav.Item>
+            </UnderlineNav2.Item>
           ))}
-        </UnderlineNav>
+        </UnderlineNav2>
       </ModalHeader>
-      <ModalContent>
+      <ModalContent tabIndex={0}>
         {status === "loading" ? (
           <Spinner>Fetching Repository Contents...</Spinner>
         ) : (
@@ -154,7 +161,7 @@ const GithubModal: FC<ModalProps & { tab: string }> = ({ tab, ...props }) => {
   );
 };
 
-export function openGithubModal(url: string, tab: string) {
+export function openGithubModal(link: GithubLink) {
   common.modal.openModal((props) => (
     <ErrorBoundary modalProps={props}>
       <ThemeProvider
@@ -163,9 +170,11 @@ export function openGithubModal(url: string, tab: string) {
         nightScheme={pluginSettings.get("darkTheme", "dark_discord")}
         dayScheme={pluginSettings.get("lightTheme", "light_discord")}>
         <BaseStyles>
-          <Provider query={{ issues: { state: "open" }, prs: { state: "open" } }} url={url}>
+          <Provider
+            query={{ issues: { state: "open" }, prs: { state: "open" }, branch: link.branch }}
+            link={link}>
             <Box sx={{ ".githubModel": { bg: "canvas.default" } }}>
-              <GithubModal {...props} tab={tab} />
+              <GithubModal {...props} />
             </Box>
           </Provider>
         </BaseStyles>

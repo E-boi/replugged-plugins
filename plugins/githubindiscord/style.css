@@ -1,0 +1,184 @@
+.errorModal {
+  background-color: var(--modal-background) !important;
+}
+.githubModel {
+  width: fit-content;
+  max-width: 80vw;
+  max-height: 70vh;
+  background-color: inherit;
+  min-width: 60vw;
+}
+.githubModel > * {
+  line-height: normal;
+}
+.githubModel [class*="header_"] {
+  justify-content: space-between;
+  padding-bottom: 0 !important;
+  align-items: flex-start;
+  flex-direction: column;
+  white-space: nowrap;
+  overflow: hidden;
+  display: flex;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+.githubModel [class*="header_"] .repo-info {
+  display: flex;
+  width: 100%;
+}
+.githubModel [class*="header_"] .repo-info .repo-path {
+  flex-direction: row;
+  align-items: center;
+  margin-right: auto;
+  display: flex;
+}
+.githubModel [class*="header_"] .repo-info .repo-path .separator {
+  color: var(--text-muted);
+  margin: 0 4px;
+}
+.githubModel [class*="header_"] .repo-info .repo-path .visibility {
+  text-transform: capitalize;
+  margin-left: 8px;
+}
+.githubModel [class*="header_"] .repo-info .repo-path a {
+  font-size: 20px !important;
+}
+.githubModel [class*="header_"] .repo-info .repo-path a:hover {
+  text-decoration: underline;
+}
+.githubModel [class*="header_"] .repo-info .extlink-buttons {
+  flex-direction: row;
+  align-items: center;
+  display: flex;
+  gap: 15px;
+}
+.githubModel [class*="header_"] .repo-info .extlink-buttons > .ButtonGroup-sc-tk435v-0 > button {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.githubModel [class*="header_"] nav[aria-label="Repository"] {
+  padding-left: 0 !important;
+  border-bottom: none;
+  margin-top: 12px;
+  width: 100%;
+}
+.githubModel [class*="content__"] {
+  padding-right: 10px !important;
+  padding-bottom: 16px;
+  padding-top: 10px;
+}
+.githubModel [class*="content__"] .repository-options {
+  align-items: center;
+  padding: 8px 0;
+  display: flex;
+}
+.githubModel [class*="content__"] .repository-options [class*="select__"] {
+  margin-right: 20px;
+  min-width: 15rem;
+}
+.githubModel [class*="content__"] .repository-options div.miscLinks {
+  display: flex;
+}
+.githubModel [class*="content__"] .repository-options div.miscLinks a {
+  display: flex;
+}
+.githubModel [class*="content__"] .repository-options div.miscLinks a.taglink {
+  margin-left: 16px;
+}
+.githubModel [class*="content__"] nav.Breadcrumbs__BreadcrumbsBase-sc-zwknu7-1 .Box-sc-1gh2r6s-0 {
+  display: flex;
+}
+.githubModel
+  [class*="content__"]
+  nav.Breadcrumbs__BreadcrumbsBase-sc-zwknu7-1
+  .Box-sc-1gh2r6s-0
+  .fLAmDQ {
+  align-items: center;
+  display: flex;
+}
+.githubModel
+  [class*="content__"]
+  nav.Breadcrumbs__BreadcrumbsBase-sc-zwknu7-1
+  .Box-sc-1gh2r6s-0
+  .fLAmDQ
+  a {
+  font-size: 17px !important;
+  font-weight: 600;
+}
+.githubModel
+  [class*="content__"]
+  nav.Breadcrumbs__BreadcrumbsBase-sc-zwknu7-1
+  .Box-sc-1gh2r6s-0
+  .fLAmDQ
+  a.selected {
+  color: var(--text-normal) !important;
+  font-weight: normal;
+}
+.githubModel [class*="content__"] .fetching {
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  min-height: 25vh;
+  display: flex;
+}
+.githubModel [class*="content__"] .fetching span {
+  margin-bottom: 16px;
+}
+.githubModel [class*="content__"] a:hover {
+  text-decoration: underline !important;
+}
+.githubModel [class*="content__"] .relativeTime {
+  margin-left: auto;
+}
+.githubModel [class*="content__"] .issueList {
+  border-radius: 4px;
+}
+.githubModel [class*="content__"] .issueList .issue:nth-child(1) {
+  border-top: none !important;
+}
+.githubModel [class*="content__"] .Gerror {
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 0;
+  display: flex;
+}
+.githubModel [class*="content__"] .Gerror .emptyStateImage-1kilCd {
+  margin: 0;
+}
+.githubModel [class*="content__"] .Gerror span {
+  padding-top: 15px;
+}
+.githubModel [class*="content__"] .gid-markdown {
+  word-wrap: break-word;
+}
+.githubModel [class*="content__"] .gid-markdown > :first-child {
+  margin-top: 0px;
+}
+.githubModel [class*="content__"] .gid-markdown > :last-child {
+  margin-bottom: 0px;
+}
+.githubModel [class*="content__"] .gid-markdown h1,
+.githubModel [class*="content__"] .gid-markdown h2,
+.githubModel [class*="content__"] .gid-markdown h3,
+.githubModel [class*="content__"] .gid-markdown h4,
+.githubModel [class*="content__"] .gid-markdown h5,
+.githubModel [class*="content__"] .gid-markdown h6 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+.githubModel [class*="content__"] .gid-markdown h1,
+.githubModel [class*="content__"] .gid-markdown h2 {
+  padding-bottom: 0.3em;
+  border-style: solid;
+  border-bottom-width: 1px;
+}
+.githubModel [class*="content__"] .gid-markdown .inlineCode {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  border-radius: 6px;
+}
+.githubModel .footer-IubaaS {
+  background-color: inherit;
+}

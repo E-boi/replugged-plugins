@@ -4,7 +4,6 @@ import path from "path";
 import { existsSync, readdirSync } from "fs";
 import { cp, mkdir, writeFile } from "fs/promises";
 import { PluginManifest } from "replugged/dist/types/addon";
-import { pathToFileURL } from "url";
 import { reload } from "./watcher";
 import { choosePlugin, getPluginManifest, getRootDir } from "./utils";
 import chalk from "chalk";

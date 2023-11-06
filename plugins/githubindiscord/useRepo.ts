@@ -7,13 +7,15 @@ import {
   getBranches,
   getCommit,
   getFolder,
+  getReadme,
   getRepo,
 } from "./utils";
 import type { components } from "@octokit/openapi-types";
 import { common } from "replugged";
 import { useCommits, useIssues } from "./paginate";
+import { GithubLink } from ".";
 
-export default function useRepo(url: string, query: RepoQuery) {
+export default function useRepo(link: GithubLink, query: RepoQuery) {
   const [repo, setRepo] = useState<{
     repo: components["schemas"]["full-repository"];
     tree: TreeWithContent[];
@@ -22,47 +24,55 @@ export default function useRepo(url: string, query: RepoQuery) {
     currentBranch: Branch;
   }>();
   const [status, setStatus] = useState<"loading" | "completed">("loading");
-  const issues = useIssues(url, "issue");
-  const prs = useIssues(url, "pr");
-  const commits = useCommits(url, { branch: repo?.currentBranch.name });
+  const issues = useIssues(link.url, "issue");
+  const prs = useIssues(link.url, "pr");
+  const commits = useCommits(link.url, { branch: repo?.currentBranch.name });
   const [iQuery, setQuery] = useState(query);
   const [force, setForce] = useState(false);
+  const [error, setError] = useState<unknown>();
+
+  if (error) {
+    throw error as Error;
+  }
 
   useEffect(() => {
     if (repo && !force) return;
 
     const fetch = async () => {
       setStatus("loading");
-      void issues.fetch(force);
-      void prs.fetch(force);
+      try {
+        void issues.fetch(force);
+        void prs.fetch(force);
 
-      const repo = await getRepo(url);
-      const defaultBranch = await getBranch(url, repo.default_branch);
-      const branches = (await getBranches(url)).filter((b) => b.name !== defaultBranch.name);
-      branches.unshift(defaultBranch);
-      const currentBranch = iQuery?.branch
-        ? branches.find((b) => b.name === iQuery.branch)!
-        : defaultBranch;
-      const tree = await getFolder(url, currentBranch.commit.sha, {
-        recursive: "1",
-        branch: currentBranch.name,
-      });
-      // const readme =
-      //   (await getReadme(url, undefined, currentBranch.name).catch(() => {})) || undefined;
+        const repo = await getRepo(link.url);
+        const defaultBranch = await getBranch(link.url, repo.default_branch);
+        const branches = (await getBranches(link.url)).filter((b) => b.name !== defaultBranch.name);
+        branches.unshift(defaultBranch);
+        const currentBranch = iQuery?.branch
+          ? branches.find((b) => b.name === iQuery.branch) ?? defaultBranch
+          : defaultBranch;
 
-      const readme = undefined;
+        const tree = await getFolder(link.url, currentBranch.commit.sha, {
+          recursive: "1",
+          branch: currentBranch.name,
+        });
+        const readme =
+          (await getReadme(link.url, undefined, currentBranch.name).catch(() => {})) || undefined;
 
-      setRepo({
-        repo,
-        branches,
-        currentBranch,
-        tree,
-        readme,
-      });
-      setForce(false);
-      setStatus("completed");
+        setRepo({
+          repo,
+          branches,
+          currentBranch,
+          tree,
+          readme,
+        });
+        setForce(false);
+        setStatus("completed");
 
-      void commits.fetch(force, currentBranch.name);
+        void commits.fetch(force, currentBranch.name);
+      } catch (err) {
+        setError(err);
+      }
     };
 
     void fetch();
@@ -73,7 +83,7 @@ export default function useRepo(url: string, query: RepoQuery) {
 
     const idx = repo.branches.findIndex((b) => b.name === name);
     if (idx === -1) return;
-    const commit = await getCommit(url, name);
+    const commit = await getCommit(link.url, name);
     repo.branches[idx].commitInfo = commit;
     if (repo?.currentBranch.name === name) repo.currentBranch.commitInfo = commit;
 
@@ -86,10 +96,8 @@ export default function useRepo(url: string, query: RepoQuery) {
 
   const refetch = (q: RepoQuery, force?: boolean) => {
     if (!force && JSON.stringify(q) === JSON.stringify(iQuery)) return;
-    common.ReactDOM.unstable_batchedUpdates(() => {
-      setQuery(q);
-      setForce(Boolean(force));
-    });
+    setQuery(q);
+    setForce(Boolean(force));
   };
 
   const switchBranch = (name: string) => {
@@ -108,5 +116,6 @@ export default function useRepo(url: string, query: RepoQuery) {
     commits,
     refetch,
     switchBranch,
+    link,
   };
 }

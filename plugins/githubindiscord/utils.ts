@@ -150,6 +150,16 @@ export async function getCommit(
   return commit.data;
 }
 
+export async function getIssue(url: string, issueNumber: number) {
+  const issue = await octokit.issues.get({
+    owner: url.split("/")[0]!,
+    repo: url.split("/")[1]!,
+    issue_number: issueNumber,
+  });
+
+  return issue.data;
+}
+
 export async function getPR(url: string, prNumber: number) {
   const pr = await octokit.pulls.get({
     owner: url.split("/")[0]!,

@@ -9,10 +9,10 @@ import {
   Timeline,
 } from "@primer/react";
 import { CheckIcon, IssueOpenedIcon } from "@primer/styled-octicons";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Context } from "../context";
 import { useTimeline } from "../paginate";
-import { Issue } from "../utils";
+import { Issue, getIssue } from "../utils";
 import { TimelineComment } from "./Comment";
 import IssueCard from "./IssueCard";
 import Spinner from "./Spinner";
@@ -20,12 +20,23 @@ import TimelineItems from "./TimelineItems";
 import { operations } from "@octokit/openapi-types";
 
 export default () => {
-  const { issues } = useContext(Context)!;
+  const { issues, link } = useContext(Context)!;
   const [selectedIssue, setIssue] = useState<Issue | null>(null);
 
   // useEffect(() => {
   //   void issues.fetch();
   // }, []);
+
+  useEffect(() => {
+    console.log("rin");
+    if (link.issuenumber) {
+      const num = Number.parseInt(link.issuenumber!);
+
+      console.log(num);
+
+      getIssue(link.url, num).then((issue) => setIssue(issue as Issue));
+    }
+  }, []);
 
   if (!issues.data) return <Spinner>Fetching Issues...</Spinner>;
 
@@ -57,7 +68,7 @@ export default () => {
         page?.map((issue) => <IssueCard issue={issue} onClick={() => setIssue(issue)} />)
       )}
       {issues.info[issues.data.state].data?.pageInfo.lastPage && (
-        <Box borderColor="border.default" borderStyle="solid" borderTopWidth={1}>
+        <Box borderColor="border.default" borderStyle="solid" borderTopWidth={1} tabIndex={-1}>
           <Pagination
             currentPage={issues.info[issues.data.state].data!.pageInfo.currentPage}
             pageCount={issues.info[issues.data.state].data!.pageInfo.lastPage!}

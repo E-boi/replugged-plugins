@@ -2,16 +2,13 @@ import type { PlaintextPatch } from "replugged/dist/types";
 
 export default [
   {
-    find: "renderAttachments=function",
+    find: "ChannelTextAreaForm > Popout > renderPopout: contentWarningProps cannot be null",
     replacements: [
       {
-        match: /(renderMediaPostEmbeds\([\w]+\)[\s\S]+?className:)(.*?\)),/gm,
-        replace: (e, match, className) => {
-          console.log(e);
-          console.log(
-            `${match}[${className},this?.props?.channel?.nsfw&&'rp-blurNsfw'].join(' '),`,
-          );
-          return `${match}[${className},this?.props?.channel?.nsfw&&'rp-blurNsfw'].join(' '),`;
+        match:
+          /(getInitialValuesFromInteractionOptions[^]*?channel:(\w+)[^]*?richValue:this\.state.richValue,[^]*?className:)([^]*?),/gm,
+        replace: (e, match, channel, className) => {
+          return `${match}[${className},${channel}?.nsfw&&"rp-blurNsfw"].join(" "),`;
         },
       },
     ],

@@ -30,11 +30,15 @@ import TimelineItems from "./TimelineItems";
 import { operations } from "@octokit/openapi-types";
 
 export default () => {
-  const { prs } = useContext(Context)!;
+  const { prs, link, status } = useContext(Context)!;
   const [selectedPr, setPr] = useState<Issue | null>(null);
 
   useEffect(() => {
-    void prs.fetch();
+    if (link.issuenumber) {
+      const num = Number.parseInt(link.issuenumber!);
+
+      getPR(link.url, num).then((pr) => setPr(pr as unknown as Issue));
+    }
   }, []);
 
   if (!prs.data) return <Spinner>Fetching Full Requests...</Spinner>;

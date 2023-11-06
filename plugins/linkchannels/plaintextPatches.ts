@@ -2,7 +2,7 @@ import type { PlaintextPatch } from "replugged/dist/types";
 
 export default [
   {
-    find: "resetThreadPopoutTimers=function",
+    find: "resetThreadPopoutTimers(){",
     replacements: [
       {
         match: /!(\w+)..(\w+).renderEditButton\(\)/g,

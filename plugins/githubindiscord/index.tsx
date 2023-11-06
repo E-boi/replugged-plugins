@@ -1,66 +1,48 @@
-import "./style.scss";
-import { Injector, common, components, types, webpack } from "replugged";
-import { openGithubModal } from "./Modal";
-import { MarkGithubIcon } from "@primer/styled-octicons";
+import "./style.css";
 import { Box } from "@primer/react";
-import type {
-  AnyFunction,
-  ModuleExports,
-  ModuleExportsWithProps,
-  RawModule,
-} from "replugged/dist/types";
-// import { ReactNode } from "react";
-const { MenuItem, MenuGroup } = components.ContextMenu;
-const { Tooltip } = components;
-const { ContextMenuTypes } = types;
+import { Injector, common, webpack } from "replugged";
+import { MarkGithubIcon } from "@primer/styled-octicons";
+import { Tooltip } from "replugged/components";
+import { openGithubModal } from "./Modal";
+import { Message } from "discord-types/general";
+import ContextMenu from "./contextMenu";
+import { ContextMenuTypes } from "replugged/types";
+import { ContextMenu as c } from "replugged/components";
+
+const { MenuItem, MenuGroup } = c;
 
 export { default as Settings } from "./Settings";
 
 const injector = new Injector();
 
-export function getExportsForProto<
-  P extends string = string,
-  T extends ModuleExportsWithProps<P> = ModuleExportsWithProps<P>,
->(m: ModuleExports, props: P[]): T | undefined {
-  if (typeof m !== "object") return undefined;
-  return Object.values(m).find((o) => {
-    return (
-      typeof o === "function" && o != null && o.prototype && props.every((p) => p in o.prototype)
-    );
-  }) as T | undefined;
-}
-
 const ghRegex =
-  /https?:\/\/(?:www.)?github.com\/([\w-]+\/[\w.-]+)(?:\/((?:tree|blob)\/([\w-]+)\/([\w/.?]+)|((issues|pulls)(?:\/([0-9]+))?)))?/g;
+  /https?:\/\/(?:www\.)?github.com\/(?<link>[\w-]+\/[\w.-]+)\/?((?<tree>tree|blob)\/(?<branch>[\w.-]+)\/?(?<path>[\w.\/]+)?|(?<issue>issues|pull)\/(?<issuenumber>\d+)|(?:commit\/(?<commit>\w+)))?/g;
 
 export async function start() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const module = await webpack.waitForModule<any>((m: RawModule<{ renderTitle: AnyFunction }>) =>
-    Boolean(getExportsForProto(m.exports, ["renderTitle"])),
-  );
+  const module = await webpack.waitForModule<any>(webpack.filters.byProps("EmbedVideo"));
 
-  if (!module) return;
+  if (module) {
+    injector.after(module.default?.prototype, "renderProvider", (_, res) => {
+      if (!res) return res;
+      const link = res._owner?.stateNode?.props?.embed?.url as string;
+      if (!link) return res;
+      const msg = checkMessage(link)?.[0];
+      if (!msg) return res;
 
-  injector.after(module.ZP?.prototype, "renderProvider", (_, res) => {
-    if (!res) return res;
-    const link = res._owner?.stateNode?.props?.embed?.url as string;
-    if (!link) return res;
-    const msg = checkMessage(link)?.[0];
-    if (!msg) return res;
-    return (
-      <Box display="flex" className={res.props.className}>
-        <span>{res.props.children.props.children}</span>
-        <Tooltip
-          style={{ position: "absolute", right: "10px" }}
-          text="Open Repository"
-          position="top">
-          <Box sx={{ cursor: "pointer" }} onClick={() => openGithubModal(msg.url, msg.tab)}>
-            <MarkGithubIcon />
-          </Box>
-        </Tooltip>
-      </Box>
-    );
-  });
+      // return res;
+      return (
+        <Box display="flex" className={res.props.className}>
+          <span>{res.props.children.props.children}</span>
+          <Tooltip style={{ marginLeft: "5px" }} text="Open Repository" position="top">
+            <Box sx={{ cursor: "pointer" }} onClick={() => openGithubModal(msg)}>
+              <MarkGithubIcon />
+            </Box>
+          </Tooltip>
+        </Box>
+      );
+    });
+  }
 
   injector.after(common.parser.defaultRules.link, "react", (args, res) => {
     // @ts-expect-error yes it is
@@ -72,8 +54,11 @@ export async function start() {
     if (!msg) return res;
     // @ts-expect-error yes it is
     res.push(
-      <Tooltip style={{ cursor: "pointer", marginLeft: "5px" }} text="Open Repo" position="top">
-        <span onClick={() => openGithubModal(msg.url, msg.tab)}>
+      <Tooltip
+        style={{ cursor: "pointer", marginLeft: "5px" }}
+        text="Open Repository"
+        position="top">
+        <span onClick={() => openGithubModal(msg)}>
           <MarkGithubIcon />
         </span>
       </Tooltip>,
@@ -81,10 +66,28 @@ export async function start() {
     return res;
   });
 
+  injector.utils.addPopoverButton((msg: Message, _) => {
+    const check = checkMessage(msg.content);
+    if (!check.length) return null;
+
+    return {
+      label: "Open Repository",
+      icon: () => <MarkGithubIcon />,
+      onClick: () => {
+        console.log(check[0]);
+        openGithubModal(check[0]);
+      },
+      onContextMenu: (e) => {
+        common.contextMenu.open(e, () => <ContextMenu links={check} />);
+      },
+    };
+  });
+
   injector.utils.addMenuItem(
     ContextMenuTypes.Message,
     (data: { message?: { content: string }; itemHref?: string }) => {
       const msg = checkMessage(data.message?.content ?? data.itemHref);
+      console.log(msg);
       if (!msg.length) return;
 
       return (
@@ -92,14 +95,14 @@ export async function start() {
           <MenuItem
             id="githubindiscord"
             label="Open Repository"
-            action={() => openGithubModal(msg[0].url, msg[0].tab)}
+            action={() => openGithubModal(msg[0])}
             icon={() => <MarkGithubIcon />}>
             {msg.length > 1 &&
               msg.map((m, i) => (
                 <MenuItem
                   id={`githubindiscord-${i}`}
                   label={`Open ${m.url}`}
-                  action={() => openGithubModal(m.url, m.tab)}
+                  action={() => openGithubModal(m)}
                   icon={() => <MarkGithubIcon size={12} />}
                 />
               ))}
@@ -116,17 +119,34 @@ export function stop(): void {
   injector.uninjectAll();
 }
 
-const tabs = {
-  issues: "Issues",
-  pulls: "Pull Request",
-};
+enum Tabs {
+  issue = "Issues",
+  pull = "Pull Requests",
+}
 
-function checkMessage(content?: string) {
+export interface GithubLink {
+  url: string;
+  tab?: Tabs;
+  path?: string;
+  branch?: string;
+  issuenumber?: string;
+  issue?: "pull" | "issue";
+  commit?: string;
+  tree?: string;
+}
+
+function checkMessage(content?: string): GithubLink[] {
   if (!content) return [];
   const match = [...content.matchAll(ghRegex)];
 
   return match.map((d) => ({
     url: d[1],
-    tab: d[2] && tabs[d[2] as keyof typeof tabs],
+    tab: d.groups?.issue ? (d.groups!.issue === "issues" ? Tabs.issue : Tabs.pull) : undefined,
+    branch: d.groups?.branch,
+    path: d.groups?.path,
+    tree: d.groups?.tree,
+    commit: d.groups?.commit,
+    issuenumber: d.groups?.issuenumber,
+    issue: d.groups?.issue as GithubLink["issue"],
   }));
 }

@@ -1,15 +1,16 @@
 import { Box, Breadcrumbs, Link } from "@primer/react";
 import { useContext, useEffect, useState } from "react";
 import { Context } from "../../context";
-import { TreeWithContent, getFile, getFolderInfo } from "../../utils";
+import { TreeWithContent, getCommit, getFile, getFolderInfo } from "../../utils";
 import { common, components } from "replugged";
 import { FileDirectoryFillIcon } from "@primer/styled-octicons";
 import Folder, { CommitHeader } from "./Folder";
 import Spinner from "../Spinner";
 import CommitsView from "../Commits/CommitView";
+import Markdown from "../Markdown";
 
 export default () => {
-  const { data, getBranchCommit, updated, switchBranch } = useContext(Context)!;
+  const { data, getBranchCommit, updated, switchBranch, link } = useContext(Context)!;
   const [folder, setFolder] = useState<{
     current: TreeWithContent | undefined;
     prevs: TreeWithContent[];
@@ -24,6 +25,18 @@ export default () => {
     if (data?.currentBranch.commitInfo) return;
     void getBranchCommit(data!.currentBranch.name);
   }, [data?.currentBranch.name]);
+
+  useEffect(() => {
+    if (link.commit) getCommit(link.url, link.commit).then((c) => setCommit(c));
+    if (link.path && data?.tree) {
+      const tree = findPath(data.tree, link.path);
+      if (tree) {
+        if (tree.type === "blob")
+          getFile(link.url, tree.sha!).then((file) => setFile({ ...tree, content: file.content }));
+        else if (tree.type === "tree") setFolder({ current: tree, prevs: [] });
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (folder.current?.commit || !folder.current) return;
@@ -171,7 +184,7 @@ export default () => {
           }}
         />
       )}
-      {/* {!file && (folder.current?.hasReadme || (!folder.current && data?.readme)) && (
+      {!file && (folder.current?.hasReadme || (!folder.current && data?.readme)) && (
         <Markdown
           source={atob(folder.current?.readme?.content ?? data!.readme!.content)}
           sx={{
@@ -183,7 +196,18 @@ export default () => {
             borderRadius: 6,
           }}
         />
-      )} */}
+      )}
     </Box>
   );
 };
+
+function findPath(tree: TreeWithContent[], path: string) {
+  let result: TreeWithContent | undefined;
+  //
+  for (const t of tree) {
+    if (t.path === path) return (result = t);
+    else if (t.path && t.tree && path.includes(t.path)) result = findPath(t.tree, path);
+  }
+
+  return result;
+}

@@ -6,10 +6,10 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "build": "tsx scripts/build.ts",
+    "build": "replugged build plugin",
     "watch": "pnpm build --watch",
     "dev": "pnpm watch",
-    "bundle": "tsx scripts/bundle.ts",
+    "bundle": "replugged bundle plugin",
     "release": "tsx scripts/release.ts",
     "build-and-bundle": "pnpm run build --no-install && pnpm run bundle",
     "check": "tsc --noEmit",
@@ -46,7 +46,7 @@
     "prettier": "^2.8.8",
     "prompts": "^2.4.2",
     "react-dnd": "^16.0.1",
-    "replugged": "^4.5.0",
+    "replugged": "^4.7.5",
     "semver": "^7.5.4",
     "tsx": "^3.12.7",
     "typescript": "^4.9.5",
