@@ -11,7 +11,7 @@
     "dev": "pnpm watch",
     "bundle": "replugged bundle plugin",
     "release": "tsx scripts/release.ts",
-    "build-and-bundle": "pnpm run build --no-install && pnpm run bundle",
+    "build-and-bundle": "pnpm run build --all --no-install && pnpm run bundle --all",
     "check": "tsc --noEmit",
     "prettier:check": "prettier ./plugins ./scripts --check",
     "eslint:check": "eslint ./plugins ./scripts",
