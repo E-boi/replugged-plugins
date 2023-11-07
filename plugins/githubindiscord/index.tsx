@@ -74,7 +74,6 @@ export async function start() {
       label: "Open Repository",
       icon: () => <MarkGithubIcon />,
       onClick: () => {
-        console.log(check[0]);
         openGithubModal(check[0]);
       },
       onContextMenu: (e) => {

@@ -28,11 +28,8 @@ export default () => {
   // }, []);
 
   useEffect(() => {
-    console.log("rin");
     if (link.issuenumber) {
       const num = Number.parseInt(link.issuenumber!);
-
-      console.log(num);
 
       getIssue(link.url, num).then((issue) => setIssue(issue as Issue));
     }

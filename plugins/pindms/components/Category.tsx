@@ -13,8 +13,8 @@ const classes = webpack.getByProps<Record<string, string>>(
   "headerText",
 );
 
-console.log(useDrop);
-console.log(useDrag);
+// console.log(useDrop);
+// console.log(useDrag);
 
 export default ({ category, selected }: { category: Category; selected: string }) => {
   if (!ReadStateStore || !useDrop || !useDrag) return null;
