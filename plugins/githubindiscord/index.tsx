@@ -73,9 +73,7 @@ export async function start() {
     return {
       label: "Open Repository",
       icon: () => <MarkGithubIcon />,
-      onClick: () => {
-        openGithubModal(check[0]);
-      },
+      onClick: () => openGithubModal(check[0]),
       onContextMenu: (e) => {
         common.contextMenu.open(e, () => <ContextMenu links={check} />);
       },
@@ -86,7 +84,6 @@ export async function start() {
     ContextMenuTypes.Message,
     (data: { message?: { content: string }; itemHref?: string }) => {
       const msg = checkMessage(data.message?.content ?? data.itemHref);
-      console.log(msg);
       if (!msg.length) return;
 
       return (
