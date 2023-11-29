@@ -8,12 +8,13 @@
     "discordID": "458805348669718559",
     "github": "E-boi"
   },
-  "version": "1.0.9",
+  "version": "1.0.10",
   "updater": {
     "type": "store",
     "id": "dev.eboi.customrpc"
   },
   "license": "MIT",
   "type": "replugged-plugin",
-  "renderer": "index.ts"
+  "renderer": "index.ts",
+  "image": "https://imgur.com/a/XLD53Ot"
 }

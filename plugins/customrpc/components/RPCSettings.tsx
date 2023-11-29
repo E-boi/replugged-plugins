@@ -254,14 +254,10 @@ export function openRPCModal(rpc: RPC, onSave: (rpc: RPC) => void) {
 }
 
 function TextInput(props: TextInputType["defaultProps"] & { children?: ReactNode }) {
-  const child = props.children;
-
-  delete props.children;
-
   return (
     <div>
-      <Text.Eyebrow color="text-muted">{child}</Text.Eyebrow>
-      <DTextInput {...props} />
+      <Text.Eyebrow color="text-muted">{props.children}</Text.Eyebrow>
+      <DTextInput {...{ ...props, children: undefined }} />
     </div>
   );
 }
