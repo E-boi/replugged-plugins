@@ -2,9 +2,8 @@ import { useState } from "react";
 import { components } from "replugged";
 import { defaultRPC, pluginSettings, setRPC } from ".";
 import { openRPCModal } from "./components/RPCSettings";
-import SelectMenu from "./components/SelectMenu";
 import UserActivities from "./components/UserActivities";
-const { Button } = components;
+const { Button, Select, Flex } = components;
 
 export default () => {
   const [settings, setSettings] = useSettings();
@@ -12,14 +11,16 @@ export default () => {
 
   return (
     <div>
-      <SelectMenu
-        value={selected as unknown as string}
-        options={settings.rpcs.map((rpc, i) => ({
-          label: rpc.name,
-          value: i as unknown as string,
-        }))}
-        onChange={(value) => setSelected(value as unknown as number)}>
-        RPC'S
+      <Flex className="rprpc-settings-select">
+        <Flex.Child grow={1} shrink={1} wrap>
+          <Select
+            value={selected as unknown as string}
+            options={settings.rpcs.map((rpc, i) => ({
+              label: rpc.name,
+              value: i as unknown as string,
+            }))}
+            onChange={(value) => setSelected(value as unknown as number)}></Select>
+        </Flex.Child>
         <Button
           disabled={selected === -1 || settings.selected === selected}
           onClick={() => {
@@ -61,7 +62,7 @@ export default () => {
           }}>
           Delete
         </Button>
-      </SelectMenu>
+      </Flex>
       <UserActivities />
     </div>
   );
@@ -71,7 +72,13 @@ function useSettings(): [
   ReturnType<(typeof pluginSettings)["all"]>,
   (typeof pluginSettings)["set"],
 ] {
-  const [settings, setSettings] = useState(pluginSettings.all());
+  const [settings, setSettings] = useState({
+    // @ts-ignore dont care
+    selected: 0,
+    // @ts-ignore dont care
+    rpcs: [defaultRPC],
+    ...pluginSettings.all(),
+  });
 
   const set = (
     k: Parameters<(typeof pluginSettings)["set"]>[0],

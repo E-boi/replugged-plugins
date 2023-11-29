@@ -1,40 +1,40 @@
-import { webpack } from "replugged";
+import { common, webpack } from "replugged";
 import { AnyFunction, ObjectExports } from "replugged/dist/types";
-import { UserActivity } from ".";
+import { userActivity } from ".";
+import { Store } from "replugged/dist/renderer/modules/common/flux";
 
-const useStateFromStoreRaw = await webpack.waitForModule(
-  webpack.filters.bySource("useStateFromStores"),
-);
-const useStateFromStore: ((stores: unknown[], callback: () => unknown) => unknown[]) | undefined =
-  webpack.getFunctionBySource(useStateFromStoreRaw as ObjectExports, "useStateFromStores");
-const ActivityStore = webpack.getByProps<{
-  getActivities: AnyFunction;
-  getLocalPresence: AnyFunction;
-}>("getLocalPresence", "getActivities");
+const ActivityStore = webpack.getByStoreName<
+  Store & {
+    getActivities: (...args: any[]) => unknown[];
+    getLocalPresence: AnyFunction;
+  }
+>("SelfPresenceStore");
 const user = webpack.getByProps<{ getCurrentUser: AnyFunction }>("getCurrentUser");
 
 const classes = webpack.getByProps<Record<string, string>>("profileColors");
 
 export default () => {
-  if (!useStateFromStore || !ActivityStore) return null;
+  if (!ActivityStore || !userActivity) return null;
 
-  const activities = useStateFromStore([ActivityStore], () => ActivityStore.getActivities());
+  const activities = common.flux.useStateFromStores([ActivityStore], () =>
+    ActivityStore.getActivities(),
+  );
+
+  // just for types using "userActivity.default" component says "userActivity" may be null
+  const UserActivity = userActivity.default;
 
   return (
     <div className={`${classes?.profileColors} rprpc-activities`}>
-      {activities?.map(
-        (a) =>
-          UserActivity && (
-            <UserActivity
-              activity={a}
-              className="rprpc-activity"
-              source="Profile Modal"
-              type="ProfileV2"
-              useStoreStream={false}
-              user={user?.getCurrentUser()}
-            />
-          ),
-      )}
+      {activities?.map((a) => (
+        <UserActivity
+          activity={a}
+          className="rprpc-activity"
+          source="Profile Modal"
+          type="ProfileV2"
+          useStoreStream={false}
+          user={user?.getCurrentUser()}
+        />
+      ))}
     </div>
   );
 };

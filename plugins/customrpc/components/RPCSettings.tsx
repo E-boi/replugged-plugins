@@ -3,7 +3,8 @@ import { common, components } from "replugged";
 import type { ModalProps } from "replugged/dist/renderer/modules/common/modal";
 import { RPC } from "..";
 import Save from "./Save";
-import TextInput from "./TextInput";
+import { TextInputType } from "replugged/components";
+// import TextInput from "./TextInput";
 
 const {
   Modal: { ModalRoot, ModalHeader, ModalContent, ModalCloseButton },
@@ -12,7 +13,8 @@ const {
   Category,
   ErrorBoundary,
   SwitchItem,
-  RadioItem
+  RadioItem,
+  TextInput: DTextInput,
 } = components;
 
 const ActivityTypes = {
@@ -20,7 +22,7 @@ const ActivityTypes = {
   Streaming: 1,
   Listening: 2,
   Watching: 3,
-  Competing: 5
+  Competing: 5,
 } as const;
 
 const AutoWrap = ({
@@ -51,10 +53,10 @@ function RPCSettings({
   onSave,
   ...props
 }: ModalProps & { rpc: RPC; onSave: (rpc: RPC) => void }) {
-  const [orgRPC, setOrgRPC] = useState(window._.cloneDeep(rpc));
-  const [tempRPC, setRPC] = useState(window._.cloneDeep(rpc));
+  const [orgRPC, setOrgRPC] = useState(common.lodash.cloneDeep(rpc));
+  const [tempRPC, setRPC] = useState(common.lodash.cloneDeep(rpc));
 
-  const changes = useMemo(() => !window._.isEqual(orgRPC, tempRPC), [tempRPC, orgRPC]);
+  const changes = useMemo(() => !common.lodash.isEqual(orgRPC, tempRPC), [tempRPC, orgRPC]);
   const updateRPC = (rpc: Partial<RPC>) => {
     setRPC((r) => ({ ...r, ...rpc }));
   };
@@ -74,31 +76,20 @@ function RPCSettings({
           <AutoWrap wrap grow={0} shrink={0}>
             <TextInput
               value={tempRPC.clientId}
-              divider={false}
               required
               onChange={(v) => updateRPC({ clientId: v })}>
-              Client Id
+              Client ID
             </TextInput>
 
-            <TextInput
-              value={tempRPC.name}
-              divider={false}
-              required
-              onChange={(v) => updateRPC({ name: v })}>
+            <TextInput value={tempRPC.name} required onChange={(v) => updateRPC({ name: v })}>
               Name
             </TextInput>
 
-            <TextInput
-              value={tempRPC.details}
-              divider={false}
-              onChange={(v) => updateRPC({ details: v })}>
+            <TextInput value={tempRPC.details} onChange={(v) => updateRPC({ details: v })}>
               Details
             </TextInput>
 
-            <TextInput
-              value={tempRPC.state}
-              divider={false}
-              onChange={(v) => updateRPC({ state: v })}>
+            <TextInput value={tempRPC.state} onChange={(v) => updateRPC({ state: v })}>
               State
             </TextInput>
           </AutoWrap>
@@ -119,12 +110,11 @@ function RPCSettings({
                   return {
                     name: key,
                     // Type casting hell.
-                    value: String(ActivityTypes[key as unknown as keyof typeof ActivityTypes])
+                    value: String(ActivityTypes[key as unknown as keyof typeof ActivityTypes]),
                   };
                 })}
                 value={String(tempRPC.type)}
-                onChange={(v) => updateRPC({ type: Number(v.value) })}
-              >
+                onChange={(v) => updateRPC({ type: Number(v.value) })}>
                 Activity Type
               </RadioItem>
             </AutoWrap>
@@ -133,14 +123,14 @@ function RPCSettings({
           <Flex wrap={Flex.Wrap.WRAP}>
             <AutoWrap wrap grow={1} shrink={1}>
               <TextInput
-                note="A Twitch or Youtube link"
+                // note="A Twitch or Youtube link"
+
                 placeholder="https://twitch.tv/..."
                 value={tempRPC.url}
                 onChange={(v) => updateRPC({ url: v })}
-                disabled={tempRPC.type !== 1 /** if type != 'streaming' dont allow them to type */}
-              >
-                Stream URL
-              </TextInput>
+                disabled={
+                  tempRPC.type !== 1 /** if type != 'streaming' dont allow them to type */
+                }></TextInput>
             </AutoWrap>
           </Flex>
         </Category>
@@ -150,7 +140,6 @@ function RPCSettings({
             <AutoWrap wrap grow={1} shrink={1}>
               <TextInput
                 value={tempRPC.largeText}
-                divider={false}
                 required
                 onChange={(v) => updateRPC({ largeText: v })}>
                 Large Image Text
@@ -158,7 +147,6 @@ function RPCSettings({
               <TextInput
                 placeholder="https://cdn.discordapp.com/"
                 value={tempRPC.largeImage}
-                divider={false}
                 required
                 onChange={(v) => updateRPC({ largeImage: v })}>
                 Large Image Url
@@ -169,7 +157,6 @@ function RPCSettings({
             <AutoWrap wrap grow={1} shrink={1}>
               <TextInput
                 value={tempRPC.smallText}
-                divider={false}
                 required
                 onChange={(v) => updateRPC({ smallText: v })}>
                 Small Image Text
@@ -177,7 +164,6 @@ function RPCSettings({
               <TextInput
                 placeholder="https://cdn.discordapp.com/"
                 value={tempRPC.smallImage}
-                divider={false}
                 required
                 onChange={(v) => updateRPC({ smallImage: v })}>
                 Small Image Url
@@ -192,7 +178,6 @@ function RPCSettings({
               <AutoWrap wrap grow={1} shrink={1}>
                 <TextInput
                   value={button.label}
-                  divider={false}
                   required
                   onChange={(v) => {
                     tempRPC.buttons[idx].label = v;
@@ -203,7 +188,6 @@ function RPCSettings({
                 <TextInput
                   placeholder="https://"
                   value={button.url}
-                  divider={false}
                   required
                   onChange={(v) => {
                     tempRPC.buttons[idx].url = v;
@@ -221,7 +205,6 @@ function RPCSettings({
             <AutoWrap wrap grow={1} shrink={1}>
               <TextInput
                 value={(tempRPC.party?.members as unknown as string) ?? ""}
-                divider={false}
                 onChange={(v) => {
                   updateRPC({
                     party: {
@@ -234,8 +217,7 @@ function RPCSettings({
               </TextInput>
               <TextInput
                 value={(tempRPC.party?.size as unknown as string) ?? ""}
-                note='"State" will have to be defined for the party information to show'
-                divider={false}
+                // note='"State" will have to be defined for the party information to show'
                 onChange={(v) =>
                   updateRPC({
                     party: {
@@ -251,9 +233,9 @@ function RPCSettings({
         </Category>
         {changes && (
           <Save
-            onReset={() => setRPC(window._.cloneDeep(rpc))}
+            onReset={() => setRPC(common.lodash.cloneDeep(rpc))}
             onSave={() => {
-              setOrgRPC(window._.cloneDeep(tempRPC));
+              setOrgRPC(common.lodash.cloneDeep(tempRPC));
               onSave(tempRPC);
             }}
           />
@@ -269,4 +251,17 @@ export function openRPCModal(rpc: RPC, onSave: (rpc: RPC) => void) {
       <RPCSettings {...{ ...props, rpc, onSave }} />
     </ErrorBoundary>
   ));
+}
+
+function TextInput(props: TextInputType["defaultProps"] & { children?: ReactNode }) {
+  const child = props.children;
+
+  delete props.children;
+
+  return (
+    <div>
+      <Text.Eyebrow color="text-muted">{child}</Text.Eyebrow>
+      <DTextInput {...props} />
+    </div>
+  );
 }

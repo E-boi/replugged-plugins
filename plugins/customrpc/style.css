@@ -21,3 +21,16 @@
   position: relative;
   padding: 16px;
 }
+
+.rprpc-content > [class*="container"]:nth-last-child(2) {
+  position: fixed;
+}
+
+.rprpc-settings-select {
+  margin-bottom: 5px;
+}
+
+.rprpc-settings-select button {
+  margin-left: 5px;
+  margin-right: 5px;
+}

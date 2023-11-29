@@ -9,19 +9,23 @@ import {
 } from "replugged/dist/types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const UserActivity = webpack.getFunctionBySource<FC<any>>(
-  await webpack.waitForModule(
-    webpack.filters.bySource('"activity","user","useStoreStream","showActions","hideHeader"'),
-  ),
-  '"activity","user","useStoreStream","showActions","hideHeader"',
+// export const UserActivity = webpack.getFunctionBySource<FC<any>>(
+//   await webpack.waitForModule(
+//     webpack.filters.bySource('"activity","user","useStoreStream","showActions","hideHeader"'),
+//   ),
+//   '"activity","user","useStoreStream","showActions","hideHeader"',
+// );
+
+export const userActivity: { default: FC<any> } | undefined = await webpack.waitForProps(
+  "UserActivityTypes",
 );
 
-const FormItemMod = webpack.getBySource(
-  '"children","disabled","className","titleClassName","tag","required","style","title","error"',
-);
-export const FormItemRaw =
-  FormItemMod &&
-  Object.values(FormItemMod).find((x) => x?.render?.toString()?.includes("titleClassName"));
+// const FormItemMod = webpack.getBySource(
+//   '"children","disabled","className","titleClassName","tag","required","style","title","error"',
+// );
+// export const FormItemRaw =
+//   FormItemMod &&
+//   Object.values(FormItemMod).find((x) => x?.render?.toString()?.includes("titleClassName"));
 
 const ScrollerMod = webpack.getBySource(
   '"children","className","dir","orientation","paddingFix","fade","onScroll","style"',
@@ -38,24 +42,24 @@ export const Scroller: undefined | FC<{ children: ReactNode }> =
     )) ||
   undefined;
 
-export const SelectMenuRaw = webpack.getFunctionBySource<
-  FC<{
-    className?: string;
-    value: string;
-    options: Array<{ label: string; value: string }>;
-    onChange: (value: string) => void;
-  }>
->(
-  await webpack.waitForModule(webpack.filters.bySource('["value","onChange"]')),
-  '["value","onChange"]',
-);
+// export const SelectMenuRaw = webpack.getFunctionBySource<
+//   FC<{
+//     className?: string;
+//     value: string;
+//     options: Array<{ label: string; value: string }>;
+//     onChange: (value: string) => void;
+//   }>
+// >(
+//   await webpack.waitForModule(webpack.filters.bySource('["value","onChange"]')),
+//   '["value","onChange"]',
+// );
 
-export const SlideIn = getFunctionByProto<FC<{ children: ReactNode; className?: string }>>(
-  "animateTo",
-  await webpack.waitForModule((m: RawModule<{ animateTo: AnyFunction }>) =>
-    Boolean(getExportsForProto(m.exports, ["animateTo"])),
-  ),
-);
+// export const SlideIn = getFunctionByProto<FC<{ children: ReactNode; className?: string }>>(
+//   "animateTo",
+//   await webpack.waitForModule((m: RawModule<{ animateTo: AnyFunction }>) =>
+//     Boolean(getExportsForProto(m.exports, ["animateTo"])),
+//   ),
+// );
 
 export const TransitionGroup = getFunctionByProto<
   FC<{
@@ -67,14 +71,6 @@ export const TransitionGroup = getFunctionByProto<
     Boolean(getExportsForProto(m.exports, ["performAppear"])),
   ),
 );
-
-export const Notice = webpack.getBySource<
-  FC<{
-    onReset: () => void;
-    onSave: () => void;
-    theme: "dark" | "light";
-  }>
->("onSaveButtonColor");
 
 export function getExportsForProto<
   P extends string = string,

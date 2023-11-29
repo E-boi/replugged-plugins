@@ -1,14 +1,7 @@
 import "./style.css";
 import { common, settings } from "replugged";
-import type _ from "lodash";
 const { fluxDispatcher } = common;
 export { default as Settings } from "./settings";
-
-declare global {
-  interface Window {
-    _: typeof _;
-  }
-}
 
 export interface RPC {
   clientId: string;
@@ -75,7 +68,7 @@ export const defaultRPC: Readonly<RPC> = {
 export const pluginSettings = await settings.init<{
   selected: number;
   rpcs: RPC[];
-}>("dev.eboi.customrpc");
+}>("dev.eboi.customrpc", { selected: 0, rpcs: [defaultRPC] });
 
 export function start() {
   const connectionOpen = () => {
@@ -84,6 +77,7 @@ export function start() {
       pluginSettings.set("rpcs", [defaultRPC]);
     }
     const rpc = pluginSettings.get("rpcs")![pluginSettings.get("selected")!];
+    // console.log(rpc);
     setTimeout(() => rpc && setRPC(rpc), 1000);
     fluxDispatcher.unsubscribe("CONNECTION_OPEN", connectionOpen);
   };
