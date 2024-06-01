@@ -10,7 +10,7 @@
       "github": "E-boi"
     }
   ],
-  "version": "1.0.0",
+  "version": "1.0.1",
   "updater": {
     "type": "store",
     "id": "dev.eboi.pindms"
