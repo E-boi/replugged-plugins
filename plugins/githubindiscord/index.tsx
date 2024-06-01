@@ -48,7 +48,6 @@ export async function start() {
     // @ts-expect-error yes it is
     if (!Array.isArray(res)) res = [res];
     const link = args[0]?.target;
-    // console.log(link);
     if (!link) return res;
     const msg = checkMessage(link)?.[0];
     if (!msg) return res;

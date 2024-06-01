@@ -38,13 +38,16 @@ const transitionTo = (transtionRaw &&
 
 function GuildPin({ id }: { id: string }) {
   if (
-    !useStateFromStore ||
+    // !useStateFromStore ||
     !ChannelStore ||
     !ReadStateStore ||
     !StatusStore ||
     !TypingStore ||
     !useDrop ||
-    !useDrag
+    !useDrag ||
+    !Pill ||
+    !BlobMask ||
+    !Avatar
   )
     return null;
 
@@ -56,7 +59,6 @@ function GuildPin({ id }: { id: string }) {
   const [, drop] = useDrop<Channel>(() => ({
     accept: "GUILDPIN",
     drop: (item, monitor) => {
-      console.log(monitor.getDropResult());
       if (item.id == id) return;
       const pins = pluginSettings.get("guildPins", []);
       const draggedIndex = pins.findIndex((pin) => pin === item.id);
@@ -84,14 +86,16 @@ function GuildPin({ id }: { id: string }) {
     options: { dropEffect: "copy" },
   }));
   const [hovered, setHovered] = useState(false);
-  const isMobileOnline = useStateFromStore<boolean>([StatusStore], () =>
+  const isMobileOnline = common.flux.useStateFromStores<boolean>([StatusStore], () =>
     StatusStore!.isMobileOnline(user.id),
   );
-  const status = useStateFromStore<string>([StatusStore], () => StatusStore!.getStatus(user.id));
-  const unreadCount = useStateFromStore<number>([ReadStateStore], () =>
+  const status = common.flux.useStateFromStores<string>([StatusStore], () =>
+    StatusStore!.getStatus(user.id),
+  );
+  const unreadCount = common.flux.useStateFromStores<number>([ReadStateStore], () =>
     ReadStateStore!.getUnreadCount(channel.id),
   );
-  const isTyping = useStateFromStore<boolean>([TypingStore], () =>
+  const isTyping = common.flux.useStateFromStores<boolean>([TypingStore], () =>
     TypingStore!.isTyping(channel.id, user.id),
   );
 
@@ -114,14 +118,11 @@ function GuildPin({ id }: { id: string }) {
             unread={Boolean(unreadCount)}
           />
         ) : undefined}
-        <BlobMask
-          upperBadge={
-            Badge && (unreadCount ?? 0) > 0 ? <Badge count={unreadCount} /> : <span></span>
-          }>
+        <div>
           <Avatar
             isMobile={isMobileOnline}
             isTyping={isTyping}
-            size="SIZE_40"
+            size="SIZE_48"
             src={getChannelIcon(channel)!}
             status={channel.type === 1 && showStatus ? status : undefined}
             onMouseEnter={() => setHovered(true)}
@@ -130,15 +131,9 @@ function GuildPin({ id }: { id: string }) {
             onContextMenu={(e) =>
               common.contextMenu.open(e, () => <Categories selectedId={channel.id} />)
             }
-            className={[
-              "pindms-guildlist-avatar",
-              channel.type !== 1 && "pindms-guildlist-pin-group",
-              showStatus && "pindms-guildlist-avatar-status",
-            ]
-              .filter(Boolean)
-              .join(" ")}
           />
-        </BlobMask>
+          {Badge && (unreadCount ?? 0) > 0 ? <Badge count={unreadCount} /> : undefined}
+        </div>
       </div>
     </components.Tooltip>
   );
@@ -148,16 +143,6 @@ export default () => {
   const [guildPins, setGuildPins] = useState(pluginSettings.get("guildPins", [] as string[]));
 
   useEffect(() => {
-    // const favesChannels = GuildChannelStore?.getChannels("@favorites");
-
-    // console.log(favesChannels?.SELECTABLE.flatMap((v) => v.channel));
-
-    // if ((favesChannels?.SELECTABLE.length ?? 0) > 0)
-    //   setGuildPins((v) => {
-    //     v.push(...favesChannels!.SELECTABLE.flatMap((c) => c.channel.id));
-    //     return [...v];
-    //   });
-
     const update = () => {
       setGuildPins([]);
       setTimeout(() => setGuildPins([...pluginSettings.get("guildPins", [])]));

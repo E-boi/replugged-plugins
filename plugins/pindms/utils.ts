@@ -43,8 +43,10 @@ export function forceUpdate(element: Element | null): void {
 
 export function getChannelName(channel: Channel) {
   return channel.type === 3
-    ? channel.name || channel.rawRecipients?.map((e) => e.globalName ?? e.username).join(", ")
-    : channel.rawRecipients[0].globalName ?? channel.rawRecipients[0].username;
+    ? channel.name || channel.rawRecipients?.map((e) => e.global_name ?? e.username).join(", ")
+    : channel.rawRecipients[0].display_name ??
+        channel.rawRecipients[0].global_name ??
+        channel.rawRecipients[0].username;
 }
 
 export const { getUser } = webpack.getByProps<{

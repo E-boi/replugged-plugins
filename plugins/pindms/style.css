@@ -96,3 +96,9 @@
 .pindms-guildlist-avatar:hover {
   cursor: pointer;
 }
+
+.pindms-guildlist-pin [class*="numberBadge"] {
+  right: 10px;
+  position: absolute;
+  top: 0;
+}

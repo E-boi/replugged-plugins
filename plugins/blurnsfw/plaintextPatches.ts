@@ -6,9 +6,9 @@ export default [
     replacements: [
       {
         match:
-          /(getInitialValuesFromInteractionOptions[^]*?channel:(\w+)[^]*?richValue:this\.state.richValue,[^]*?className:)([^]*?),/gm,
-        replace: (e, match, channel, className) => {
-          return `${match}[${className},${channel}?.nsfw&&"rp-blurNsfw"].join(" "),`;
+          /(textValue:this\.state\.textValue,richValue:this\.state\.richValue,focused:\w+,className:)(\w+\.channelTextArea),channel:(\w+)/gm,
+        replace: (e, match, className, channel) => {
+          return `${match}[${className},${channel}?.nsfw&&"rp-blurNsfw"].join(" "),channel:${channel}`;
         },
       },
     ],

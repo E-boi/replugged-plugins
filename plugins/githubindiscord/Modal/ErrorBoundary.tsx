@@ -6,8 +6,6 @@ import { Text } from "@primer/react";
 
 const { ModalContent, ModalRoot } = components.Modal;
 
-// console.log(ModalContent, ModalRoot);
-
 export default class ErrorBoundary extends PureComponent<
   { children: ReactNode; modalProps: ModalProps },
   { hasErr: boolean; err?: string }

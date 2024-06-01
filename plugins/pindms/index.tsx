@@ -44,7 +44,6 @@ export function start() {
 
         res.props.children.props.privateChannelIds =
           res.props.children.props.privateChannelIds.filter((p: string) => !ids.includes(p));
-
         if (
           !res.props?.children?.props?.children?.some(
             (c: ReactElement) => c?.key === "pindms-categories",
@@ -121,8 +120,6 @@ function patchGuildsNavBar(component: JSX.Element): void {
   injector.after(component, "type", (_, res) => {
     const NavScroll = findInReactTree(res, (node) => node?.props?.onScroll);
     if (!NavScroll?.props?.children) return res;
-
-    // console.log(NavScroll);
     let PinIndex = 3;
 
     const getIndexByKeyword = (keyword: string): number =>
@@ -139,8 +136,6 @@ function patchGuildsNavBar(component: JSX.Element): void {
         PinIndex = HomeButtonIndex + 1;
       }
     }
-
-    // console.log(PinIndex);
 
     const UnreadDMsIndex = getIndexByKeyword("getUnreadPrivateChannelIds");
     if (UnreadDMsIndex != -1) {

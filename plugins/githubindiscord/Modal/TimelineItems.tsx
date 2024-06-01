@@ -42,7 +42,6 @@ const items = {
 };
 
 export default ({ event }: Props) => {
-  // console.log(event);
   const item = event.event && items[event.event as keyof typeof items];
   const Item = typeof item === "object" ? item[event.state as keyof typeof item] : item;
   if (Item) return <Item event={event} />;

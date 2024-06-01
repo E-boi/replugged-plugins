@@ -77,12 +77,12 @@ export function start() {
       pluginSettings.set("rpcs", [defaultRPC]);
     }
     const rpc = pluginSettings.get("rpcs")![pluginSettings.get("selected")!];
-    // console.log(rpc);
     setTimeout(() => rpc && setRPC(rpc), 1000);
     fluxDispatcher.unsubscribe("CONNECTION_OPEN", connectionOpen);
   };
 
   fluxDispatcher.subscribe("CONNECTION_OPEN", connectionOpen);
+  connectionOpen();
 }
 
 export function stop() {

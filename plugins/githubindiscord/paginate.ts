@@ -156,7 +156,6 @@ export function usePaginate<T extends OctokitTypes.RequestInterface>(
   useEffect(() => {
     if (!data) return;
     // save to cache when ever "data" changes
-    // console.log(params);
     cache.set(
       JSON.stringify({ ...(params as unknown as object), url: octokit.endpoint.DEFAULTS.url }),
       data,

@@ -9,6 +9,7 @@ import {
   getFolder,
   getReadme,
   getRepo,
+  getTags,
 } from "./utils";
 import type { components } from "@octokit/openapi-types";
 import { common } from "replugged";
@@ -45,6 +46,8 @@ export default function useRepo(link: GithubLink, query: RepoQuery) {
         void prs.fetch(force);
 
         const repo = await getRepo(link.url);
+        const tags = await getTags(link.url);
+        console.log(tags);
         const defaultBranch = await getBranch(link.url, repo.default_branch);
         const branches = (await getBranches(link.url)).filter((b) => b.name !== defaultBranch.name);
         branches.unshift(defaultBranch);
