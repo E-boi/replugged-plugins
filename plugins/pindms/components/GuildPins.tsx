@@ -10,9 +10,13 @@ import { Store } from "replugged/dist/renderer/modules/common/flux";
 import {
   ChannelStore,
   GuildChannelStore,
+  SelectedChannelStore,
   ReadStateStore,
   StatusStore,
   TypingStore,
+  ApplicationStreamingStore,
+  ChannelRTCStore,
+  RTCConnectionStore,
 } from "../stores";
 
 const classes = webpack.getByProps<{ listItem: string; listItemWrapper: string; pill: string }>(
@@ -36,6 +40,44 @@ const transitionTo = (transtionRaw &&
     '"transitionTo - Transitioning to "',
   )!) as ((to: string) => void) | undefined;
 
+function DropEndWrapper({ id }: { id: string }) {
+  if (!useDrop) return null;
+
+  const [{ isOver }, drop] = useDrop<Channel>(() => ({
+    accept: "GUILDPIN",
+    drop: (item, monitor) => {
+      if (item.id == id) return;
+      const pins = pluginSettings.get("guildPins", []);
+      const draggedIndex = pins.findIndex((pin) => pin === item.id);
+      const droppedIndex = pins.findIndex((pin) => pin === id);
+
+      if (draggedIndex == -1 || droppedIndex == -1) return;
+
+      pluginSettings.set(
+        "guildPins",
+        pins.reduce((acc: string[], item, index) => {
+          if (index === draggedIndex) return acc;
+          if (index === droppedIndex) return [...acc, item, pins[draggedIndex]];
+          return [...acc, item];
+        }, []),
+      );
+
+      common.fluxDispatcher.dispatch({ type: GUILDLIST_UPDATE });
+    },
+    collect: (e) => ({
+      isOver: e.isOver(),
+    }),
+  }));
+
+  return (
+    <span
+      className={isOver ? "pindms-guildList-dragTarget" : ""}
+      ref={(node) => drop(node)}
+      style={{ padding: "10% 0% 10% 100%" }}
+    />
+  );
+}
+
 function GuildPin({ id }: { id: string }) {
   if (
     // !useStateFromStore ||
@@ -43,6 +85,10 @@ function GuildPin({ id }: { id: string }) {
     !ReadStateStore ||
     !StatusStore ||
     !TypingStore ||
+    !SelectedChannelStore ||
+    !ApplicationStreamingStore ||
+    !ChannelRTCStore ||
+    !RTCConnectionStore ||
     !useDrop ||
     !useDrag ||
     !Pill ||
@@ -56,7 +102,7 @@ function GuildPin({ id }: { id: string }) {
 
   if (!channel || !user) return null;
 
-  const [, drop] = useDrop<Channel>(() => ({
+  const [{ isOver }, drop] = useDrop<Channel>(() => ({
     accept: "GUILDPIN",
     drop: (item, monitor) => {
       if (item.id == id) return;
@@ -68,22 +114,27 @@ function GuildPin({ id }: { id: string }) {
 
       pluginSettings.set(
         "guildPins",
-        pins.map((pin, index) => {
-          if (index === draggedIndex) return id;
-          else if (index === droppedIndex) return item.id;
-
-          return pin;
-        }),
+        pins.reduce((acc: string[], item, index) => {
+          if (index === draggedIndex) return acc;
+          if (index === droppedIndex) return [...acc, pins[draggedIndex], item];
+          return [...acc, item];
+        }, []),
       );
 
       common.fluxDispatcher.dispatch({ type: GUILDLIST_UPDATE });
     },
+    collect: (e) => ({
+      isOver: e.isOver(),
+    }),
   }));
 
-  const [, drag] = useDrag(() => ({
+  const [{ dragging }, drag] = useDrag(() => ({
     type: "GUILDPIN",
     item: channel,
     options: { dropEffect: "copy" },
+    collect: (e) => ({
+      dragging: e.isDragging(),
+    }),
   }));
   const [hovered, setHovered] = useState(false);
   const isMobileOnline = common.flux.useStateFromStores<boolean>([StatusStore], () =>
@@ -98,13 +149,37 @@ function GuildPin({ id }: { id: string }) {
   const isTyping = common.flux.useStateFromStores<boolean>([TypingStore], () =>
     TypingStore!.isTyping(channel.id, user.id),
   );
+  const selected = common.flux.useStateFromStores<boolean>(
+    [SelectedChannelStore],
+    () => SelectedChannelStore!.getCurrentlySelectedChannelId() === channel.id,
+  );
+  const mediaInfo = common.flux.useStateFromStores<{
+    video: boolean;
+    audio: boolean;
+    screenshare: boolean;
+    isCurrentUserConnected: boolean;
+  }>([ApplicationStreamingStore, ChannelRTCStore, RTCConnectionStore], () => {
+    const connectedVoiceChannelId = RTCConnectionStore!.getChannelId();
+    const streams = ApplicationStreamingStore?.getAllApplicationStreamsForChannel(id);
+    const voiceChannelMode = connectedVoiceChannelId === id ? ChannelRTCStore?.getMode(id) : "";
+    return {
+      video: voiceChannelMode === "video",
+      audio: voiceChannelMode === "voice",
+      screenshare: Boolean(streams?.length),
+      isCurrentUserConnected: connectedVoiceChannelId === id,
+    };
+  });
 
   const showStatus = pluginSettings.get("showStatus", true);
 
   return (
-    <components.Tooltip shouldShow={hovered} text={getChannelName(channel)} position="right">
+    <components.Tooltip
+      key={`${dragging}`}
+      className={!dragging && isOver ? "pindms-guildList-dragTarget" : ""}
+      shouldShow={hovered}
+      text={getChannelName(channel)}
+      position="right">
       <div
-        ref={(node) => drop(drag(node))}
         className={[
           classes?.listItem,
           "pindms-guildlist-pin",
@@ -113,27 +188,33 @@ function GuildPin({ id }: { id: string }) {
         {Pill ? (
           <Pill
             className={classes?.pill}
-            selected={false}
-            hovered={hovered}
+            selected={selected}
+            hovered={!dragging && hovered}
             unread={Boolean(unreadCount)}
           />
         ) : undefined}
-        <div>
-          <Avatar
-            isMobile={isMobileOnline}
-            isTyping={isTyping}
-            size="SIZE_48"
-            src={getChannelIcon(channel)!}
-            status={channel.type === 1 && showStatus ? status : undefined}
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            onClick={() => transitionTo?.(`/channels/@me/${id}`)}
-            onContextMenu={(e) =>
-              common.contextMenu.open(e, () => <Categories selectedId={channel.id} />)
-            }
-          />
-          {Badge && (unreadCount ?? 0) > 0 ? <Badge count={unreadCount} /> : undefined}
-        </div>
+        <span ref={(node) => drop(drag(node))}>
+          {!dragging && (
+            <>
+              <Avatar
+                isMobile={isMobileOnline}
+                isTyping={isTyping}
+                size="SIZE_48"
+                src={getChannelIcon(channel)!}
+                status={channel.type === 1 && showStatus ? status : undefined}
+                onMouseEnter={() => setHovered(true)}
+                onMouseLeave={() => setHovered(false)}
+                onClick={() => transitionTo?.(`/channels/@me/${id}`)}
+                onContextMenu={(e) =>
+                  common.contextMenu.open(e, () => <Categories selectedId={channel.id} />)
+                }
+              />
+              {Badge && (unreadCount ?? 0) > 0
+                ? Badge.renderMentionBadge(unreadCount)
+                : Badge?.renderMediaBadge(mediaInfo)}
+            </>
+          )}
+        </span>
       </div>
     </components.Tooltip>
   );
@@ -141,22 +222,24 @@ function GuildPin({ id }: { id: string }) {
 
 export default () => {
   const [guildPins, setGuildPins] = useState(pluginSettings.get("guildPins", [] as string[]));
-
+  const [key, setKey] = useState(Date.now());
   useEffect(() => {
     const update = () => {
-      setGuildPins([]);
-      setTimeout(() => setGuildPins([...pluginSettings.get("guildPins", [])]));
+      setTimeout(() => {
+        setGuildPins([...pluginSettings.get("guildPins", [])]);
+        setKey(Date.now());
+      }, 500);
     };
 
     common.fluxDispatcher.subscribe(GUILDLIST_UPDATE, update);
     return () => common.fluxDispatcher.unsubscribe(GUILDLIST_UPDATE, update);
-  }, []);
-
+  }, [pluginSettings.get("guildPins", [] as string[])]);
   return (
-    <>
-      {guildPins.map((id) => (
-        <GuildPin id={id} />
+    <span key={key}>
+      {guildPins.map((id, index) => (
+        <GuildPin id={id} key={id} />
       ))}
-    </>
+      <DropEndWrapper id={guildPins[guildPins.length - 1]} />
+    </span>
   );
 };

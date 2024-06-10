@@ -94,9 +94,19 @@ export const StatusBlob = AvatarRaw?.X as FC | undefined;
 
 const BadgeRaw = webpack.getBySource('"count","color","disableColor","shape","className","style"');
 
-export const Badge = webpack.getByProps<{ NumberBadge: FC<{ count: number }> }>(
-  "NumberBadge",
-)?.NumberBadge;
+export const Badge = webpack.getByProps<{
+  renderMediaBadge: (props: {
+    activeEvent?: boolean;
+    activity?: boolean;
+    audio?: boolean;
+    gaming?: boolean;
+    isCurrentUserConnected?: boolean;
+    liveStage?: boolean;
+    screenshare?: boolean;
+    video?: boolean;
+  }) => JSX.Element;
+  renderMentionBadge: (count: number, color?: string) => JSX.Element;
+}>("renderMediaBadge", "renderMentionBadge");
 
 export const SearchBar = webpack.getBySource<
   FC<{ className: string; query: string; onChange: (value: string) => void; onClear: () => void }>

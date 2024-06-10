@@ -102,3 +102,21 @@
   position: absolute;
   top: 0;
 }
+
+.pindms-guildlist-pin [class*="iconBadge"] {
+  right: 8px;
+  position: absolute;
+  top: 0;
+}
+
+.pindms-guildList-dragTarget:before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 4px;
+  right: 4px;
+  height: 4px;
+  background-color: var(--green-360);
+  border-radius: 2px;
+  box-shadow: 0 0 3px hsl(var(--black-500-hsl) / 0.3);
+}
