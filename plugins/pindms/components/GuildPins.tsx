@@ -79,6 +79,22 @@ function DropEndWrapper({ id }: { id: string }) {
 }
 
 function GuildPin({ id }: { id: string }) {
+  console.log({
+    ChannelStore,
+    ReadStateStore,
+    StatusStore,
+    TypingStore,
+    SelectedChannelStore,
+    ApplicationStreamingStore,
+    ChannelRTCStore,
+    RTCConnectionStore,
+    useDrop,
+    useDrag,
+    Pill,
+    BlobMask,
+    Avatar,
+  });
+
   if (
     // !useStateFromStore ||
     !ChannelStore ||
@@ -193,7 +209,11 @@ function GuildPin({ id }: { id: string }) {
             unread={Boolean(unreadCount)}
           />
         ) : undefined}
-        <span ref={(node) => drop(drag(node))}>
+        <span
+          ref={(node) => drop(drag(node))}
+          style={{
+            transform: "translate(0, 0)",
+          }}>
           {!dragging && (
             <>
               <Avatar
