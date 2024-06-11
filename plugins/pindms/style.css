@@ -120,3 +120,9 @@
   border-radius: 2px;
   box-shadow: 0 0 3px hsl(var(--black-500-hsl) / 0.3);
 }
+
+[data-list-id="guildsnav"]:has(.pindms-guildlist-pin > [class*="pill_"] > span)
+  [class*="listItem_"]:has([data-list-item-id="guildsnav___home"])
+  [class*="pill_"] {
+  display: none;
+}
