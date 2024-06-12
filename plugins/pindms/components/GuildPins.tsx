@@ -73,28 +73,12 @@ function DropEndWrapper({ id }: { id: string }) {
     <span
       className={isOver ? "pindms-guildList-dragTarget" : ""}
       ref={(node) => drop(node)}
-      style={{ padding: "10% 0% 10% 100%" }}
+      style={{ padding: "10% 0% 10% 100%", zIndex: "99", position: "absolute" }}
     />
   );
 }
 
 function GuildPin({ id }: { id: string }) {
-  console.log({
-    ChannelStore,
-    ReadStateStore,
-    StatusStore,
-    TypingStore,
-    SelectedChannelStore,
-    ApplicationStreamingStore,
-    ChannelRTCStore,
-    RTCConnectionStore,
-    useDrop,
-    useDrag,
-    Pill,
-    BlobMask,
-    Avatar,
-  });
-
   if (
     // !useStateFromStore ||
     !ChannelStore ||
