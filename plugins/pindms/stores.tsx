@@ -11,7 +11,11 @@ export const TypingStore = webpack.getByStoreName<
 >("TypingStore");
 
 export const ReadStateStore = webpack.getByStoreName<
-  Store & { getUnreadCount: (channelId: string) => number; lastMessageId: (id: string) => number }
+  Store & {
+    getUnreadCount: (channelId: string) => number;
+    getMentionCount: (channelId: string) => number;
+    lastMessageId: (id: string) => number;
+  }
 >("ReadStateStore");
 
 export const ChannelStore = webpack.getByStoreName<

@@ -94,7 +94,7 @@ export const StatusBlob = AvatarRaw?.X as FC | undefined;
 
 const BadgeRaw = webpack.getBySource('"count","color","disableColor","shape","className","style"');
 
-export const Badge = webpack.getByProps<{
+export const Badge = await webpack.waitForProps<{
   renderMediaBadge: (props: {
     activeEvent?: boolean;
     activity?: boolean;

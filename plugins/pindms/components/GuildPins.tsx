@@ -143,8 +143,9 @@ function GuildPin({ id }: { id: string }) {
   const status = common.flux.useStateFromStores<string>([StatusStore], () =>
     StatusStore!.getStatus(user.id),
   );
-  const unreadCount = common.flux.useStateFromStores<number>([ReadStateStore], () =>
-    ReadStateStore!.getUnreadCount(channel.id),
+  const unreadCount = common.flux.useStateFromStores<number>(
+    [ReadStateStore],
+    () => ReadStateStore!.getUnreadCount(channel.id) || ReadStateStore!.getMentionCount(channel.id),
   );
   const isTyping = common.flux.useStateFromStores<boolean>([TypingStore], () =>
     TypingStore!.isTyping(channel.id, user.id),
