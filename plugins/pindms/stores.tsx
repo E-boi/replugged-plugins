@@ -11,7 +11,11 @@ export const TypingStore = webpack.getByStoreName<
 >("TypingStore");
 
 export const ReadStateStore = webpack.getByStoreName<
-  Store & { getUnreadCount: (channelId: string) => number; lastMessageId: (id: string) => number }
+  Store & {
+    getUnreadCount: (channelId: string) => number;
+    getMentionCount: (channelId: string) => number;
+    lastMessageId: (id: string) => number;
+  }
 >("ReadStateStore");
 
 export const ChannelStore = webpack.getByStoreName<
@@ -21,3 +25,19 @@ export const ChannelStore = webpack.getByStoreName<
 export const GuildChannelStore = webpack.getByStoreName<
   Store & { getChannels: (guildId: string) => { SELECTABLE: Array<{ channel: Channel }> } }
 >("GuildChannelStore");
+
+export const SelectedChannelStore = webpack.getByStoreName<
+  Store & { getCurrentlySelectedChannelId: () => string }
+>("SelectedChannelStore");
+
+export const ApplicationStreamingStore = webpack.getByStoreName<
+  Store & { getAllApplicationStreamsForChannel: (channelId: string) => unknown[] }
+>("ApplicationStreamingStore");
+
+export const ChannelRTCStore = webpack.getByStoreName<
+  Store & { getMode: (channelId: string) => string }
+>("ChannelRTCStore");
+
+export const RTCConnectionStore = webpack.getByStoreName<Store & { getChannelId: () => string }>(
+  "RTCConnectionStore",
+);

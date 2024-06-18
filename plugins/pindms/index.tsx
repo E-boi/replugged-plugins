@@ -161,7 +161,7 @@ function patchUnreadDMs(component: JSX.Element) {
     }, []);
 
     res.props.children = res.props.children.filter(
-      (c: ReactElement) => !pins.includes(c.key as string),
+      (c: ReactElement) => !pins.includes(c?.key as string),
     );
 
     return res;
