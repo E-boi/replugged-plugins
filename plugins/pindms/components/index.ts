@@ -48,12 +48,9 @@ export const GroupDM =
     /hasUnreadMessages:\w,isFavorite/,
   )!;
 
-export const PrivateChannel = webpack.getByProps<{
-  default: React.FC<{ channel: Channel; selected: boolean }>;
-  CloseButton: React.FC;
-  LinkButton: React.FC;
-}>(["CloseButton", "LinkButton"])?.default;
-
+export const PrivateChannel = webpack.getFunctionBySource<
+  React.FC<{ channel: Channel; selected: boolean }>
+>(webpack.getBySource("PrivateChannel.renderAvatar"), "isTypingIndicatorEnabled:");
 export const RawPrivateChannel = webpack.getBySource<ObjectExports>(/children\)\(\w+\(\w+\.id/);
 
 export const PrivateChannelKey =
@@ -94,19 +91,25 @@ export const StatusBlob = AvatarRaw?.X as FC | undefined;
 
 const BadgeRaw = webpack.getBySource('"count","color","disableColor","shape","className","style"');
 
-export const Badge = await webpack.waitForProps<{
-  renderMediaBadge: (props: {
-    activeEvent?: boolean;
-    activity?: boolean;
-    audio?: boolean;
-    gaming?: boolean;
-    isCurrentUserConnected?: boolean;
-    liveStage?: boolean;
-    screenshare?: boolean;
-    video?: boolean;
-  }) => JSX.Element;
-  renderMentionBadge: (count: number, color?: string) => JSX.Element;
-}>("renderMediaBadge", "renderMentionBadge");
+const BadgeMod = await webpack.waitForModule(webpack.filters.bySource(".isCurrentUserConnected]"));
+export const Badge = {
+  renderMediaBadge: webpack.getFunctionBySource<
+    (props: {
+      activeEvent?: boolean;
+      activity?: boolean;
+      audio?: boolean;
+      gaming?: boolean;
+      isCurrentUserConnected?: boolean;
+      liveStage?: boolean;
+      screenshare?: boolean;
+      video?: boolean;
+    }) => JSX.Element
+  >(BadgeMod, ".ScreenIcon;"),
+  renderMentionBadge: webpack.getFunctionBySource<(count: number, color?: string) => JSX.Element>(
+    BadgeMod,
+    ".NumberBadge",
+  ),
+};
 
 export const SearchBar = webpack.getBySource<
   FC<{ className: string; query: string; onChange: (value: string) => void; onClear: () => void }>
@@ -122,28 +125,22 @@ export const Pill =
     FC<{ className?: string; selected?: boolean; hovered?: boolean; unread?: boolean }>
   >('"pill":"empty"');
 
-// const useDragRaw = webpack.getBySource(
-//   "useDrag::spec.begin was deprecated in v14. Replace spec.begin() with spec.item(). (see more here - https://react-dnd.github.io/react-dnd/docs/api/use-drag)",
-// );
-// export const useDrag = webpack.getFunctionBySource<
-//   <DragObject = unknown, DropResult = unknown, CollectedProps = unknown>(
-//     specArg: FactoryOrInstance<DragSourceHookSpec<DragObject, DropResult, CollectedProps>>,
-//     deps?: unknown[],
-//   ) => [CollectedProps, ConnectDragSource, ConnectDragPreview]
-// >(
-//   useDragRaw,
-//   "useDrag::spec.begin was deprecated in v14. Replace spec.begin() with spec.item(). (see more here - https://react-dnd.github.io/react-dnd/docs/api/use-drag)",
-// );
+const useDragRaw = webpack.getBySource("useDrag::spec.begin was deprecated in v14.");
+export const useDrag = webpack.getFunctionBySource<
+  <DragObject = unknown, DropResult = unknown, CollectedProps = unknown>(
+    specArg: FactoryOrInstance<DragSourceHookSpec<DragObject, DropResult, CollectedProps>>,
+    deps?: unknown[],
+  ) => [CollectedProps, ConnectDragSource, ConnectDragPreview]
+>(useDragRaw, "useDrag::spec.begin was deprecated in v14.");
+const useDropRaw = webpack.getBySource(/\.options\);.{10,50}.collect/);
+export const useDrop = webpack.getFunctionBySource<
+  <DragObject = unknown, DropResult = unknown, CollectedProps = unknown>(
+    specArg: FactoryOrInstance<DropTargetHookSpec<DragObject, DropResult, CollectedProps>>,
+    deps?: unknown[],
+  ) => [CollectedProps, ConnectDragSource, ConnectDragPreview]
+>(useDropRaw, ".collect");
 
-// const useDropRaw = webpack.getBySource("accept must be defined");
-// export const useDrop = webpack.getFunctionBySource<
-//   <DragObject = unknown, DropResult = unknown, CollectedProps = unknown>(
-//     specArg: FactoryOrInstance<DropTargetHookSpec<DragObject, DropResult, CollectedProps>>,
-//     deps?: unknown[],
-//   ) => [CollectedProps, ConnectDragSource, ConnectDragPreview]
-// >(useDropRaw, "disconnectDropTarget");
-
-export const {
+/* export const {
   useDrag,
   useDrop,
 }: {
@@ -156,3 +153,4 @@ export const {
     deps?: unknown[],
   ) => [CollectedProps, ConnectDragSource, ConnectDragPreview];
 } = webpack.getByProps("useDrag")!;
+ */

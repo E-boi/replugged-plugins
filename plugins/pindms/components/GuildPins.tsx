@@ -7,6 +7,7 @@ import { Avatar, Badge, BlobMask, Channel, Pill, useDrag, useDrop } from ".";
 import { ObjectExports } from "replugged/dist/types";
 import Categories from "./contextMenus/Channel";
 import { Store } from "replugged/dist/renderer/modules/common/flux";
+
 import {
   ChannelStore,
   GuildChannelStore,
@@ -25,12 +26,12 @@ const classes = webpack.getByProps<{ listItem: string; listItemWrapper: string; 
   "pill",
 );
 
-const useStateFromStoreRaw = await webpack.waitForModule(
+/* const useStateFromStoreRaw = await webpack.waitForModule(
   webpack.filters.bySource("useStateFromStores"),
-);
+); */
 
-const useStateFromStore: (<T>(stores: Store[], callback: () => unknown) => T) | undefined =
-  webpack.getFunctionBySource(useStateFromStoreRaw as ObjectExports, "useStateFromStores");
+/* const useStateFromStore: (<T>(stores: Store[], callback: () => unknown) => T) | undefined =
+  webpack.getFunctionBySource(useStateFromStoreRaw as ObjectExports, "useStateFromStores"); */
 
 const transtionRaw = webpack.getBySource('"transitionTo - Transitioning to "');
 
@@ -43,7 +44,7 @@ const transitionTo = (transtionRaw &&
 function DropEndWrapper({ id }: { id: string }) {
   if (!useDrop) return null;
 
-  const [{ isOver }, drop] = useDrop<Channel>(() => ({
+  const [{ isOver }, drop] = useDrop<Channel>({
     accept: "GUILDPIN",
     drop: (item, monitor) => {
       if (item.id == id) return;
@@ -67,7 +68,7 @@ function DropEndWrapper({ id }: { id: string }) {
     collect: (e) => ({
       isOver: e.isOver(),
     }),
-  }));
+  });
 
   return (
     <span
@@ -102,7 +103,7 @@ function GuildPin({ id }: { id: string }) {
 
   if (!channel || !user) return null;
 
-  const [{ isOver }, drop] = useDrop<Channel>(() => ({
+  const [{ isOver }, drop] = useDrop<Channel>({
     accept: "GUILDPIN",
     drop: (item, monitor) => {
       if (item.id == id) return;
@@ -126,16 +127,16 @@ function GuildPin({ id }: { id: string }) {
     collect: (e) => ({
       isOver: e.isOver(),
     }),
-  }));
+  });
 
-  const [{ dragging }, drag] = useDrag(() => ({
+  const [{ dragging }, drag] = useDrag({
     type: "GUILDPIN",
     item: channel,
     options: { dropEffect: "copy" },
     collect: (e) => ({
       dragging: e.isDragging(),
     }),
-  }));
+  });
   const [hovered, setHovered] = useState(false);
   const isMobileOnline = common.flux.useStateFromStores<boolean>([StatusStore], () =>
     StatusStore!.isMobileOnline(user.id),
@@ -182,13 +183,12 @@ function GuildPin({ id }: { id: string }) {
       position="right">
       <div
         className={[
-          classes?.listItem,
           "pindms-guildlist-pin",
           channel.type === 1 ? null : "pindms-guildlist-pin-group",
         ].join(" ")}>
         {Pill ? (
           <Pill
-            className={classes?.pill}
+            className={"pindms-guildlist-pill"}
             selected={selected}
             hovered={!dragging && hovered}
             unread={Boolean(unreadCount)}
@@ -215,8 +215,8 @@ function GuildPin({ id }: { id: string }) {
                 }
               />
               {Badge && (unreadCount ?? 0) > 0
-                ? Badge.renderMentionBadge(unreadCount)
-                : Badge?.renderMediaBadge(mediaInfo)}
+                ? Badge.renderMentionBadge!(unreadCount)
+                : Badge?.renderMediaBadge!(mediaInfo)}
             </>
           )}
         </span>
@@ -230,19 +230,18 @@ export default () => {
   const [key, setKey] = useState(Date.now());
   useEffect(() => {
     const update = () => {
-      setTimeout(() => {
-        setGuildPins([...pluginSettings.get("guildPins", [])]);
-        setKey(Date.now());
-      }, 500);
+      setGuildPins([...pluginSettings.get("guildPins", [])]);
+      setKey(Date.now());
     };
 
     common.fluxDispatcher.subscribe(GUILDLIST_UPDATE, update);
     return () => common.fluxDispatcher.unsubscribe(GUILDLIST_UPDATE, update);
   }, [pluginSettings.get("guildPins", [] as string[])]);
+
   return (
     <span key={key}>
       {guildPins.map((id, index) => (
-        <GuildPin id={id} key={id} />
+        <GuildPin id={id} key={`${id}-${index}`} />
       ))}
       <DropEndWrapper id={guildPins[guildPins.length - 1]} />
     </span>

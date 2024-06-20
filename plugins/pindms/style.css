@@ -96,7 +96,18 @@
 .pindms-guildlist-avatar:hover {
   cursor: pointer;
 }
-
+.pindms-guildlist-pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.pindms-guildlist-pin {
+  position: relative;
+  margin: 0 0 8px;
+  display: flex;
+  justify-content: center;
+  width: var(--custom-list-items-list-item-width);
+}
 .pindms-guildlist-pin [class*="numberBadge"] {
   right: 0;
   position: absolute;
@@ -121,7 +132,7 @@
   box-shadow: 0 0 3px hsl(var(--black-500-hsl) / 0.3);
 }
 
-[data-list-id="guildsnav"]:has(.pindms-guildlist-pin > [class*="pill_"] > span)
+[data-list-id="guildsnav"]:has(.pindms-guildlist-pin > .pindms-guildlist-pill > span)
   [class*="listItem_"]:has([data-list-item-id="guildsnav___home"])
   [class*="pill_"] {
   display: none;
