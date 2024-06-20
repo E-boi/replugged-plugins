@@ -217,6 +217,7 @@ function GuildPin({ id }: { id: string }) {
               {Badge && (unreadCount ?? 0) > 0
                 ? Badge.renderMentionBadge!(unreadCount)
                 : Badge?.renderMediaBadge!(mediaInfo)}
+
             </>
           )}
         </span>

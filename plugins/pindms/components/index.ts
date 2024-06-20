@@ -91,6 +91,7 @@ export const StatusBlob = AvatarRaw?.X as FC | undefined;
 
 const BadgeRaw = webpack.getBySource('"count","color","disableColor","shape","className","style"');
 
+
 const BadgeMod = await webpack.waitForModule(webpack.filters.bySource(".isCurrentUserConnected]"));
 export const Badge = {
   renderMediaBadge: webpack.getFunctionBySource<
