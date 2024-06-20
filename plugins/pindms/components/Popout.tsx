@@ -26,12 +26,7 @@ const ChannelItem = ({
 }) => {
   return (
     <div className="pindms-popout-channel" onClick={onClick}>
-      <img
-        src={icon}
-        height={40}
-        width={40}
-        style={{ borderRadius: "9999px", marginRight: "8px" }}
-      />
+      <img src={icon} height={40} width={40} style={{ borderRadius: "99px", marginRight: "8px" }} />
       <components.Text>{name}</components.Text>
       <input type="checkbox" checked={checked} style={{ marginLeft: "auto" }} />
     </div>

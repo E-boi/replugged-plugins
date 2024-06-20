@@ -1,4 +1,4 @@
-import { DirectMessage, GroupDM, PrivateChannel } from ".";
+import { PrivateChannel } from ".";
 import { ChannelStore } from "../stores";
 
 export default ({ id, selected }: { id: string; selected: boolean }) => {

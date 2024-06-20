@@ -26,36 +26,12 @@ export interface Channel {
   recipients: string[];
 }
 
-export const RawDirectMessage = webpack.getBySource<ObjectExports>('["channel","selected"]');
-
-export const DirectMessageKey =
-  RawDirectMessage &&
-  webpack.getFunctionKeyBySource(RawDirectMessage, /hasUnreadMessages:\w,canUseAvatarDecorations/)!;
-
-export const DirectMessage = (RawDirectMessage &&
-  DirectMessageKey &&
-  RawDirectMessage[DirectMessageKey]) as
-  | React.FC<{
-      channel: Channel;
-      selected: boolean;
-    }>
-  | undefined;
-
-export const GroupDM =
-  RawDirectMessage &&
-  webpack.getFunctionBySource<React.FC<{ channel: Channel; selected: boolean }>>(
-    RawDirectMessage,
-    /hasUnreadMessages:\w,isFavorite/,
-  )!;
-
 export const PrivateChannel = webpack.getFunctionBySource<
   React.FC<{ channel: Channel; selected: boolean }>
->(webpack.getBySource("PrivateChannel.renderAvatar"), "isTypingIndicatorEnabled:");
-export const RawPrivateChannel = webpack.getBySource<ObjectExports>(/children\)\(\w+\(\w+\.id/);
-
-export const PrivateChannelKey =
-  RawPrivateChannel &&
-  webpack.getFunctionKeyBySource(RawPrivateChannel, /children\)\(\w+\(\w+\.id/);
+>(
+  await webpack.waitForModule(webpack.filters.bySource("PrivateChannel.renderAvatar")),
+  "isTypingIndicatorEnabled:",
+);
 
 interface AvatarProps {
   src: string;
@@ -85,13 +61,6 @@ export const {
   BlobMask: FC<{ children: ReactElement; lowerBadge?: ReactElement; upperBadge?: ReactElement }>;
 } = webpack.getByProps(["Avatar", "Popout", "BlobMask"])!;
 
-const AvatarRaw = webpack.getBySource<{ X: AnyFunction }>('"size","isMobile","isTyping"');
-
-export const StatusBlob = AvatarRaw?.X as FC | undefined;
-
-const BadgeRaw = webpack.getBySource('"count","color","disableColor","shape","className","style"');
-
-
 const BadgeMod = await webpack.waitForModule(webpack.filters.bySource(".isCurrentUserConnected]"));
 export const Badge = {
   renderMediaBadge: webpack.getFunctionBySource<
@@ -112,11 +81,9 @@ export const Badge = {
   ),
 };
 
-export const SearchBar = webpack.getBySource<
+export const SearchBar = webpack.getFunctionBySource<
   FC<{ className: string; query: string; onChange: (value: string) => void; onClear: () => void }>
->(
-  '"query","autoFocus","onClear","className","placeholder","iconClassName","onKeyDown","onKeyUp","onKeyPress","isLoading","size","disabled","onChange","onBlur","onFocus","autoComplete","inputProps","aria-label"',
-)!;
+>(webpack.getBySource("placeholder:s=d.Z.Messages.SEARCH"), "placeholder:s=d.Z.Messages.SEARCH");
 
 export const { getChannelIconURL }: { getChannelIconURL: (channel: Channel) => string } =
   webpack.getByProps("getChannelIconURL")!;

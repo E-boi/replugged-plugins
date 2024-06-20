@@ -24,10 +24,8 @@
   background-color: var(--modal-background);
   overflow-x: hidden;
   overflow-y: auto;
-  border-radius: 10px;
   padding-bottom: 10px;
-  -webkit-box-shadow: var(--dark-elevation-border), var(--dark-elevation-high);
-  box-shadow: var(--dark-elevation-border), var(--dark-elevation-high);
+  box-shadow: var(--legacy-elevation-border), var(--legacy-elevation-high);
 }
 
 .pindms-popout-channel {

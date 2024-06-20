@@ -6,7 +6,7 @@ import { getChannelIcon, getChannelName, getUser } from "../utils";
 import { Avatar, Badge, BlobMask, Channel, Pill, useDrag, useDrop } from ".";
 import { ObjectExports } from "replugged/dist/types";
 import Categories from "./contextMenus/Channel";
-import { Store } from "replugged/dist/renderer/modules/common/flux";
+import type { Flux } from "replugged/dist/renderer/modules/common/flux";
 
 import {
   ChannelStore,
@@ -32,6 +32,10 @@ const classes = webpack.getByProps<{ listItem: string; listItemWrapper: string; 
 
 /* const useStateFromStore: (<T>(stores: Store[], callback: () => unknown) => T) | undefined =
   webpack.getFunctionBySource(useStateFromStoreRaw as ObjectExports, "useStateFromStores"); */
+const useStateFromStore = webpack.getFunctionBySource<Flux["useStateFromStores"]>(
+  webpack.getBySource('attach("useStateFromStores")'),
+  "getStateFromStores",
+);
 
 const transtionRaw = webpack.getBySource('"transitionTo - Transitioning to "');
 
@@ -44,7 +48,7 @@ const transitionTo = (transtionRaw &&
 function DropEndWrapper({ id }: { id: string }) {
   if (!useDrop) return null;
 
-  const [{ isOver }, drop] = useDrop<Channel>({
+  const [{ isOver }, drop] = useDrop<Channel, unknown, { isOver: boolean }>({
     accept: "GUILDPIN",
     drop: (item, monitor) => {
       if (item.id == id) return;
@@ -81,7 +85,7 @@ function DropEndWrapper({ id }: { id: string }) {
 
 function GuildPin({ id }: { id: string }) {
   if (
-    // !useStateFromStore ||
+    !useStateFromStore ||
     !ChannelStore ||
     !ReadStateStore ||
     !StatusStore ||
@@ -103,7 +107,7 @@ function GuildPin({ id }: { id: string }) {
 
   if (!channel || !user) return null;
 
-  const [{ isOver }, drop] = useDrop<Channel>({
+  const [{ isOver }, drop] = useDrop<Channel, unknown, { isOver: boolean }>({
     accept: "GUILDPIN",
     drop: (item, monitor) => {
       if (item.id == id) return;
@@ -138,24 +142,22 @@ function GuildPin({ id }: { id: string }) {
     }),
   });
   const [hovered, setHovered] = useState(false);
-  const isMobileOnline = common.flux.useStateFromStores<boolean>([StatusStore], () =>
+  const isMobileOnline = useStateFromStore<boolean>([StatusStore], () =>
     StatusStore!.isMobileOnline(user.id),
   );
-  const status = common.flux.useStateFromStores<string>([StatusStore], () =>
-    StatusStore!.getStatus(user.id),
-  );
-  const unreadCount = common.flux.useStateFromStores<number>(
+  const status = useStateFromStore<string>([StatusStore], () => StatusStore!.getStatus(user.id));
+  const unreadCount = useStateFromStore<number>(
     [ReadStateStore],
     () => ReadStateStore!.getUnreadCount(channel.id) || ReadStateStore!.getMentionCount(channel.id),
   );
-  const isTyping = common.flux.useStateFromStores<boolean>([TypingStore], () =>
+  const isTyping = useStateFromStore<boolean>([TypingStore], () =>
     TypingStore!.isTyping(channel.id, user.id),
   );
-  const selected = common.flux.useStateFromStores<boolean>(
+  const selected = useStateFromStore<boolean>(
     [SelectedChannelStore],
     () => SelectedChannelStore!.getCurrentlySelectedChannelId() === channel.id,
   );
-  const mediaInfo = common.flux.useStateFromStores<{
+  const mediaInfo = useStateFromStore<{
     video: boolean;
     audio: boolean;
     screenshare: boolean;
@@ -217,7 +219,6 @@ function GuildPin({ id }: { id: string }) {
               {Badge && (unreadCount ?? 0) > 0
                 ? Badge.renderMentionBadge!(unreadCount)
                 : Badge?.renderMediaBadge!(mediaInfo)}
-
             </>
           )}
         </span>
