@@ -4,7 +4,6 @@ import type { ModalProps } from "replugged/dist/renderer/modules/common/modal";
 import { RPC } from "..";
 import Save from "./Save";
 import { TextInputType } from "replugged/components";
-// import TextInput from "./TextInput";
 
 const {
   Modal: { ModalRoot, ModalHeader, ModalContent, ModalCloseButton },

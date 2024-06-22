@@ -1,3 +1,4 @@
+import { User } from "discord-types/general";
 import { FC, ReactNode } from "react";
 import { webpack } from "replugged";
 import {
@@ -9,15 +10,8 @@ import {
 } from "replugged/dist/types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-// export const UserActivity = webpack.getFunctionBySource<FC<any>>(
-//   await webpack.waitForModule(
-//     webpack.filters.bySource('"activity","user","useStoreStream","showActions","hideHeader"'),
-//   ),
-//   '"activity","user","useStoreStream","showActions","hideHeader"',
-// );
-
-export const userActivity: { default: FC<any> } | undefined = await webpack.waitForProps(
-  "UserActivityTypes",
+export const UserActivity = webpack.getBySource<FC<{ type: "ProfileV2"; user: User }>>(
+  "user:i,type:s,showActions:t,onClose:m",
 );
 
 // const FormItemMod = webpack.getBySource(
@@ -71,6 +65,8 @@ export const TransitionGroup = getFunctionByProto<
     Boolean(getExportsForProto(m.exports, ["performAppear"])),
   ),
 );
+
+console.log(TransitionGroup);
 
 export function getExportsForProto<
   P extends string = string,
